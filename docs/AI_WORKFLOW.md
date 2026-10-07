@@ -4,7 +4,7 @@
 
 Read `AGENTS.md`, the current state/latest entry in `WORKLOG.md`, and `docs/IMPLEMENTATION_PLAN.md`. For code work read the full handoff documents and relevant AC rows. Inspect `git status --short`, existing sources and tests. Work from actual files rather than a previous assistant's completion claims.
 
-The original `IMPLEMENTATION_PROMPT.md` requests the entire milestone. A user asking for a single stage narrows the work to that stage. Do not silently convert a scaffolding request into full implementation. For an explicitly requested full milestone, continue through 1A-1E and do not pause for routine confirmations.
+The original `docs/IMPLEMENTATION_PROMPT.md` requests the entire milestone. A user asking for a single stage narrows the work to that stage. Do not silently convert a scaffolding request into full implementation. For an explicitly requested full milestone, continue through 1A-1E and do not pause for routine confirmations.
 
 ## Implement a stage
 
@@ -42,7 +42,7 @@ Ask a focused question when an unresolved requirement affects the result.
 
 ```text
 Read AGENTS.md, WORKLOG.md and docs/IMPLEMENTATION_PLAN.md, then execute
-IMPLEMENTATION_PROMPT.md through the remaining milestone 1 stages.
+docs/IMPLEMENTATION_PROMPT.md through the remaining milestone 1 stages.
 Build and verify real MCP-to-REST behavior against an independent HTTP mock.
 Use the demo contract until the actual coordinator contract is supplied.
 Continue through documentation and the SDK smoke client; report actual
@@ -53,7 +53,7 @@ acceptance tracker without claiming unverified live-coordinator integration.
 ### Review
 
 ```text
-Review <stage/diff/files> against FUNCTIONAL_SPEC.md and AGENTS.md.
+Review <stage/diff/files> against docs/FUNCTIONAL_SPEC.md and AGENTS.md.
 Use the review workflow in docs/AI_WORKFLOW.md. Inspect actual code and
 test evidence. Report prioritized concrete findings with file/line,
 impact and relevant AC IDs, plus commands run and missing evidence.

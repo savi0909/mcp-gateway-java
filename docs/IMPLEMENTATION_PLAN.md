@@ -1,6 +1,6 @@
 # Milestone 1 implementation plan
 
-The baseline is `FUNCTIONAL_SPEC.md` and `DESIGN.md` section 10. This file tracks work; it does not replace requirements. Status is `pending`, `in progress`, or `complete`, and completion requires the stated evidence.
+The baseline is `docs/FUNCTIONAL_SPEC.md` and `docs/DESIGN.md` section 10. This file tracks work; it does not replace requirements. Status is `pending`, `in progress`, or `complete`, and completion requires the stated evidence.
 
 User-directed 2026-10-07 exception: pause automated tests, allow automatic allocation retries, and use the existing separate payment sample for the local MCP demo. See ADRs 0002/0003. Default MCP stays disabled; the opt-in payments profile is operational. The original milestone is not fully verified.
 

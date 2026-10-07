@@ -15,4 +15,3 @@ CLAUDE.local.md
 .claude/settings.local.json
 .codex/config.local.toml
 /config/local/
-/mcp-gateway-codex-handoff.zip

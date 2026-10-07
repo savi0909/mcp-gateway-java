@@ -59,9 +59,9 @@ AI coding tools require their own login/subscription or credentials; that is sep
 
 | Path | Purpose |
 | --- | --- |
-| `FUNCTIONAL_SPEC.md` | Authoritative behavior and AC-01 through AC-13 |
-| `DESIGN.md` | Component boundaries and architecture guidance |
-| `IMPLEMENTATION_PROMPT.md` | Original full milestone implementation request |
+| [docs/FUNCTIONAL_SPEC.md](docs/FUNCTIONAL_SPEC.md) | Authoritative behavior and AC-01 through AC-13 |
+| [docs/DESIGN.md](docs/DESIGN.md) | Component boundaries and architecture guidance |
+| [docs/IMPLEMENTATION_PROMPT.md](docs/IMPLEMENTATION_PROMPT.md) | Original full milestone implementation request |
 | `AGENTS.md`, `CLAUDE.md` | Shared AI guidance and Claude entry point |
 | `WORKLOG.md` | Verified state, work history, blockers and next action |
 | `docs/IMPLEMENTATION_PLAN.md`, `docs/ACCEPTANCE.md` | Stages and evidence tracker |

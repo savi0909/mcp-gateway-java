@@ -2,9 +2,9 @@
 
 ## Read first
 
-Read this file, `WORKLOG.md` (current state and latest entry), and `docs/IMPLEMENTATION_PLAN.md` before changing code. For implementation, read `IMPLEMENTATION_PROMPT.md`, `FUNCTIONAL_SPEC.md`, `DESIGN.md`, and `examples/worker-catalog.json`; use `docs/ACCEPTANCE.md` to find required evidence.
+Read this file, `WORKLOG.md` (current state and latest entry), and `docs/IMPLEMENTATION_PLAN.md` before changing code. For implementation, read `docs/IMPLEMENTATION_PROMPT.md`, `docs/FUNCTIONAL_SPEC.md`, `docs/DESIGN.md`, and `examples/worker-catalog.json`; use `docs/ACCEPTANCE.md` to find required evidence.
 
-Explicit user instructions take precedence. `FUNCTIONAL_SPEC.md` is authoritative for milestone behavior; `DESIGN.md` guides architecture; `IMPLEMENTATION_PROMPT.md` describes the complete implementation request. Repository workflow files do not relax the functional requirements. Ask a focused question if documents conflict or an unresolved choice affects the external contract. Continue independent work while waiting.
+Explicit user instructions take precedence. `docs/FUNCTIONAL_SPEC.md` is authoritative for milestone behavior; `docs/DESIGN.md` guides architecture; `docs/IMPLEMENTATION_PROMPT.md` describes the complete implementation request. Repository workflow files do not relax the functional requirements. Ask a focused question if documents conflict or an unresolved choice affects the external contract. Continue independent work while waiting.
 
 ## Current development state
 

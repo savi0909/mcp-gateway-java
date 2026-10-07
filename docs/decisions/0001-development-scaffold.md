@@ -23,8 +23,8 @@ The source namespace is a default, not a known publishing domain. No license or 
 
 ## References
 
-- `FUNCTIONAL_SPEC.md` sections 1-2 and 7-8
-- `DESIGN.md` sections 3 and 10
+- `docs/FUNCTIONAL_SPEC.md` sections 1-2 and 7-8
+- `docs/DESIGN.md` sections 3 and 10
 - https://docs.spring.io/spring-ai/reference/getting-started.html
 - https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-starter-parent/4.0.8/
 - https://repo.maven.apache.org/maven2/org/springframework/ai/spring-ai-bom/2.0.1/

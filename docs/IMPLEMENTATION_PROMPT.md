@@ -1,6 +1,6 @@
 # Codex implementation prompt: milestone 1 MCP Gateway
 
-Paste the text below into Codex in the repository where the gateway should be built. Keep `FUNCTIONAL_SPEC.md`, `DESIGN.md` and `examples/worker-catalog.json` available alongside this prompt. The prompt also states the essential requirements if used independently.
+Paste the text below into Codex in the repository where the gateway should be built. Keep `docs/FUNCTIONAL_SPEC.md`, `docs/DESIGN.md` and `examples/worker-catalog.json` available alongside this prompt. The prompt also states the essential requirements if used independently.
 
 ---
 
@@ -12,7 +12,7 @@ I already have a Worker Coordinator service. It exposes REST and allocates a uni
 
 Create a separate Spring Boot gateway that exposes one virtual MCP server. The gateway must accept a real MCP tool call, translate it into a REST request, invoke the Worker Coordinator, and convert its response into a real MCP tool result. “Virtual” means that the MCP definition and execution handler live in the gateway's JVM; there is no new MCP process or container per tool/service.
 
-Read the supplied documents. `FUNCTIONAL_SPEC.md` is authoritative for behavior, `DESIGN.md` gives implementation guidance, and the example catalog defines the proposed file format. Follow the repository's applicable instructions and preserve unrelated work. If the repository is empty, create a single Maven module at its root; if it contains other applications, use a clearly named `mcp-gateway` module/directory.
+Read the supplied documents. `docs/FUNCTIONAL_SPEC.md` is authoritative for behavior, `docs/DESIGN.md` gives implementation guidance, and the example catalog defines the proposed file format. Follow the repository's applicable instructions and preserve unrelated work. If the repository is empty, create a single Maven module at its root; if it contains other applications, use a clearly named `mcp-gateway` module/directory.
 
 ## 1. Verify and scaffold the stack
 
@@ -118,7 +118,7 @@ Work incrementally, completing each stage without pausing for routine confirmati
 4. Real SDK-client-to-gateway-to-REST integration.
 5. Documentation, external configuration and a smoke client.
 
-Implement the acceptance table in `FUNCTIONAL_SPEC.md`. If used without that document, the essential tests are:
+Implement the acceptance table in `docs/FUNCTIONAL_SPEC.md`. If used without that document, the essential tests are:
 
 - SDK connection/negotiation and exact single-tool discovery from the static file.
 - Startup and discovery cause zero coordinator allocation calls.

@@ -1,6 +1,6 @@
 # Development workflow
 
-Read `AGENTS.md` and the latest `WORKLOG.md` entry, then pick a scoped task from `docs/IMPLEMENTATION_PLAN.md`. `FUNCTIONAL_SPEC.md` defines behavior; use its AC identifiers in test descriptions and reviews.
+Read `AGENTS.md` and the latest `WORKLOG.md` entry, then pick a scoped task from `docs/IMPLEMENTATION_PLAN.md`. `docs/FUNCTIONAL_SPEC.md` defines behavior; use its AC identifiers in test descriptions and reviews.
 
 1. Inspect the working tree and relevant code before editing. Preserve unrelated work.
 2. State the intended behavior and meaningful verification for the change. Resolve uncertainty about the real REST contract through the user; use the documented demo contract for local tests.

@@ -1,6 +1,6 @@
 # Milestone 1 acceptance evidence
 
-`FUNCTIONAL_SPEC.md` section 7 is authoritative. Mark a row `verified` only after an actual automated run demonstrates all parts. Use `partial` for limited scaffold/unit evidence and `pending` for missing tests. Record commands/results in `WORKLOG.md`.
+`docs/FUNCTIONAL_SPEC.md` section 7 is authoritative. Mark a row `verified` only after an actual automated run demonstrates all parts. Use `partial` for limited scaffold/unit evidence and `pending` for missing tests. Record commands/results in `WORKLOG.md`.
 
 The user subsequently authorized application allocation retries and a real local payment-demo variant, and paused automated tests. See ADRs 0002/0003. Live smoke evidence is recorded below without claiming the original worker milestone or final code is fully verified.
 

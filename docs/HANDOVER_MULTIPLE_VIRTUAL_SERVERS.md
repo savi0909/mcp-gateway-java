@@ -16,7 +16,7 @@ Read first:
   docs/IMPLEMENTATION_PLAN.md.
 - docs/MULTIPLE_VIRTUAL_SERVERS.md and
   docs/decisions/0005-multiple-virtual-servers.md (proposed, unimplemented).
-- IMPLEMENTATION_PROMPT.md, FUNCTIONAL_SPEC.md, DESIGN.md,
+- docs/IMPLEMENTATION_PROMPT.md, docs/FUNCTIONAL_SPEC.md, docs/DESIGN.md,
   docs/ACCEPTANCE.md and docs/decisions/0002 through 0004.
 - docs/WORKER_TOOLS.md, current catalogs, production sources and tests.
 Inspect git status and actual files; preserve unrelated and untracked work.

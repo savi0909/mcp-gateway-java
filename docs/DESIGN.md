@@ -164,7 +164,7 @@ The initial listener remains loopback-bound. Enforce the MCP Origin policy, incl
 
 ## 9. Verification strategy
 
-Implement `FUNCTIONAL_SPEC.md` acceptance tests against a running server and an SDK client. Use a local mock HTTP server with recorded requests, controllable status/body/delay, and deterministic responses. A fresh application context can test startup catalogs and configuration overrides. Avoid a test that directly calls the Java dispatcher and calls that an MCP integration test.
+Implement `docs/FUNCTIONAL_SPEC.md` acceptance tests against a running server and an SDK client. Use a local mock HTTP server with recorded requests, controllable status/body/delay, and deterministic responses. A fresh application context can test startup catalogs and configuration overrides. Avoid a test that directly calls the Java dispatcher and calls that an MCP integration test.
 
 Use time-bounded client calls and explicit await/polling helpers for mock observations. Avoid arbitrary long sleeps. Count requests to prove discovery has no side effects and errors have no retries. Test large integral IDs, duplicate returned IDs and a canary secret in an upstream error. Assert output-schema conformity on successes and absence of structured error output.
 
