@@ -11,6 +11,10 @@ import dev.mcp.gateway.catalog.ToolDefinition;
 import dev.mcp.gateway.config.GatewayProperties;
 import dev.mcp.gateway.rest.AllocationResult;
 import dev.mcp.gateway.rest.RestBindingExecutor;
+import dev.mcp.gateway.security.Caller;
+import dev.mcp.gateway.security.TenantPolicy;
+import org.springframework.beans.factory.ObjectProvider;
+import io.modelcontextprotocol.server.McpAsyncServerExchange;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.slf4j.Logger;
@@ -20,6 +24,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.ai.mcp.customizer.McpAsyncServerCustomizer;
 import reactor.core.publisher.Mono;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -31,6 +36,12 @@ public class McpToolRegistrationConfiguration {
     private final JsonMapper json = JsonMapper.builder().build();
 
     @Bean
+    McpAsyncServerCustomizer gatewayInputValidation() {
+        // The supported catalog subset is enforced below, with sanitized application errors.
+        return server -> server.validateToolInputs(false);
+    }
+
+    @Bean
     List<ToolDefinition> toolDefinitions(GatewayProperties properties, ResourceLoader resources, Environment environment) {
         if (!"127.0.0.1".equals(environment.getProperty("server.address"))) {
             throw new IllegalArgumentException("MCP demo must listen on 127.0.0.1");
@@ -39,18 +50,19 @@ public class McpToolRegistrationConfiguration {
     }
 
     @Bean
-    List<McpServerFeatures.AsyncToolSpecification> catalogTools(List<ToolDefinition> definitions, RestBindingExecutor executor) {
-        return definitions.stream().map(definition -> specification(definition, executor)).toList();
+    List<McpServerFeatures.AsyncToolSpecification> catalogTools(List<ToolDefinition> definitions, RestBindingExecutor executor,
+            ObjectProvider<TenantPolicy> policy) {
+        return definitions.stream().map(definition -> specification(definition, executor, policy.getIfAvailable())).toList();
     }
 
-    private McpServerFeatures.AsyncToolSpecification specification(ToolDefinition definition, RestBindingExecutor executor) {
+    private McpServerFeatures.AsyncToolSpecification specification(ToolDefinition definition, RestBindingExecutor executor, TenantPolicy policy) {
         var hints = definition.annotations();
         var annotations = new McpSchema.ToolAnnotations(null, hints.get("readOnlyHint"), hints.get("destructiveHint"),
                 hints.get("idempotentHint"), hints.get("openWorldHint"), null);
         var tool = McpSchema.Tool.builder().name(definition.name()).description(definition.description())
                 .inputSchema(definition.inputSchema()).outputSchema(definition.outputSchema()).annotations(annotations).build();
         return McpServerFeatures.AsyncToolSpecification.builder().tool(tool)
-                .callHandler((exchange, request) -> invoke(definition, executor, request)).build();
+                .callHandler((exchange, request) -> invoke(definition, executor, request, exchange, policy)).build();
     }
 
     @Bean
@@ -59,7 +71,7 @@ public class McpToolRegistrationConfiguration {
     }
 
     private Mono<McpSchema.CallToolResult> invoke(ToolDefinition definition, RestBindingExecutor executor,
-            McpSchema.CallToolRequest request) {
+            McpSchema.CallToolRequest request, McpAsyncServerExchange exchange, TenantPolicy policy) {
         return Mono.defer(() -> {
             String correlation = UUID.randomUUID().toString();
             long started = System.nanoTime();
@@ -72,6 +84,11 @@ public class McpToolRegistrationConfiguration {
                 outcome.set("INVALID_ARGUMENTS");
                 result = Mono.just(error("INVALID_ARGUMENTS", "Arguments must match the advertised input schema.",
                         "not_attempted"));
+            }
+            else if (policy != null && (!(exchange.transportContext().get(Caller.ATTRIBUTE) instanceof Caller caller)
+                    || !policy.allows(caller, definition.name(), arguments))) {
+                outcome.set("ACCESS_DENIED");
+                result = Mono.just(error("ACCESS_DENIED", "This operation is not permitted.", "not_attempted"));
             }
             else {
                 result = executor.execute(definition.binding().resolve(arguments)).map(allocation -> {

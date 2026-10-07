@@ -1,0 +1,11 @@
+spring:
+  ai:
+    mcp:
+      server:
+        enabled: true
+gateway:
+  catalog-location: classpath:catalog/worker-catalog.json
+  backends:
+    worker-coordinator:
+      base-url: ${MOCK_BACKEND_BASE_URL:http://127.0.0.1:19090}
+      bearer-token: ''

@@ -37,7 +37,15 @@ public final class McpSmokeClient {
         if (count < 1 || count > 20) {
             throw new IllegalArgumentException("count must be between 1 and 20");
         }
-        var transport = HttpClientStreamableHttpTransport.builder(origin).endpoint("/worker-coordinator/mcp").build();
+        var builder = HttpClientStreamableHttpTransport.builder(origin).endpoint("/worker-coordinator/mcp");
+        String accessToken = System.getenv("MCP_ACCESS_TOKEN");
+        if (accessToken != null && !accessToken.isBlank()) {
+            if (!accessToken.matches("[A-Za-z0-9._~+/-]+=*")) {
+                throw new IllegalArgumentException("MCP_ACCESS_TOKEN has invalid bearer syntax");
+            }
+            builder.requestBuilder(java.net.http.HttpRequest.newBuilder().header("Authorization", "Bearer " + accessToken));
+        }
+        var transport = builder.build();
         var client = McpClient.async(transport).requestTimeout(Duration.ofSeconds(12)).build();
         var json = JsonMapper.builder().build();
         try {
@@ -84,8 +92,15 @@ public final class McpSmokeClient {
                 System.out.println("Discovery only; no allocation requested.");
             }
         }
+        catch (Exception failure) {
+            if (accessToken != null && !accessToken.isBlank()) {
+                throw new IllegalStateException("Authenticated MCP check failed; inspect sanitized gateway outcomes.");
+            }
+            throw failure;
+        }
         finally {
-            client.closeGracefully().toFuture().get(5, TimeUnit.SECONDS);
+            try { client.closeGracefully().toFuture().get(5, TimeUnit.SECONDS); }
+            catch (Exception failure) { throw new IllegalStateException("MCP client closure failed."); }
         }
     }
 }

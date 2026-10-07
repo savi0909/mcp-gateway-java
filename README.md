@@ -2,9 +2,23 @@
 
 A local Java MCP gateway exposing the existing coordinator's worker lease and namespace APIs alongside its separate payment sample. The coordinator manages leases, the payment worker generates payment IDs, and the gateway adapts REST and MCP.
 
-**Current state:** validated configuration, bounded REST execution, strict catalogs, ASYNC registration, Origin enforcement and an SDK smoke client are implemented. Default MCP is disabled. The running `worker-payments` profile exposes nine coordinator tools plus `create_sample_payment`; actual SDK discovery listed all ten. Wrapper `verify -DskipTests` passed, including test compilation. Automated test execution remains paused; worker invocations have not yet been verified.
+**Current state:** the MCP foundation is implemented and verified with independent mocks: **121 unit/startup tests and 20 real Boot/SDK integration tests pass**. Default MCP is disabled. `worker-payments` exposes nine coordinator tools plus payment; optional `secured` adds JWT caller authentication, read/write permissions, tenant admission and session ownership. The existing running demo is unchanged. The updated executable is under `target/foundation`.
 
 See [Worker tools and definitions](docs/WORKER_TOOLS.md) for tools, schemas and run commands, and [the payment demo](docs/PAYMENT_DEMO.md) for Docker setup. The running MCP address is `http://127.0.0.1:8080/worker-coordinator/mcp`.
+
+For manual testing, see [MCP Inspector commands](docs/MCP_INSPECTOR.md): the worker/payment gateway adapts MCP to REST on port 8080, while the native URL shortener tools are available through HAProxy at `http://127.0.0.1:8119/mcp`.
+
+For the big picture and a detailed code walkthrough, read the
+[end-to-end MCP tutorial](docs/MCP_END_TO_END_TUTORIAL.md). It follows startup,
+discovery, REST mapping, caller security, retries and uncertain outcomes, with
+mock exercises and debugger checkpoints.
+
+Start with the [independent standalone mock demo](docs/MOCK_DEMO.md). For caller
+security and the response-loss/cancellation demonstration, see
+[the secured foundation guide](docs/SECURED_MCP.md) and
+[threat model](docs/SECURITY_THREAT_MODEL.md). Tenant controls apply at gateway
+admission; unchanged backend storage has no new tenant isolation. HAProxy failover
+and interactive OAuth/host walkthroughs are not established by these tests.
 
 ## Start development
 
@@ -47,8 +61,8 @@ Use the current worklog to resume with either tool:
 ```text
 Read AGENTS.md, WORKLOG.md, docs/IMPLEMENTATION_PLAN.md and the supplied
 handoff documents. Preserve the user-directed worker tools, payment demo and retry decisions.
-When the user resumes tests, finish the revised mock/catalog/SDK tests and
-Wrapper verify. Update the worklog and acceptance evidence.
+Tests are resumed. Read the final foundation evidence and residual limitations;
+implement only the next selected scope. Update the worklog and acceptance evidence.
 ```
 
 For Claude Code you can use `/implement-stage 1B` or `/review-stage 1B`. In Codex, ask it to use the `implement-stage` or `review-stage` skill. [AI_WORKFLOW.md](docs/AI_WORKFLOW.md) contains prompts for staged development, full implementation, review and handoff. Keep one active writer in a checkout; hand off through the worklog before switching tools.
@@ -76,7 +90,9 @@ AI coding tools require their own login/subscription or credentials; that is sep
 | `compose.coordinator.yml` | Separate unchanged coordinator, payment worker and private PostgreSQL |
 | `examples/worker-catalog.json` | Original catalog restored from the supplied ZIP |
 | `src/main/resources/catalog/worker-catalog.json` | Matching packaged default catalog |
-| `src/test/java/` | Default startup guard, independent HTTP fixture and adapter/configuration tests; final verification deferred |
+| `src/test/java/` | Independent HTTP/JWKS fixtures, startup/adapter/policy tests and real Boot/SDK integration tests |
+| `src/main/resources/application-secured.yml` | Opt-in JWT caller security; requires issuer, audience/resource and private policy |
+| `examples/tenant-policy.json` | Synthetic admission-policy example; no credentials |
 | `scripts/doctor.ps1` | Read-only local prerequisite check |
 | `.github/workflows/verify.yml` | Maven verification on Windows and Linux |
 
@@ -103,7 +119,29 @@ Public metadata, method/path/body/JSON Pointer and version-3 argument mappings b
 
 Pinned baseline: Java 21, Spring Boot 4.0.8, Spring AI BOM 2.0.1, Maven 3.9.11, Wrapper 3.3.4. The WebFlux MCP server starter is BOM-managed; the build adds no model starter or independently pinned MCP SDK. Surefire runs `*Test`; Failsafe runs `*IT` during `verify`.
 
-`ScaffoldStartupTest` guards the default disabled endpoint; adapter tests use an independent JDK HTTP fixture. Final automated tests remain paused. The separate live SDK smoke negotiated `2025-11-25`, discovered one payment tool, created two distinct persisted payments and confirmed matching text/structured output. Current Wrapper `verify -DskipTests` compiled all tests and packaged the gateway; combined-profile SDK discovery listed ten tools. Test execution is still deferred. [WORKLOG.md](WORKLOG.md) records exact results and limitations; [ACCEPTANCE.md](docs/ACCEPTANCE.md) tracks missing evidence. No hosted CI run was performed.
+Final command: `.\mvnw.cmd -B -ntp '-Dgateway.build-directory=target/foundation' verify`
+passed with 121 Surefire and 20 Failsafe tests, zero failures/errors/skips, and an
+executable JAR. The separate build directory avoids the existing Windows demo's
+JAR lock. CI executes full tests on Windows/Linux; no hosted CI run is claimed.
+Boot 4.0.8 manages Spring Security 7.0.7 and Nimbus 10.4; AI/SDK versions stay pinned.
+
+Tests use real SDK clients/running random-port Boot servers with independent
+REST/JWKS fixtures. They verify discovery without backend calls (including an
+outage), exact mappings/IDs/epochs, errors, catalog lifecycle, Origin, scopes,
+tenant/owner/session denial, concurrency, response-loss recovery and cancellation.
+A separate-process mock smoke also proved zero allocations during discovery and
+exactly two allocations after two explicit SDK calls. Earlier live local payment
+success remains historical; these failure/security experiments used mocks.
+[WORKLOG.md](WORKLOG.md) and [ACCEPTANCE.md](docs/ACCEPTANCE.md) contain exact evidence.
+
+The file catalog becomes immutable SDK tool specifications at startup. The SDK
+negotiates and dispatches a call; the gateway validates arguments and, in secured
+mode, authorizes the current transport identity before resolving the private
+REST binding. The bounded executor sends the mapped request, projects advertised
+response fields and supplies matching text/structured success to the SDK.
+Errors omit structured content and report conservative outcomes. Per-invocation
+payment keys survive retries; a new invocation creates a new key. Physical HTTP
+reset/local disposal can cancel work; graceful SDK closure alone does not prove it.
 
 ## References
 
@@ -114,4 +152,7 @@ Pinned baseline: Java 21, Spring Boot 4.0.8, Spring AI BOM 2.0.1, Maven 3.9.11, 
 - [Claude Code project memory](https://code.claude.com/docs/en/memory)
 - [Claude Code skills](https://code.claude.com/docs/en/skills)
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the development and verification workflow. Multiple virtual servers, native MCP proxying, hot reload, remote IAM, HA and a control plane remain later milestones.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow. Multiple virtual servers,
+native MCP proxying, hot reload, enterprise IAM, HA and a control plane remain
+later scopes. The operations assistant belongs in a separate repository after
+the remaining MCP learning gates are selected and evidenced.

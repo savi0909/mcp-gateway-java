@@ -172,6 +172,19 @@ class CoordinatorToolsIT {
         assertThat(response.statusCode()).isEqualTo(403);
         assertThat(coordinator.count()).isZero();
         assertThat(payments.count()).isZero();
+        for (String allowed : java.util.List.of("http://localhost:6274", "http://127.0.0.1:6274")) {
+            var acceptedClient = McpClient.async(HttpClientStreamableHttpTransport.builder(origin)
+                    .endpoint("/worker-coordinator/mcp")
+                    .requestBuilder(HttpRequest.newBuilder().header("Origin", allowed)).build())
+                    .requestTimeout(Duration.ofSeconds(3)).build();
+            try {
+                assertThat(acceptedClient.initialize().toFuture().get(4, TimeUnit.SECONDS).protocolVersion()).isEqualTo("2025-11-25");
+                assertThat(acceptedClient.listTools().toFuture().get(3, TimeUnit.SECONDS).tools()).hasSize(10);
+            }
+            finally { acceptedClient.closeGracefully().toFuture().get(3, TimeUnit.SECONDS); }
+        }
+        assertThat(coordinator.count()).isZero();
+        assertThat(payments.count()).isZero();
     }
 
     private void check(String name, Map<String, Object> arguments, String method, String path,

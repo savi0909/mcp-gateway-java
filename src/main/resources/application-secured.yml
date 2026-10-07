@@ -1,0 +1,16 @@
+# Layer with worker-payments/workers/payments; required settings have no working fallback.
+gateway-security:
+  enabled: true
+  issuer: ${MCP_ISSUER:}
+  jwk-set-uri: ${MCP_JWK_SET_URI:}
+  resource: ${MCP_RESOURCE:}
+  policy-location: ${MCP_POLICY_LOCATION:}
+  allow-loopback-http: false
+
+# Suppress SDK diagnostics that can include untrusted initialization/notification bodies.
+# Gateway terminal logs remain correlation/tool/duration/category only.
+logging:
+  level:
+    io.modelcontextprotocol.server: WARN
+    io.modelcontextprotocol.spec.McpStreamableServerSession: ERROR
+    org.springframework.ai.mcp.server.webflux.transport.WebFluxStreamableServerTransportProvider: OFF

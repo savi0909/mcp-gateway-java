@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "tenants": {
+    "tenant-a": {
+      "products": ["p", "p2"],
+      "services": {"s": "p", "s2": "p2"},
+      "workerTypes": {"w": "s", "w2": "s2"},
+      "regions": [0],
+      "subjects": {
+        "alice": {"instanceId": "00000000-0000-0000-0000-000000000001", "registrationId": "00000000-0000-0000-0000-000000000002"},
+        "amy": {"instanceId": "00000000-0000-0000-0000-000000000005", "registrationId": "00000000-0000-0000-0000-000000000006"}
+      },
+      "paymentAllowed": true
+    },
+    "tenant-b": {
+      "products": ["bp"],
+      "services": {"bs": "bp"},
+      "workerTypes": {"bw": "bs"},
+      "regions": [1],
+      "subjects": {
+        "bob": {"instanceId": "00000000-0000-0000-0000-000000000003", "registrationId": "00000000-0000-0000-0000-000000000004"}
+      },
+      "paymentAllowed": false
+    }
+  }
+}

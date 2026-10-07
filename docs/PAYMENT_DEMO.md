@@ -95,7 +95,9 @@ discovers and closes its session with bounded waits. It checks distinct returned
 IDs and matching text/structured output, and prints counts rather than IDs.
 
 The current gateway is a hidden Java process whose PID is in ignored
-`target/payment-gateway.pid`. Stop only that process when rebuilding. The separate
+`target/payment-gateway.pid`. Preserve it by building with
+`-Dgateway.build-directory=target/foundation` and running new demos on a separate
+loopback port. The separate
 Docker services can be stopped while preserving their data:
 
 ```powershell
@@ -105,8 +107,9 @@ docker compose --env-file config/local/coordinator.env -f compose.coordinator.ym
 Actual result: negotiated MCP protocol `2025-11-25`; one discovered tool; zero
 persisted payments after gateway startup/discovery; two explicit SDK calls
 created two persisted payments with distinct IDs/request keys and matching
-text/structured outputs. Final automated tests and Wrapper `verify` remain
-deferred at the user's request. Failure-induced retries were not exercised by
-this successful live smoke. See [the worklog](../WORKLOG.md) and ADRs
+text/structured outputs. That live smoke did not exercise failure-induced retries.
+Tests have since resumed: full Wrapper verification passed with 121 unit/startup
+and 20 integration tests. [Response-loss/security experiments](SECURED_MCP.md)
+use independent mocks, not these Docker backends. See [the worklog](../WORKLOG.md) and ADRs
 [0002](decisions/0002-user-authorized-allocation-retries.md) and
 [0003](decisions/0003-local-payment-mcp-demo.md).

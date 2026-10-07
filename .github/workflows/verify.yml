@@ -28,12 +28,10 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
-      # Automated test execution remains paused by the project owner.
-      # Remove -DskipTests from both commands when tests are explicitly resumed.
-      - name: Build on Linux (tests paused)
+      - name: Verify on Linux
         if: runner.os != 'Windows'
-        run: sh ./mvnw -B -ntp -DskipTests verify
-      - name: Build on Windows (tests paused)
+        run: sh ./mvnw -B -ntp verify
+      - name: Verify on Windows
         if: runner.os == 'Windows'
         shell: pwsh
-        run: .\mvnw.cmd -B -ntp '-DskipTests' verify
+        run: .\mvnw.cmd -B -ntp verify

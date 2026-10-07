@@ -8,7 +8,7 @@ Explicit user instructions take precedence. `docs/FUNCTIONAL_SPEC.md` is authori
 
 ## Current development state
 
-This is a single-module gateway with validated properties/catalogs, a bounded REST executor, ASYNC registered tools, Origin enforcement, an independent test HTTP fixture and an SDK smoke client. Default MCP remains disabled. Opt-in profiles `payments`, `workers`, and `worker-payments` expose one payment tool, nine coordinator tools, or all ten respectively. The combined profile is running locally. Automated tests remain paused at the user's request; Wrapper verification with tests skipped and actual SDK discovery passed. Consult `WORKLOG.md` and ADRs 0002–0004 for the current evidence and user-directed changes.
+This is a single-module gateway with validated properties/catalogs, a bounded REST executor, ASYNC tools, Origin enforcement, independent HTTP fixtures and an SDK smoke client. Default MCP remains disabled. Opt-in profiles `payments`, `workers`, and `worker-payments` expose one, nine or ten tools; `mock` supplies the standalone worker demo. Tests were explicitly resumed: full Wrapper verification passed with 121 unit/startup tests and 20 integration tests, all using independent local mocks. The `secured` profile adds JWT callers, explicit scopes, tenant admission and session-owner enforcement (ADR 0006). The existing running demo was left unchanged; new artifacts are under `target/foundation`. Consult `WORKLOG.md` and ADRs 0002–0004/0006 for evidence and limits.
 
 Use Java 21, Spring Boot 4.0.8, Spring AI BOM 2.0.1, Maven 3.9.11 via Wrapper, and package `dev.mcp.gateway`. Inspect resolved dependency sources and configuration metadata before coding against SDK or starter APIs. Keep the BOM-managed SDK version; do not invent constructors, handlers, or property names. Version changes require official compatibility evidence and a decision record.
 
@@ -23,6 +23,14 @@ Use Java 21, Spring Boot 4.0.8, Spring AI BOM 2.0.1, Maven 3.9.11 via Wrapper, a
 | Resolve dependency tree | `.\mvnw.cmd -B -ntp dependency:tree` | `sh ./mvnw -B -ntp dependency:tree` |
 
 PowerShell environment check: `pwsh -NoProfile -File scripts/doctor.ps1`. Tests named `*Test` run with Surefire; future protocol tests named `*IT` run with Failsafe during `verify`. Run `verify` before handing off Java/configuration changes. A passing startup test is not proof of MCP interoperability.
+
+If an existing Windows process holds the default JAR open, use
+`.\mvnw.cmd -B -ntp '-Dgateway.build-directory=target/foundation' verify` to run
+all checks/package independently. Do not restart an existing demo solely to build.
+CI executes tests again. SDK graceful client closure does not guarantee cancellation
+of outstanding requests; local disposal/physical HTTP reset and total deadlines
+have separate executed evidence. Tenant admission does not make backend storage
+tenant-aware; caller JWTs never become downstream bearer tokens.
 
 ## Required boundaries
 
@@ -42,7 +50,7 @@ PowerShell environment check: `pwsh -NoProfile -File scripts/doctor.ps1`. Tests 
 
 Work in the stage order in `docs/IMPLEMENTATION_PLAN.md`; implement only the requested scope. When asked for the full milestone, continue through all stages without routine confirmation. Explain consequential choices briefly so the user can learn the code.
 
-Preserve the supplied handoff documents and unrelated changes. Do not delete files or directories, run `clean`, reset/discard work, or use destructive Git commands without explicit user permission. Do not commit, push, publish, deploy, or modify the live coordinator unless requested. Do not spawn additional agents unless requested.
+Preserve the supplied handoff documents and unrelated changes. Do not delete files or directories, run `clean`, reset/discard work, or use destructive Git commands without explicit user permission. The user's standing instruction is to commit completed repository work and push to `origin` after the relevant checks; no repeated confirmation is needed. Do not publish releases, deploy, or modify the live coordinator unless requested. Do not spawn additional agents unless requested.
 
 Use independent local HTTP mocks and random ports for tests; never allocate live IDs in automated tests. Real allocation requires an explicitly requested live check. Verify protocol behavior through an actual running Boot server and compatible SDK client; direct dispatcher tests are supplementary. Keep waits bounded and prove no retries using request counters. Add meaningful tests for functional changes; documentation edits do not need mirror tests.
 

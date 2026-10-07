@@ -26,14 +26,14 @@ Definitions, descriptions, schemas, hints and private mappings are in
 ## Run and discover
 
 The gateway currently runs the combined profile. Its PID is in ignored
-`target/worker-tools-gateway.pid` and `target/payment-gateway.pid`. Stop that
-verified gateway process before rebuilding its JAR on Windows. See
+`target/worker-tools-gateway.pid` and `target/payment-gateway.pid`. Build to a
+separate directory and use a separate loopback port to preserve that process. See
 [PAYMENT_DEMO.md](PAYMENT_DEMO.md) to reproduce the separate Docker services.
 
 ```powershell
-# While the user's automated-test pause remains active:
-.\mvnw.cmd -B -ntp '-DskipTests' verify
-java -jar target/mcp-gateway-server-0.1.0.jar --spring.profiles.active=worker-payments
+# Tests have been explicitly resumed; this leaves the existing demo JAR untouched.
+.\mvnw.cmd -B -ntp '-Dgateway.build-directory=target/foundation' verify
+java -jar target/foundation/mcp-gateway-server-0.1.0.jar --spring.profiles.active=worker-payments --server.port=18080
 # Alternatively, expose only nine coordinator tools:
 # java -jar target/mcp-gateway-server-0.1.0.jar --spring.profiles.active=workers
 ```
@@ -116,15 +116,16 @@ establish whether a mutation occurred. Structured content is absent on errors.
 
 ## Evidence
 
-Wrapper `verify -DskipTests` packaged the gateway and compiled all tests with
-Surefire/Failsafe execution skipped. Actual SDK discovery against the running
-combined-profile Boot server negotiated `2025-11-25` and listed all ten tools.
-No coordinator tool or new payment was invoked in this task.
+Full Wrapper verification passed with 121 unit/startup tests and 20 integration
+tests, zero failures/errors/skips. Independent real Boot/SDK tests negotiate
+`2025-11-25`, discover all ten tools and verify every coordinator mapping, exact
+epochs, private projection and separate backend credentials. No live mutations
+were made during foundation verification.
 
 New `FileCatalogLoaderTest` and `CoordinatorToolsIT` cover supported/invalid
 catalogs, all nine request mappings, separate backend/token routing, large epochs,
 public projection, invalid arguments, sanitized failures and Origin rejection.
-They compile but have not run under the continuing test pause. When tests resume,
-run `.\mvnw.cmd -B -ntp verify` against their independent random-port mocks. Worker
-execution is implemented but not yet verified by a test run or a live invocation.
-See [ADR 0004](decisions/0004-worker-api-tools.md).
+They now run as part of full verification against independent random-port mocks.
+Worker mutations are mock-verified, not live-verified. See
+[ADR 0004](decisions/0004-worker-api-tools.md) and
+[the secured foundation](SECURED_MCP.md).
