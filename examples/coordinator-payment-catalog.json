@@ -1,0 +1,907 @@
+{
+  "schemaVersion": 3,
+  "servers": [
+    {
+      "id": "worker-coordinator",
+      "tools": [
+        {
+          "name": "register_product",
+          "description": "Register a coordinator product namespace. Requires a unique productId; this changes state.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "productId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": "^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,99}$"
+              },
+              "productName": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255,
+                "pattern": ".*\\S.*"
+              }
+            },
+            "required": [
+              "productId",
+              "productName"
+            ],
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "productId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": "^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,99}$"
+              },
+              "productName": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255,
+                "pattern": ".*\\S.*"
+              },
+              "status": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 32,
+                "pattern": ".*\\S.*"
+              }
+            },
+            "required": [
+              "productId",
+              "productName",
+              "status"
+            ],
+            "additionalProperties": false
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": true
+          },
+          "binding": {
+            "type": "REST",
+            "backendRef": "worker-coordinator",
+            "method": "POST",
+            "path": "/api/v1/products",
+            "requestBody": {},
+            "bodyArguments": {
+              "productId": "productId",
+              "productName": "productName"
+            }
+          }
+        },
+        {
+          "name": "get_product",
+          "description": "Get an existing coordinator product by productId.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "productId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": "^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,99}$"
+              }
+            },
+            "required": [
+              "productId"
+            ],
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "productId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": "^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,99}$"
+              },
+              "productName": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255,
+                "pattern": ".*\\S.*"
+              },
+              "status": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 32,
+                "pattern": ".*\\S.*"
+              }
+            },
+            "required": [
+              "productId",
+              "productName",
+              "status"
+            ],
+            "additionalProperties": false
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": true
+          },
+          "binding": {
+            "type": "REST",
+            "backendRef": "worker-coordinator",
+            "method": "GET",
+            "path": "/api/v1/products/{productId}",
+            "pathArguments": {
+              "productId": "productId"
+            }
+          }
+        },
+        {
+          "name": "register_service",
+          "description": "Register a service under an existing product. Requires a unique serviceId; this changes state.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "serviceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": "^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,99}$"
+              },
+              "productId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": "^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,99}$"
+              },
+              "serviceName": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255,
+                "pattern": ".*\\S.*"
+              }
+            },
+            "required": [
+              "serviceId",
+              "productId",
+              "serviceName"
+            ],
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "serviceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": "^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,99}$"
+              },
+              "productId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": "^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,99}$"
+              },
+              "serviceName": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255,
+                "pattern": ".*\\S.*"
+              },
+              "status": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 32,
+                "pattern": ".*\\S.*"
+              }
+            },
+            "required": [
+              "serviceId",
+              "productId",
+              "serviceName",
+              "status"
+            ],
+            "additionalProperties": false
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": true
+          },
+          "binding": {
+            "type": "REST",
+            "backendRef": "worker-coordinator",
+            "method": "POST",
+            "path": "/api/v1/products/{productId}/services",
+            "requestBody": {},
+            "bodyArguments": {
+              "serviceId": "serviceId",
+              "serviceName": "serviceName"
+            },
+            "pathArguments": {
+              "productId": "productId"
+            }
+          }
+        },
+        {
+          "name": "get_service",
+          "description": "Get an existing coordinator service by serviceId.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "serviceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": "^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,99}$"
+              }
+            },
+            "required": [
+              "serviceId"
+            ],
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "serviceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": "^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,99}$"
+              },
+              "productId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": "^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,99}$"
+              },
+              "serviceName": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255,
+                "pattern": ".*\\S.*"
+              },
+              "status": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 32,
+                "pattern": ".*\\S.*"
+              }
+            },
+            "required": [
+              "serviceId",
+              "productId",
+              "serviceName",
+              "status"
+            ],
+            "additionalProperties": false
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": true
+          },
+          "binding": {
+            "type": "REST",
+            "backendRef": "worker-coordinator",
+            "method": "GET",
+            "path": "/api/v1/services/{serviceId}",
+            "pathArguments": {
+              "serviceId": "serviceId"
+            }
+          }
+        },
+        {
+          "name": "register_worker_type",
+          "description": "Register a worker type under an existing service. Requires a unique workerTypeId; this changes state.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "workerTypeId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": "^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,99}$"
+              },
+              "serviceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": "^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,99}$"
+              },
+              "workerTypeName": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255,
+                "pattern": ".*\\S.*"
+              }
+            },
+            "required": [
+              "workerTypeId",
+              "serviceId",
+              "workerTypeName"
+            ],
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "workerTypeId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": "^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,99}$"
+              },
+              "serviceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": "^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,99}$"
+              },
+              "workerTypeName": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255,
+                "pattern": ".*\\S.*"
+              },
+              "status": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 32,
+                "pattern": ".*\\S.*"
+              }
+            },
+            "required": [
+              "workerTypeId",
+              "serviceId",
+              "workerTypeName",
+              "status"
+            ],
+            "additionalProperties": false
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": true
+          },
+          "binding": {
+            "type": "REST",
+            "backendRef": "worker-coordinator",
+            "method": "POST",
+            "path": "/api/v1/services/{serviceId}/worker-types",
+            "requestBody": {},
+            "bodyArguments": {
+              "workerTypeId": "workerTypeId",
+              "workerTypeName": "workerTypeName"
+            },
+            "pathArguments": {
+              "serviceId": "serviceId"
+            }
+          }
+        },
+        {
+          "name": "get_worker_type",
+          "description": "Get an existing coordinator worker type by workerTypeId.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "workerTypeId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": "^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,99}$"
+              }
+            },
+            "required": [
+              "workerTypeId"
+            ],
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "workerTypeId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": "^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,99}$"
+              },
+              "serviceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": "^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,99}$"
+              },
+              "workerTypeName": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255,
+                "pattern": ".*\\S.*"
+              },
+              "status": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 32,
+                "pattern": ".*\\S.*"
+              }
+            },
+            "required": [
+              "workerTypeId",
+              "serviceId",
+              "workerTypeName",
+              "status"
+            ],
+            "additionalProperties": false
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": true
+          },
+          "binding": {
+            "type": "REST",
+            "backendRef": "worker-coordinator",
+            "method": "GET",
+            "path": "/api/v1/worker-types/{workerTypeId}",
+            "pathArguments": {
+              "workerTypeId": "workerTypeId"
+            }
+          }
+        },
+        {
+          "name": "acquire_worker",
+          "description": "Acquire or recover a worker-slot lease in an existing namespace. Caller supplies instanceId and registrationId UUIDs. workerId is reusable and is not a globally unique generated ID. Keep the returned epoch and expiry; failures can have an unknown allocation outcome.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "productId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": ".*\\S.*"
+              },
+              "serviceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": ".*\\S.*"
+              },
+              "workerTypeId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": ".*\\S.*"
+              },
+              "regionId": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 15
+              },
+              "instanceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 36,
+                "format": "uuid"
+              },
+              "registrationId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 36,
+                "format": "uuid"
+              }
+            },
+            "required": [
+              "productId",
+              "serviceId",
+              "workerTypeId",
+              "regionId",
+              "instanceId",
+              "registrationId"
+            ],
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "productId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": ".*\\S.*"
+              },
+              "serviceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": ".*\\S.*"
+              },
+              "workerTypeId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": ".*\\S.*"
+              },
+              "regionId": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 15
+              },
+              "workerId": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              },
+              "epoch": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9223372036854775807
+              },
+              "instanceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 36,
+                "format": "uuid"
+              },
+              "leaseExpiry": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64,
+                "pattern": ".*\\S.*"
+              },
+              "leaseDuration": {
+                "type": [
+                  "string",
+                  "number"
+                ]
+              }
+            },
+            "required": [
+              "productId",
+              "serviceId",
+              "workerTypeId",
+              "regionId",
+              "workerId",
+              "epoch",
+              "instanceId",
+              "leaseExpiry",
+              "leaseDuration"
+            ],
+            "additionalProperties": false
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": true
+          },
+          "binding": {
+            "type": "REST",
+            "backendRef": "worker-coordinator",
+            "method": "POST",
+            "path": "/api/v1/workers/acquire",
+            "requestBody": {},
+            "bodyArguments": {
+              "productId": "productId",
+              "serviceId": "serviceId",
+              "workerTypeId": "workerTypeId",
+              "regionId": "regionId",
+              "instanceId": "instanceId",
+              "registrationId": "registrationId"
+            }
+          }
+        },
+        {
+          "name": "renew_worker_lease",
+          "description": "Renew a worker lease using its namespace, workerId, epoch and original owner UUIDs. Returns the current lease and expiry. This changes state; a failed call can have an unknown outcome.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "productId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": ".*\\S.*"
+              },
+              "serviceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": ".*\\S.*"
+              },
+              "workerTypeId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": ".*\\S.*"
+              },
+              "regionId": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 15
+              },
+              "workerId": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              },
+              "epoch": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9223372036854775807
+              },
+              "instanceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 36,
+                "format": "uuid"
+              },
+              "registrationId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 36,
+                "format": "uuid"
+              }
+            },
+            "required": [
+              "productId",
+              "serviceId",
+              "workerTypeId",
+              "regionId",
+              "workerId",
+              "epoch",
+              "instanceId",
+              "registrationId"
+            ],
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "productId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": ".*\\S.*"
+              },
+              "serviceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": ".*\\S.*"
+              },
+              "workerTypeId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": ".*\\S.*"
+              },
+              "regionId": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 15
+              },
+              "workerId": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              },
+              "epoch": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9223372036854775807
+              },
+              "instanceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 36,
+                "format": "uuid"
+              },
+              "leaseExpiry": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64,
+                "pattern": ".*\\S.*"
+              },
+              "leaseDuration": {
+                "type": [
+                  "string",
+                  "number"
+                ]
+              }
+            },
+            "required": [
+              "productId",
+              "serviceId",
+              "workerTypeId",
+              "regionId",
+              "workerId",
+              "epoch",
+              "instanceId",
+              "leaseExpiry",
+              "leaseDuration"
+            ],
+            "additionalProperties": false
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": true
+          },
+          "binding": {
+            "type": "REST",
+            "backendRef": "worker-coordinator",
+            "method": "POST",
+            "path": "/api/v1/workers/renew",
+            "requestBody": {},
+            "bodyArguments": {
+              "productId": "productId",
+              "serviceId": "serviceId",
+              "workerTypeId": "workerTypeId",
+              "regionId": "regionId",
+              "workerId": "workerId",
+              "epoch": "epoch",
+              "instanceId": "instanceId",
+              "registrationId": "registrationId"
+            }
+          }
+        },
+        {
+          "name": "release_worker",
+          "description": "Release a worker lease using its namespace, workerId, epoch and original owner UUIDs. This ends ownership of the slot. A failed call can have an unknown outcome.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "productId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": ".*\\S.*"
+              },
+              "serviceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": ".*\\S.*"
+              },
+              "workerTypeId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": ".*\\S.*"
+              },
+              "regionId": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 15
+              },
+              "workerId": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              },
+              "epoch": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9223372036854775807
+              },
+              "instanceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 36,
+                "format": "uuid"
+              },
+              "registrationId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 36,
+                "format": "uuid"
+              }
+            },
+            "required": [
+              "productId",
+              "serviceId",
+              "workerTypeId",
+              "regionId",
+              "workerId",
+              "epoch",
+              "instanceId",
+              "registrationId"
+            ],
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "released": {
+                "type": "boolean"
+              },
+              "epoch": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9223372036854775807
+              }
+            },
+            "required": [
+              "released",
+              "epoch"
+            ],
+            "additionalProperties": false
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "idempotentHint": false,
+            "openWorldHint": true
+          },
+          "binding": {
+            "type": "REST",
+            "backendRef": "worker-coordinator",
+            "method": "POST",
+            "path": "/api/v1/workers/release",
+            "requestBody": {},
+            "bodyArguments": {
+              "productId": "productId",
+              "serviceId": "serviceId",
+              "workerTypeId": "workerTypeId",
+              "regionId": "regionId",
+              "workerId": "workerId",
+              "epoch": "epoch",
+              "instanceId": "instanceId",
+              "registrationId": "registrationId"
+            }
+          }
+        },
+        {
+          "name": "create_sample_payment",
+          "description": "Create a sample payment with the configured static amount and return its backend-issued payment ID. Each invocation uses a new request key; automatic upstream retries reuse that key to recover the same payment. This changes state and is intended for the local payment demo.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false,
+            "required": []
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "paymentId": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "paymentId"
+            ],
+            "additionalProperties": false
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": true
+          },
+          "binding": {
+            "type": "REST",
+            "backendRef": "payment-api",
+            "method": "POST",
+            "path": "/api/v1/payments",
+            "requestBody": {
+              "amount": "12.34"
+            },
+            "requestKeyField": "clientIdempotencyKey",
+            "responseIdPointer": "/id"
+          }
+        }
+      ]
+    }
+  ]
+}

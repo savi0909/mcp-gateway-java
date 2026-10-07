@@ -1,0 +1,12 @@
+# Opt-in live local sample. The default profile keeps MCP disabled.
+spring:
+  ai:
+    mcp:
+      server:
+        enabled: true
+
+gateway:
+  catalog-location: ${GATEWAY_CATALOG_LOCATION:classpath:catalog/payment-catalog.json}
+  backends:
+    worker-coordinator:
+      base-url: ${PAYMENT_API_BASE_URL:http://127.0.0.1:9091}

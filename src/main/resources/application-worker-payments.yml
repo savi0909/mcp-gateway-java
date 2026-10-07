@@ -1,0 +1,13 @@
+# Coordinator tools alongside the existing payment demo, with separate private origins.
+spring:
+  ai:
+    mcp:
+      server:
+        enabled: true
+
+gateway:
+  catalog-location: ${GATEWAY_CATALOG_LOCATION:classpath:catalog/coordinator-payment-catalog.json}
+  backends:
+    payment-api:
+      base-url: ${PAYMENT_API_BASE_URL:http://127.0.0.1:9091}
+      bearer-token: ${PAYMENT_API_BEARER_TOKEN:}

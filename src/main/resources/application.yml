@@ -1,0 +1,45 @@
+server:
+  address: 127.0.0.1
+  port: 8080
+
+spring:
+  application:
+    name: mcp-gateway-server
+  ai:
+    mcp:
+      server:
+        # Opt-in profiles enable validated catalog registration and transport together.
+        enabled: false
+        name: worker-coordinator
+        version: 0.1.0
+        type: ASYNC
+        protocol: STREAMABLE
+        request-timeout: 10s
+        annotation-scanner:
+          enabled: false
+        tool-callback-converter: false
+        capabilities:
+          tool: true
+          resource: false
+          prompt: false
+          completion: false
+        tool-change-notification: false
+        resource-change-notification: false
+        prompt-change-notification: false
+        streamable-http:
+          mcp-endpoint: /worker-coordinator/mcp
+
+# Deployment properties are bound and validated; opt-in profiles load their startup catalog.
+gateway:
+  catalog-location: ${GATEWAY_CATALOG_LOCATION:classpath:catalog/worker-catalog.json}
+  backends:
+    worker-coordinator:
+      base-url: ${WORKER_COORDINATOR_BASE_URL:http://127.0.0.1:9090}
+      bearer-token: ${WORKER_COORDINATOR_BEARER_TOKEN:}
+  upstream:
+    connect-timeout: 2s
+    deadline: 5s
+    max-response-bytes: 65536
+  allowed-origins:
+    - http://localhost:6274
+    - http://127.0.0.1:6274

@@ -1,0 +1,39 @@
+name: Verify
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Java 21 / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Set up Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      # Automated test execution remains paused by the project owner.
+      # Remove -DskipTests from both commands when tests are explicitly resumed.
+      - name: Build on Linux (tests paused)
+        if: runner.os != 'Windows'
+        run: sh ./mvnw -B -ntp -DskipTests verify
+      - name: Build on Windows (tests paused)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: .\mvnw.cmd -B -ntp '-DskipTests' verify

@@ -1,0 +1,66 @@
+name: mcp-gateway-coordinator
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: coordinator
+      POSTGRES_USER: coordinator
+      POSTGRES_PASSWORD: ${COORDINATOR_POSTGRES_PASSWORD:?Set in the ignored coordinator env file}
+    volumes:
+      - coordinator-data:/var/lib/postgresql/data
+      - ./scripts/docker-init/02-payments.sql:/docker-entrypoint-initdb.d/02-payments.sql:ro
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U coordinator -d coordinator"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  coordinator:
+    image: mcp-gateway-coordinator:local
+    build:
+      context: ${COORDINATOR_PROJECT_DIR:-D:/java-projects/distributed-coordinator}
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:${COORDINATOR_HTTP_PORT:-9090}:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/coordinator
+      SPRING_DATASOURCE_USERNAME: coordinator
+      SPRING_DATASOURCE_PASSWORD: ${COORDINATOR_POSTGRES_PASSWORD:?Set in the ignored coordinator env file}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  payments:
+    image: mcp-gateway-payment-sample:local
+    build:
+      context: ${COORDINATOR_PROJECT_DIR:-D:/java-projects/distributed-coordinator}/worker-client-sample/target
+      dockerfile_inline: |
+        FROM eclipse-temurin:21-jre-alpine
+        WORKDIR /app
+        COPY worker-client-sample-0.1.0-SNAPSHOT.jar app.jar
+        USER 10001
+        ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=65"
+        ENTRYPOINT ["java","-jar","app.jar"]
+    ports:
+      - "127.0.0.1:${PAYMENT_HTTP_PORT:-9091}:8080"
+    environment:
+      SPRING_MAIN_WEB_APPLICATION_TYPE: servlet
+      COORDINATOR_URL: http://coordinator:8080
+      PAYMENTS_DB_URL: jdbc:postgresql://postgres:5432/payments
+      PAYMENTS_DB_USERNAME: coordinator
+      PAYMENTS_DB_PASSWORD: ${COORDINATOR_POSTGRES_PASSWORD:?Set in the ignored coordinator env file}
+      PRODUCT_ID: mcp-demo
+      PRODUCT_NAME: MCP Demo
+      SERVICE_ID: mcp-demo-worker
+      SERVICE_NAME: MCP Demo Worker
+      WORKER_TYPE_ID: mcp-demo-generator
+      WORKER_TYPE_NAME: MCP Demo Generator
+    depends_on:
+      postgres:
+        condition: service_healthy
+      coordinator:
+        condition: service_started
+
+volumes:
+  coordinator-data:

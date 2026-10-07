@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 2,
+  "servers": [
+    {
+      "id": "worker-coordinator",
+      "tools": [
+        {
+          "name": "create_sample_payment",
+          "description": "Create a sample payment with the configured static amount and return its backend-issued payment ID. Each invocation uses a new request key; automatic upstream retries reuse that key to recover the same payment. This changes state and is intended for the local payment demo.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "paymentId": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["paymentId"],
+            "additionalProperties": false
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": true
+          },
+          "binding": {
+            "type": "REST",
+            "backendRef": "worker-coordinator",
+            "method": "POST",
+            "path": "/api/v1/payments",
+            "requestBody": {"amount": "12.34"},
+            "requestKeyField": "clientIdempotencyKey",
+            "responseIdPointer": "/id"
+          }
+        }
+      ]
+    }
+  ]
+}

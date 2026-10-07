@@ -1,0 +1,9 @@
+# All nine inspected coordinator operations, on the existing fixed MCP endpoint.
+spring:
+  ai:
+    mcp:
+      server:
+        enabled: true
+
+gateway:
+  catalog-location: ${GATEWAY_CATALOG_LOCATION:classpath:catalog/coordinator-catalog.json}

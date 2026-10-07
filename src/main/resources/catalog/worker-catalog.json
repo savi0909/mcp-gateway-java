@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "servers": [
+    {
+      "id": "worker-coordinator",
+      "tools": [
+        {
+          "name": "allocate_worker_id",
+          "description": "Allocate a fresh worker ID using the Worker Coordinator. Each successful invocation performs a new allocation. This operation is not idempotent; do not automatically retry after an uncertain outcome.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "workerId": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["workerId"],
+            "additionalProperties": false
+          },
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": true
+          },
+          "binding": {
+            "type": "REST",
+            "backendRef": "worker-coordinator",
+            "method": "POST",
+            "path": "/workers/ids",
+            "requestBody": {},
+            "responseIdPointer": "/workerId"
+          }
+        }
+      ]
+    }
+  ]
+}
