@@ -87,18 +87,25 @@ Spring AI supplies MCP server integration; the application has no model starter,
 model key, prompt loop or agent planner. An eventual assistant can consume these
 tools from a separate repository and decide when to request them.
 
-### Three connections that must stay distinct
+### Protocol implementation and request routing
 
 ```text
 REST adaptation:
   client -- MCP --> Java gateway -- REST --> coordinator / payment API
 
-Native MCP:
-  client -- MCP --> shortener's own MCP server
+Native MCP through HAProxy (the deployed shortener path):
+  client -- MCP over HTTP --> HAProxy -- MCP over HTTP --> shortener's own MCP server
 
-HTTP routing:
-  client -- MCP over HTTP --> HAProxy -- HTTP --> native shortener backend
+Direct replica connection (optional diagnostic path, bypassing HAProxy):
+  client -- MCP over HTTP --> individual shortener replica's MCP server
 ```
+
+"Native MCP" means the shortener itself implements MCP discovery and tool
+execution. The deployed client reaches it through HAProxy at port 8119; HAProxy
+routes the HTTP requests to a shortener replica. MCP remains the application
+protocol on both sides of that routing hop. A direct replica URL such as port
+8117 is an optional diagnostic route. The Java REST-adapting gateway is a
+separate integration path for coordinator/payment tools.
 
 **Historical live evidence.** Native shortener discovery through HAProxy at
 `http://127.0.0.1:8119/mcp` worked. Its separate project records 49 passing tests.

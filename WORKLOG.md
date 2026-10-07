@@ -190,3 +190,9 @@ Append date/tool/stage, scope, changes, decisions, exact verification commands a
 - User explicitly instructed: always commit and push to origin. Recorded the standing authorization in AGENTS.md, shared with Claude Code through its existing import. Release publication, deployment, live coordinator mutations and file deletion remain separate actions.
 - Prepared the completed secured MCP foundation, independent mocks/tests, Inspector/run guides and end-to-end tutorial for one repository commit on main to origin/main at savi0909/mcp-gateway-java. Reviewed the changed build/client/handler/CI files and the existing successful full-verification log; no Java/configuration behavior changed during this publication step and tests were not rerun. Prior evidence remains 121 Surefire and 20 Failsafe passing cases.
 - Preserved both Git-excluded local planning files, build outputs and private local configuration outside the commit. Git diff/Markdown/catalog-example checks passed during the tutorial work; publication checks examine the exact staged files before committing. Final commit/push status is reported after Git completes the operations.
+
+### 2026-10-07 — Clarify native MCP behind HAProxy
+
+- The foundation/tutorial commit `8b215e9` was successfully pushed to origin/main. The user then highlighted that the shortener's native MCP server is still behind HAProxy.
+- Corrected the tutorial's architecture diagram to show the deployed client → HAProxy → native shortener MCP path explicitly, with MCP over HTTP on both hops. Labeled direct replica access as an optional diagnostic path and explained that native implementation and HTTP routing describe different aspects of the same service.
+- Documentation-only clarification; no Java/configuration changes, Maven test reruns, service changes or live tool calls. Validate documentation and commit/push under the user's standing instruction; excluded personal planning files remain preserved.
