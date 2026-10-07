@@ -10,7 +10,7 @@
 - The actual coordinator at `D:/java-projects/distributed-coordinator` leases worker slots and has no UUID-generating REST endpoint. The user accepted its separate payment sample as the backend; numeric payment IDs are projected exactly as string `paymentId` (ADR 0003). No source in that repository was modified.
 - Local Docker services are running: coordinator `127.0.0.1:9090`, payment sample `127.0.0.1:9091`, private PostgreSQL. The gateway runs separately on loopback port 8080 using `worker-payments`. Its PID is in ignored `target/payment-gateway.pid` and `target/worker-tools-gateway.pid`.
 - Verification: Wrapper `verify -DskipTests` compiles current source/tests and packages, skipping Surefire/Failsafe. Actual combined-profile SDK discovery negotiated `2025-11-25` and listed all ten tools without invocation. Earlier two payment calls remain historical evidence; the read-only get_product tool is now verified against the local database; lease/registration mutations remain unverified. Full test execution remains paused.
-- Local Git repository on `main` with initial commit `925deca` and GitHub origin configured. Push failed with HTTP 403: the authenticated account lacks write access (see latest entry).
+- Git repository published to `https://github.com/savi0909/mcp-gateway-java.git`; local `main` tracks `origin/main`. Initial implementation and document relocation are pushed (see latest entry).
 - Next task: when the user resumes tests, execute the revised adapter/configuration tests and new `FileCatalogLoaderTest`/`CoordinatorToolsIT`, resolve failures, complete remaining lifecycle/cancellation/retry checks, then run full Wrapper `verify`. The independent standalone mock demo remains unimplemented.
 
 ## Entry format
@@ -114,3 +114,11 @@ Append date/tool/stage, scope, changes, decisions, exact verification commands a
 - Git publication result: initial commit `925deca` exists locally. `git push -u origin main` failed with HTTP 403 because the authenticated GitHub account savi0909 lacks write access to abhishek0909/mcp-gateway-java. No successful push or upstream tracking was established. Relocation changes remain uncommitted.
 - Verification: inline Python location/content/reference/local Markdown-link checks passed; the moved documents match their committed content except for updated path references (allowing Git line-ending normalization). `git diff --check` passed with line-ending notices only. No Java/build/test execution; automated-test pause remains active. No milestone acceptance state changed.
 - Next action: grant the authenticated account repository write access or authenticate as an authorized GitHub account before retrying publication; commit the document relocation when requested.
+
+### 2026-10-07 - Codex - Corrected GitHub origin and successful publication
+
+- Scope: user explicitly changed the target to `https://github.com/savi0909/mcp-gateway-java.git` and requested pushing main with upstream tracking.
+- Commands/results: `git remote set-url origin https://github.com/savi0909/mcp-gateway-java.git` and `git branch -M main` succeeded. `git ls-remote --heads origin` succeeded with no branches before publication. Used set-url because origin already existed.
+- Commands/results: `git add .` and `git diff --cached --check` succeeded; `git commit -m "Move handoff documents into docs and update references"` created `3085b94`. `git push -u origin main` succeeded, creating remote main and setting tracking to origin/main. The remote now includes initial commit `925deca` and document relocation commit `3085b94`.
+- Verification/limits: the earlier document/reference/link checks passed; no Java/build/test execution. CI is configured to skip tests during the continuing pause; no hosted CI result is claimed. No new functional acceptance evidence.
+- Next action: publish this factual worklog update and verify local/remote commit agreement. Proposed multiple-server implementation remains unstarted; resume automated tests only on explicit user instruction.
