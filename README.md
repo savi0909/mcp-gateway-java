@@ -13,6 +13,12 @@ For the big picture and a detailed code walkthrough, read the
 discovery, REST mapping, caller security, retries and uncertain outcomes, with
 mock exercises and debugger checkpoints.
 
+The [enterprise MCP gateway vision](docs/ENTERPRISE_MCP_VISION.md) records the
+long-term direction: an LLM-independent platform with federation, identity,
+policy enforcement and resilient execution, plus a separate control plane.
+Its architecture, priorities and enterprise phases are future planning context;
+the current foundation's verified behavior remains described below.
+
 Start with the [independent standalone mock demo](docs/MOCK_DEMO.md). For caller
 security and the response-loss/cancellation demonstration, see
 [the secured foundation guide](docs/SECURED_MCP.md) and
@@ -76,6 +82,7 @@ AI coding tools require their own login/subscription or credentials; that is sep
 | [docs/FUNCTIONAL_SPEC.md](docs/FUNCTIONAL_SPEC.md) | Authoritative behavior and AC-01 through AC-13 |
 | [docs/DESIGN.md](docs/DESIGN.md) | Component boundaries and architecture guidance |
 | [docs/IMPLEMENTATION_PROMPT.md](docs/IMPLEMENTATION_PROMPT.md) | Original full milestone implementation request |
+| [docs/ENTERPRISE_MCP_VISION.md](docs/ENTERPRISE_MCP_VISION.md) | Owner-selected enterprise architecture, priorities, roadmap and design process; future scope |
 | `AGENTS.md`, `CLAUDE.md` | Shared AI guidance and Claude entry point |
 | `WORKLOG.md` | Verified state, work history, blockers and next action |
 | `docs/IMPLEMENTATION_PLAN.md`, `docs/ACCEPTANCE.md` | Stages and evidence tracker |

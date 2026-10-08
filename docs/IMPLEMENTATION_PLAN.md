@@ -2,6 +2,12 @@
 
 The baseline is `docs/FUNCTIONAL_SPEC.md` and `docs/DESIGN.md` section 10. This file tracks work; it does not replace requirements. Status is `pending`, `in progress`, or `complete`, and completion requires the stated evidence.
 
+The owner-selected [enterprise vision](ENTERPRISE_MCP_VISION.md) and
+[ADR 0007](decisions/0007-enterprise-platform-direction.md) guide future planning.
+Enterprise E1-E4 (federation, security/policies, transport/resilience and production
+control plane) are pending and separate from this completed foundation milestone.
+Recording that direction does not begin implementation or change acceptance rows.
+
 User-directed exceptions allow bounded application retries and the separate
 payment sample (ADRs 0002/0003). On 2026-10-07 the owner explicitly resumed
 independent local tests and selected the secured foundation handover. Full Wrapper

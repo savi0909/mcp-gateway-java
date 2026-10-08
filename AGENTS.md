@@ -6,6 +6,24 @@ Read this file, `WORKLOG.md` (current state and latest entry), and `docs/IMPLEME
 
 Explicit user instructions take precedence. `docs/FUNCTIONAL_SPEC.md` is authoritative for milestone behavior; `docs/DESIGN.md` guides architecture; `docs/IMPLEMENTATION_PROMPT.md` describes the complete implementation request. Repository workflow files do not relax the functional requirements. Ask a focused question if documents conflict or an unresolved choice affects the external contract. Continue independent work while waiting.
 
+## Long-term project direction
+
+Read [the enterprise MCP vision](docs/ENTERPRISE_MCP_VISION.md) when planning future
+work; [ADR 0007](docs/decisions/0007-enterprise-platform-direction.md) records the
+owner-selected direction. Target an LLM/framework-independent enterprise gateway
+and separate control plane, organized around federation, identity, policy and
+resilient execution, with observability and governance across them. Think in
+system-wide guarantees under concurrency, failure and adversarial conditions.
+Use deterministic public-tool mappings and validated versioned configuration;
+define bounded staleness/revocation when retaining the last valid snapshot.
+
+Hundreds of servers, thousands of tools, multiple tenants and concurrent agents
+are design targets, not measured capability. Enterprise E1-E4 are future phases,
+separate from completed foundation milestone 1. Federation is the first major
+subsystem when implementation is requested. This context update does not start
+those phases or adopt proposed dependencies/protocol changes. Preserve existing
+foundation behavior and evidence; implement only explicitly selected scope.
+
 ## Current development state
 
 This is a single-module gateway with validated properties/catalogs, a bounded REST executor, ASYNC tools, Origin enforcement, independent HTTP fixtures and an SDK smoke client. Default MCP remains disabled. Opt-in profiles `payments`, `workers`, and `worker-payments` expose one, nine or ten tools; `mock` supplies the standalone worker demo. Tests were explicitly resumed: full Wrapper verification passed with 121 unit/startup tests and 20 integration tests, all using independent local mocks. The `secured` profile adds JWT callers, explicit scopes, tenant admission and session-owner enforcement (ADR 0006). The existing running demo was left unchanged; new artifacts are under `target/foundation`. Consult `WORKLOG.md` and ADRs 0002–0004/0006 for evidence and limits.
