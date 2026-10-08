@@ -13,6 +13,7 @@ import dev.mcp.gateway.rest.AllocationResult;
 import dev.mcp.gateway.rest.RestBindingExecutor;
 import dev.mcp.gateway.security.Caller;
 import dev.mcp.gateway.security.TenantPolicy;
+import dev.mcp.gateway.admission.AdmissionService;
 import org.springframework.beans.factory.ObjectProvider;
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
 import io.modelcontextprotocol.server.McpServerFeatures;
@@ -51,18 +52,19 @@ public class McpToolRegistrationConfiguration {
 
     @Bean
     List<McpServerFeatures.AsyncToolSpecification> catalogTools(List<ToolDefinition> definitions, RestBindingExecutor executor,
-            ObjectProvider<TenantPolicy> policy) {
-        return definitions.stream().map(definition -> specification(definition, executor, policy.getIfAvailable())).toList();
+            ObjectProvider<TenantPolicy> policy, ObjectProvider<AdmissionService> admission) {
+        return definitions.stream().map(definition -> specification(definition, executor, policy.getIfAvailable(), admission.getIfAvailable())).toList();
     }
 
-    private McpServerFeatures.AsyncToolSpecification specification(ToolDefinition definition, RestBindingExecutor executor, TenantPolicy policy) {
+    private McpServerFeatures.AsyncToolSpecification specification(ToolDefinition definition, RestBindingExecutor executor, TenantPolicy policy, AdmissionService admission) {
         var hints = definition.annotations();
         var annotations = new McpSchema.ToolAnnotations(null, hints.get("readOnlyHint"), hints.get("destructiveHint"),
                 hints.get("idempotentHint"), hints.get("openWorldHint"), null);
         var tool = McpSchema.Tool.builder().name(definition.name()).description(definition.description())
                 .inputSchema(definition.inputSchema()).outputSchema(definition.outputSchema()).annotations(annotations).build();
         return McpServerFeatures.AsyncToolSpecification.builder().tool(tool)
-                .callHandler((exchange, request) -> invoke(definition, executor, request, exchange, policy)).build();
+                .callHandler((exchange, request) -> admission == null ? invoke(definition, executor, request, exchange, policy)
+                        : admission.invoke(definition, request, exchange)).build();
     }
 
     @Bean

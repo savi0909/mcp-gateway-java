@@ -1,0 +1,14 @@
+# Layer with workers and secured. Bootstrap and credentials come from private configuration.
+admission:
+  bootstrap: ${MCP_ADMISSION_BOOTSTRAP:}
+  journal-directory: ${MCP_ADMISSION_JOURNAL:}
+  policy-max-age: 30s
+spring:
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+logging:
+  level:
+    io.modelcontextprotocol.server: WARN
+    io.modelcontextprotocol.spec.McpStreamableServerSession: ERROR
+    org.springframework.ai.mcp.server.webflux.transport.WebFluxStreamableServerTransportProvider: OFF

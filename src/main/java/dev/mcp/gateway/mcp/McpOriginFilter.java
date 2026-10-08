@@ -27,7 +27,7 @@ public final class McpOriginFilter implements WebFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         String path = exchange.getRequest().getPath().value();
-        if (path.equals("/worker-coordinator/mcp") || path.startsWith("/worker-coordinator/mcp/")) {
+        if (path.equals("/worker-coordinator/mcp") || path.startsWith("/worker-coordinator/mcp/") || path.startsWith("/control/")) {
             var origins = exchange.getRequest().getHeaders().get(HttpHeaders.ORIGIN);
             if (origins != null && (origins.size() != 1 || !allowedOrigins.contains(origins.getFirst()))) {
                 exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);

@@ -69,13 +69,32 @@ public final class RestBindingExecutor {
     }
 
     private Mono<AllocationResult> executeWithBody(RestBinding binding, String body) {
+        return attempt(binding, body, properties.backends().get(binding.backendRef()).bearerToken())
+                .retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofMillis(100))
+                        .maxBackoff(Duration.ofSeconds(1))
+                        .filter(error -> error instanceof AttemptFailure failure && failure.retryable))
+                .timeout(properties.upstream().deadline())
+                .onErrorResume(error -> Mono.just(new AllocationResult.Failure(
+                        error instanceof AttemptFailure failure ? failure.code : category(error))));
+    }
+
+    /** UC-01: explicit context credential, one GET attempt, no shared-token fallback. */
+    public Mono<AllocationResult> executeAuthorizedRead(RestBinding binding, String token) {
+        if (binding.method() != RestBinding.Method.GET || token == null || token.isBlank())
+            return Mono.error(new IllegalArgumentException("Invalid authorized read"));
+        return attempt(binding, null, token).timeout(properties.upstream().deadline())
+                .onErrorResume(error -> Mono.just(new AllocationResult.Failure(
+                        error instanceof AttemptFailure failure ? failure.code : category(error))));
+    }
+
+    private Mono<AllocationResult> attempt(RestBinding binding, String body, String token) {
         return Mono.defer(() -> {
             var backend = properties.backends().get(binding.backendRef());
             var request = client.method(HttpMethod.valueOf(binding.method().name()))
                     .uri(binding.target(backend.baseUrl()))
                     .accept(MediaType.APPLICATION_JSON);
-            if (!backend.bearerToken().isEmpty()) {
-                request.headers(headers -> headers.setBearerAuth(backend.bearerToken()));
+            if (!token.isEmpty()) {
+                request.headers(headers -> headers.setBearerAuth(token));
             }
             WebClient.RequestHeadersSpec<?> ready = request;
             if (binding.method() == RestBinding.Method.POST) {
@@ -90,16 +109,7 @@ public final class RestBindingExecutor {
                     }
                     var code = category(error);
                     return new AttemptFailure(code, code == UPSTREAM_UNAVAILABLE || code == UPSTREAM_TIMEOUT);
-                })
-                // User-authorized allocation retries; reuse the exact same validated binding/body.
-                // Keep connector retries disabled so every new attempt is controlled here.
-                .retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofMillis(100))
-                        .maxBackoff(Duration.ofSeconds(1))
-                        .filter(error -> error instanceof AttemptFailure failure && failure.retryable))
-                // Covers pool acquisition, connect, send, all body chunks and projection.
-                .timeout(properties.upstream().deadline())
-                .onErrorResume(error -> Mono.just(new AllocationResult.Failure(
-                        error instanceof AttemptFailure failure ? failure.code : category(error))));
+                });
     }
 
     private Mono<AllocationResult> read(ClientResponse response, RestBinding binding) {

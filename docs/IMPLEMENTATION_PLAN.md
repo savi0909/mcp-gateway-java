@@ -9,22 +9,27 @@ control plane) are pending and separate from this completed foundation milestone
 Recording that direction does not begin implementation or change acceptance rows.
 The subsequent owner-selected UC-01 prerequisite refines execution order below.
 
-## Selected next slice: UC-01 (implementation pending)
+## Selected slice: UC-01 (local implementation; release incomplete)
 
 Follow [UC01_ADMISSION_PLAN.md](UC01_ADMISSION_PLAN.md) and
 [ADR 0008](decisions/0008-uc01-admission-first.md) against preserved
 [identity/authorization v1.4](requirements/Enterprise_MCP_Identity_Authorization_Requirements_v1.4.md).
 Build human-delegated ordinary-read admission with identity/tenant lifecycle,
 minimal catalog eligibility, isolated credentials, durable admission audit and
-revocation before broad federation. All U1-U5 stages remain pending; this turn
-prepares documentation only. Review missing catalog v1.3 before final catalog
-contracts; progress independent design while obtaining it.
+revocation before broad federation. The owner supplied catalog v1.3; it is
+[preserved and reviewed](requirements/Enterprise_MCP_Discovery_Catalog_Requirements_v1.3.md).
+[ADR 0009](decisions/0009-uc01-local-admission-design.md) and the
+[implementation guide](UC01_ADMISSION.md) describe the opt-in local increment.
+U1/U3/U4 have evidence for ordinary internal reads, U2 has bounded administration,
+and U5 is partial while retention/archival and broader revocation remain later.
 
 Audit persistence before dispatch and supported-context revocation within 60
 seconds belong to this first slice. They cannot wait for enterprise E4. Unsupported
 mutations, sensitive reads, autonomous and third-party execution remain disabled.
-[Identity acceptance](IDENTITY_ACCEPTANCE.md) tracks all 32 criteria as pending
-IA-AC rows; all baseline MUST requirements and all 32 remain the full-release gate.
+[Identity acceptance](IDENTITY_ACCEPTANCE.md) tracks all 32 criteria as separate
+IA-AC rows, with partial/pending evidence. [Catalog evidence](CATALOG_ACCEPTANCE.md)
+uses distinct source identifiers. All baseline MUST requirements and all 32
+identity criteria remain the full-release gate.
 
 ## Completed foundation milestone 1
 

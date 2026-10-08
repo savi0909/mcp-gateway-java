@@ -2,7 +2,7 @@
 
 A local Java MCP gateway exposing the existing coordinator's worker lease and namespace APIs alongside its separate payment sample. The coordinator manages leases, the payment worker generates payment IDs, and the gateway adapts REST and MCP.
 
-**Current state:** the MCP foundation is implemented and verified with independent mocks: **121 unit/startup tests and 20 real Boot/SDK integration tests pass**. Default MCP is disabled. `worker-payments` exposes nine coordinator tools plus payment; optional `secured` adds JWT caller authentication, read/write permissions, tenant admission and session ownership. The existing running demo is unchanged. The updated executable is under `target/foundation`.
+**Current state:** the foundation plus opt-in local UC-01 increment pass **128 unit/startup tests and 34 real Boot/SDK integration tests** with independent mocks. Default MCP is disabled. `worker-payments` exposes nine coordinator tools plus payment; optional `secured` adds JWT authentication, scopes, tenant admission and session ownership. `workers,secured,uc01` adds the enterprise ordinary-read admission described below. The existing demo is unchanged; the updated executable is under `target/foundation`.
 
 See [Worker tools and definitions](docs/WORKER_TOOLS.md) for tools, schemas and run commands, and [the payment demo](docs/PAYMENT_DEMO.md) for Docker setup. The running MCP address is `http://127.0.0.1:8080/worker-coordinator/mcp`.
 
@@ -19,11 +19,14 @@ policy enforcement and resilient execution, plus a separate control plane.
 Its architecture, priorities and enterprise phases are future planning context;
 the current foundation's verified behavior remains described below.
 
-**Selected next implementation:** [UC-01 admission](docs/UC01_ADMISSION_PLAN.md)
+**Opt-in enterprise increment:** [local UC-01 admission](docs/UC01_ADMISSION.md)
 under [identity/authorization requirements v1.4](docs/requirements/Enterprise_MCP_Identity_Authorization_Requirements_v1.4.md).
 The first slice combines delegated ordinary-read authorization, minimal catalog
-eligibility, durable admission audit and revocation. Design/implementation remain
-pending; [all 32 identity acceptance criteria](docs/IDENTITY_ACCEPTANCE.md) remain
+eligibility, durable admission audit and revocation through `workers,secured,uc01`.
+It adds caller-specific discovery, exact contract/origin pinning, separate
+application/human grants, context credentials and bounded verified-policy fallback.
+The [plan](docs/UC01_ADMISSION_PLAN.md) and [catalog tracker](docs/CATALOG_ACCEPTANCE.md)
+record tested scope and limits; [all 32 identity acceptance criteria](docs/IDENTITY_ACCEPTANCE.md) remain
 required for the full first release, separately from foundation evidence.
 
 Start with the [independent standalone mock demo](docs/MOCK_DEMO.md). For caller
@@ -170,6 +173,6 @@ reset/local disposal can cancel work; graceful SDK closure alone does not prove 
 - [Claude Code skills](https://code.claude.com/docs/en/skills)
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow. Multiple virtual servers,
-native MCP proxying, hot reload, enterprise IAM, HA and a control plane remain
+native MCP proxying, hot reload, full enterprise IAM, HA and a production control plane remain
 later scopes. The operations assistant belongs in a separate repository after
 the remaining MCP learning gates are selected and evidenced.

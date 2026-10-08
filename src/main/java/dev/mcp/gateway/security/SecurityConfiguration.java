@@ -15,6 +15,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.HttpStatus;
@@ -47,7 +48,8 @@ public class SecurityConfiguration {
     @Bean
     SecurityWebFilterChain securityChain(ServerHttpSecurity http, SecuritySettings settings,
             ObjectProvider<ReactiveJwtDecoder> decoder, Environment environment) {
-        SecuritySettings.require(!java.util.Arrays.asList(environment.getActiveProfiles()).contains("secured") || settings.enabled(),
+        boolean enterprise = java.util.Arrays.asList(environment.getActiveProfiles()).contains("uc01");
+        SecuritySettings.require(!(java.util.Arrays.asList(environment.getActiveProfiles()).contains("secured") || enterprise) || settings.enabled(),
                 "secured profile cannot disable caller security");
         http.csrf(ServerHttpSecurity.CsrfSpec::disable).httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable).logout(ServerHttpSecurity.LogoutSpec::disable)
@@ -57,7 +59,8 @@ public class SecurityConfiguration {
         String challenge = "Bearer resource_metadata=\"" + settings.metadataUrl() + "\", scope=\"gateway:read\"";
         return http.authorizeExchange(access -> access
                     .pathMatchers("/.well-known/oauth-protected-resource", "/.well-known/oauth-protected-resource/worker-coordinator/mcp").permitAll()
-                    .pathMatchers("/worker-coordinator/mcp", "/worker-coordinator/mcp/**").authenticated()
+                    .pathMatchers(enterprise ? new String[]{"/worker-coordinator/mcp", "/worker-coordinator/mcp/**", "/control/**"}
+                            : new String[]{"/worker-coordinator/mcp", "/worker-coordinator/mcp/**"}).authenticated()
                     .anyExchange().denyAll())
                 .oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt.jwtDecoder(decoder.getObject()))
                     .authenticationEntryPoint((exchange, exception) -> {
@@ -104,6 +107,7 @@ public class SecurityConfiguration {
 
     @Bean
     @ConditionalOnProperty(prefix = "gateway-security", name = "enabled", havingValue = "true")
+    @Profile("!uc01")
     TenantPolicy tenantPolicy(SecuritySettings settings, ResourceLoader resources, List<ToolDefinition> tools, Environment env) {
         SecuritySettings.require("true".equals(env.getProperty("spring.ai.mcp.server.enabled")), "security requires an enabled MCP profile");
         SecuritySettings.require(tools.stream().allMatch(tool -> TenantPolicy.TOOLS.contains(tool.name())),
@@ -113,10 +117,12 @@ public class SecurityConfiguration {
 
     @Bean
     @ConditionalOnProperty(prefix = "gateway-security", name = "enabled", havingValue = "true")
+    @Profile("!uc01")
     SessionAdmissionFilter sessionAdmissionFilter(TenantPolicy policy) { return new SessionAdmissionFilter(policy); }
 
     @Bean
     @ConditionalOnProperty(prefix = "gateway-security", name = "enabled", havingValue = "true")
+    @Profile("!uc01")
     WebFluxStreamableServerTransportProvider securedTransport(@Qualifier("mcpServerJsonMapper") JsonMapper json,
             TenantPolicy policy) {
         return WebFluxStreamableServerTransportProvider.builder().jsonMapper(new JacksonMcpJsonMapper(json))

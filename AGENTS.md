@@ -29,9 +29,9 @@ Read [identity/authorization requirements v1.4](docs/requirements/Enterprise_MCP
 [the UC-01 plan](docs/UC01_ADMISSION_PLAN.md), [identity acceptance](docs/IDENTITY_ACCEPTANCE.md)
 and [ADR 0008](docs/decisions/0008-uc01-admission-first.md) before future enterprise
 implementation. These govern the new slice; the original functional specification
-continues to govern the completed foundation. Catalog requirements v1.3 are a
-missing dependency: obtain them before finalizing publication/membership/contract
-semantics; continue independent identity/audit/revocation design meanwhile.
+continues to govern the completed foundation. The owner supplied catalog v1.3;
+read its preserved requirements in `docs/requirements/Enterprise_MCP_Discovery_Catalog_Requirements_v1.3.md`
+and separate `docs/CATALOG_ACCEPTANCE.md` before catalog work.
 
 The next slice is human-delegated ordinary-read admission with separate verified
 application/human identities, lifecycle/tenant controls, minimal catalog
@@ -41,15 +41,17 @@ queued/retried/resumed work requires fresh admission checks. Keep unsupported
 mutations, sensitive reads, autonomous and third-party execution disabled in
 this slice. Do not inherit generic mutation retries for uncertain approved actions.
 
-The current documentation update starts no implementation. U1 requires a separate
-architecture record before coding; no vendor, storage or protocol change is chosen
-here. Track enterprise identity evidence as IA-AC-01 through IA-AC-32, separately
+Opt-in `workers,secured,uc01` now implements the local ordinary-read increment;
+read `docs/UC01_ADMISSION.md` and ADR 0009 for its contract and limits. Single-writer
+durable journals, 30-second verified-policy fallback, exact origin/contract pinning,
+scoped credentials and separate administration mode are selected. No SDK upgrade
+or clustered control plane is implemented. Track identity evidence as IA-AC-01 through IA-AC-32, separately
 from foundation AC rows. All 32 v1.4 criteria and baseline MUST requirements remain
 required for the full first release; UC-01 alone cannot satisfy that release gate.
 
 ## Current development state
 
-This is a single-module gateway with validated properties/catalogs, a bounded REST executor, ASYNC tools, Origin enforcement, independent HTTP fixtures and an SDK smoke client. Default MCP remains disabled. Opt-in profiles `payments`, `workers`, and `worker-payments` expose one, nine or ten tools; `mock` supplies the standalone worker demo. Tests were explicitly resumed: full Wrapper verification passed with 121 unit/startup tests and 20 integration tests, all using independent local mocks. The `secured` profile adds JWT callers, explicit scopes, tenant admission and session-owner enforcement (ADR 0006). The existing running demo was left unchanged; new artifacts are under `target/foundation`. Consult `WORKLOG.md` and ADRs 0002–0004/0006 for evidence and limits.
+This is a single-module gateway with validated properties/catalogs, a bounded REST executor, ASYNC tools, Origin enforcement, independent HTTP fixtures and an SDK smoke client. Default MCP remains disabled. Opt-in profiles `payments`, `workers`, and `worker-payments` expose one, nine or ten tools; `mock` supplies the standalone worker demo. Full Wrapper verification passes with 128 unit/startup tests and 34 integration tests using independent mocks. The `secured` profile supplies foundation JWT/scopes/tenant/session admission (ADR 0006); `uc01` adds the separately documented enterprise ordinary-read slice (ADR 0009). Existing demos remain unchanged; artifacts are under `target/foundation`. Consult `WORKLOG.md` and ADRs for evidence and limits.
 
 Use Java 21, Spring Boot 4.0.8, Spring AI BOM 2.0.1, Maven 3.9.11 via Wrapper, and package `dev.mcp.gateway`. Inspect resolved dependency sources and configuration metadata before coding against SDK or starter APIs. Keep the BOM-managed SDK version; do not invent constructors, handlers, or property names. Version changes require official compatibility evidence and a decision record.
 

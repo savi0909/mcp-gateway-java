@@ -1,8 +1,8 @@
 # UC-01 admission slice: selected next implementation
 
-Date: 2026-10-08. Status: selected next slice; design and implementation pending.
-The current request prepares documentation before implementation. No stage below
-has implementation or test evidence yet.
+Date: 2026-10-08. Status: opt-in local implementation with executed mock evidence.
+[The implementation guide](UC01_ADMISSION.md) documents supported behavior and
+limits. Full identity/catalog domain completion remains separate.
 
 ## Baseline and scope
 
@@ -30,31 +30,31 @@ completion or permission to expose unsupported behavior. The separate
 [identity acceptance tracker](IDENTITY_ACCEPTANCE.md) uses IA-AC-01 through
 IA-AC-32 to avoid collisions with foundation AC-01 through AC-13.
 
-## Dependency to resolve before final catalog contracts
+## Reviewed catalog dependency
 
-v1.4 supplements catalog requirements **v1.3**, which have not been supplied or
-found in this repository. Obtain and review them before finalizing registration,
-publication, catalog membership, contract pinning or evolution semantics. Do not
-substitute the foundation's schema-version-3 REST catalog for requirements v1.3.
-Identity modeling, audit/revocation design and independent fixture planning can
-continue while this dependency is unresolved.
+The owner supplied [catalog requirements v1.3](requirements/Enterprise_MCP_Discovery_Catalog_Requirements_v1.3.md)
+in conversation; reviewed and transcribed on 2026-10-08. Explicit membership,
+separate sensitive approval, per-user filtering and pinned contracts govern this
+increment. [Catalog evidence](CATALOG_ACCEPTANCE.md) keeps its identifiers separate
+from IA-AC and foundation AC rows. The foundation's static REST catalog is an
+execution adapter, not a substitute for these enterprise requirements.
 
 ## Ordered work
 
 | Stage | State | Scope and required result |
 | --- | --- | --- |
-| U1 - Contract and design | Pending | Reconcile catalog v1.3; define the trusted identity proof, organization/tenant model, admission boundary, persistence/consistency, audit ordering, revocation and downstream credential contract in a separate architecture ADR. Inspect actual SDK/starter APIs. |
-| U2 - Identity and administration | Pending | Stable authority-scoped humans, approved applications, organizations/tenants, explicit memberships/grants, lifecycle, trusted audited administrator provisioning and separation of publisher/owner/security privileges. Define workload type for safe rejection, without enabling autonomous execution. |
-| U3 - Minimal catalog eligibility | Pending | Approved internal server and destination, security classification, published capability, approved pinned contract, explicit application membership and caller-context discovery filtering. Enforce the same eligibility on direct calls. |
-| U4 - Delegated read admission | Pending | Verified application and represented human, explicit execution mode, bounded delegation, intersected permissions and resource/data policy, fresh admission checks, isolated credentials and allowed response fields. Persist admission audit before dispatch and record the outcome. |
-| U5 - Revocation and evidence | Pending | Supported principal/membership/grant/delegation/server/tool/contract revocations within 60 seconds; queue/retry/recovery admission checks; audit and verification outages; session/context isolation; scoped audit access/retention; complete applicable UC-01 SDK integration evidence and Wrapper verify. |
+| U1 - Contract and design | Complete for local scope | Reviewed v1.3; ADR 0009 selects verified JWT identity, single-writer journals, forced admission audit, exact scoped credentials, 30-second fallback and SDK SPI filtering. Inspected pinned dependency sources; no version changes. |
+| U2 - Identity and administration | Implemented; bounded scope | Separate approved apps/humans, organization/tenant checks, pending enrollment, lifecycle, roles, no self-activation/grants, immutable retired identities, audited administration. Multi-tenant topology administration and workload lifecycle remain later. |
+| U3 - Minimal catalog eligibility | Complete for ordinary internal reads | Explicit owner request/removal, separate publication, classified immutable contracts, exact approved origin, fingerprint/schema pinning, filtered SDK discovery and direct-call enforcement. Sensitive approval stays pending/disabled. |
+| U4 - Delegated read admission | Complete for ordinary internal reads | Intersected exact app/human/delegation/resource grants, expiry, current checks, scoped credentials, one GET attempt, forced admission evidence, protected output projection and uncertain-outcome recovery. |
+| U5 - Revocation and evidence | Partial | Real Boot/SDK fixtures prove local revocation, deferred-subscription checks, audit outage, expiry boundaries, session isolation and 100 calls/50 users. Wrapper verification passes. Physical audit expiry/archival, all revocation types and distributed guarantees remain unimplemented/unproven. |
 
 The stages describe dependency order, not independent deployable products.
 Durable audit belongs in administration and read admission from their first
 implementation; revocation semantics belong in U1 and are exercised throughout.
 Do not add audit or revoke checks only after tool execution has been enabled.
 
-## Admission contract to design and prove
+## Implemented admission contract
 
 ```text
 SDK request with verified application + represented human
@@ -69,12 +69,12 @@ SDK request with verified application + represented human
   -> validated allowed result and durable outcome evidence
 ```
 
-This is a logical flow, not a chosen API/token/schema or prescribed database
-transaction. U1 must settle its concurrency semantics: authority must not become
-stale between evaluation, durable audit and the defined admission point. The
-audit store and external business service cannot be presumed one atomic commit.
-Preserve admitted work and unresolved outcomes across failures; do not report a
-missing response as proof of non-execution.
+ADR 0009 defines local concurrency semantics: fresh evaluation and forced audit
+serialize with administration, and successful admission audit defines the
+admission point. External execution is a separate commit. Preserve admitted work
+and unresolved outcomes across failures; a missing response is not proof of
+non-execution. Control-plane administration has separate mode/roles and does not
+depend on a business delegation.
 
 Trusted context must distinguish organization, tenant, approved application,
 represented human, delegation reference, execution mode and attribution-only
@@ -167,9 +167,9 @@ organization facts; TenantPolicy is immutable and specific to coordinator tools;
 shared discovery and terminal logs do not meet enterprise filtering/durable audit.
 These are extension points, not already verified v1.4 capabilities.
 
-v1.4 selects behavior, not vendors or token formats. Decide proof mapping,
-persistence, publication consistency, audit recovery, revocation distribution,
-failure responses and protocol scope in U1. Keep the Java/Boot/AI/BOM baseline;
+v1.4 selects behavior, not vendors or token formats. ADR 0009 records this
+increment's proof mapping, persistence, publication consistency, audit recovery,
+local revocation, failure responses and pinned protocol scope. Keep the Java/Boot/AI/BOM baseline;
 do not install Keycloak, OPA/Cedar, databases, Kubernetes or upgrade protocol/SDK
 solely from this plan. Any selected dependency change needs scoped compatibility
 evidence and an architecture decision. Architecture approval is separate from
