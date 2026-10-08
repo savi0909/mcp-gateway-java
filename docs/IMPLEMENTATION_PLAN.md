@@ -1,4 +1,4 @@
-# Milestone 1 implementation plan
+# Implementation plan: completed foundation and next UC-01 slice
 
 The baseline is `docs/FUNCTIONAL_SPEC.md` and `docs/DESIGN.md` section 10. This file tracks work; it does not replace requirements. Status is `pending`, `in progress`, or `complete`, and completion requires the stated evidence.
 
@@ -7,6 +7,26 @@ The owner-selected [enterprise vision](ENTERPRISE_MCP_VISION.md) and
 Enterprise E1-E4 (federation, security/policies, transport/resilience and production
 control plane) are pending and separate from this completed foundation milestone.
 Recording that direction does not begin implementation or change acceptance rows.
+The subsequent owner-selected UC-01 prerequisite refines execution order below.
+
+## Selected next slice: UC-01 (implementation pending)
+
+Follow [UC01_ADMISSION_PLAN.md](UC01_ADMISSION_PLAN.md) and
+[ADR 0008](decisions/0008-uc01-admission-first.md) against preserved
+[identity/authorization v1.4](requirements/Enterprise_MCP_Identity_Authorization_Requirements_v1.4.md).
+Build human-delegated ordinary-read admission with identity/tenant lifecycle,
+minimal catalog eligibility, isolated credentials, durable admission audit and
+revocation before broad federation. All U1-U5 stages remain pending; this turn
+prepares documentation only. Review missing catalog v1.3 before final catalog
+contracts; progress independent design while obtaining it.
+
+Audit persistence before dispatch and supported-context revocation within 60
+seconds belong to this first slice. They cannot wait for enterprise E4. Unsupported
+mutations, sensitive reads, autonomous and third-party execution remain disabled.
+[Identity acceptance](IDENTITY_ACCEPTANCE.md) tracks all 32 criteria as pending
+IA-AC rows; all baseline MUST requirements and all 32 remain the full-release gate.
+
+## Completed foundation milestone 1
 
 User-directed exceptions allow bounded application retries and the separate
 payment sample (ADRs 0002/0003). On 2026-10-07 the owner explicitly resumed

@@ -19,10 +19,33 @@ define bounded staleness/revocation when retaining the last valid snapshot.
 
 Hundreds of servers, thousands of tools, multiple tenants and concurrent agents
 are design targets, not measured capability. Enterprise E1-E4 are future phases,
-separate from completed foundation milestone 1. Federation is the first major
-subsystem when implementation is requested. This context update does not start
-those phases or adopt proposed dependencies/protocol changes. Preserve existing
-foundation behavior and evidence; implement only explicitly selected scope.
+separate from completed foundation milestone 1. Broad federation follows the
+selected UC-01 admission prerequisite below. Preserve existing foundation
+behavior and evidence; implement only explicitly selected scope.
+
+## Selected next implementation: UC-01 admission
+
+Read [identity/authorization requirements v1.4](docs/requirements/Enterprise_MCP_Identity_Authorization_Requirements_v1.4.md),
+[the UC-01 plan](docs/UC01_ADMISSION_PLAN.md), [identity acceptance](docs/IDENTITY_ACCEPTANCE.md)
+and [ADR 0008](docs/decisions/0008-uc01-admission-first.md) before future enterprise
+implementation. These govern the new slice; the original functional specification
+continues to govern the completed foundation. Catalog requirements v1.3 are a
+missing dependency: obtain them before finalizing publication/membership/contract
+semantics; continue independent identity/audit/revocation design meanwhile.
+
+The next slice is human-delegated ordinary-read admission with separate verified
+application/human identities, lifecycle/tenant controls, minimal catalog
+eligibility, scoped credentials, durable admission audit and revocation. Audit
+must persist before execution; revocation must complete within 60 seconds, and
+queued/retried/resumed work requires fresh admission checks. Keep unsupported
+mutations, sensitive reads, autonomous and third-party execution disabled in
+this slice. Do not inherit generic mutation retries for uncertain approved actions.
+
+The current documentation update starts no implementation. U1 requires a separate
+architecture record before coding; no vendor, storage or protocol change is chosen
+here. Track enterprise identity evidence as IA-AC-01 through IA-AC-32, separately
+from foundation AC rows. All 32 v1.4 criteria and baseline MUST requirements remain
+required for the full first release; UC-01 alone cannot satisfy that release gate.
 
 ## Current development state
 

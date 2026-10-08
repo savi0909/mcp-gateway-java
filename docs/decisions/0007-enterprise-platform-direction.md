@@ -4,6 +4,10 @@
 **Date:** 2026-10-08
 **Deciders:** Project owner
 
+**Sequencing update:** [ADR 0008](0008-uc01-admission-first.md) selects UC-01
+admission before broad federation. This strategic architecture remains accepted;
+its original federation-first order is refined by that prerequisite.
+
 ## Context
 
 The owner requested adding an enterprise platform vision to project context and

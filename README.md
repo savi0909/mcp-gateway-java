@@ -19,6 +19,13 @@ policy enforcement and resilient execution, plus a separate control plane.
 Its architecture, priorities and enterprise phases are future planning context;
 the current foundation's verified behavior remains described below.
 
+**Selected next implementation:** [UC-01 admission](docs/UC01_ADMISSION_PLAN.md)
+under [identity/authorization requirements v1.4](docs/requirements/Enterprise_MCP_Identity_Authorization_Requirements_v1.4.md).
+The first slice combines delegated ordinary-read authorization, minimal catalog
+eligibility, durable admission audit and revocation. Design/implementation remain
+pending; [all 32 identity acceptance criteria](docs/IDENTITY_ACCEPTANCE.md) remain
+required for the full first release, separately from foundation evidence.
+
 Start with the [independent standalone mock demo](docs/MOCK_DEMO.md). For caller
 security and the response-loss/cancellation demonstration, see
 [the secured foundation guide](docs/SECURED_MCP.md) and
@@ -83,6 +90,9 @@ AI coding tools require their own login/subscription or credentials; that is sep
 | [docs/DESIGN.md](docs/DESIGN.md) | Component boundaries and architecture guidance |
 | [docs/IMPLEMENTATION_PROMPT.md](docs/IMPLEMENTATION_PROMPT.md) | Original full milestone implementation request |
 | [docs/ENTERPRISE_MCP_VISION.md](docs/ENTERPRISE_MCP_VISION.md) | Owner-selected enterprise architecture, priorities, roadmap and design process; future scope |
+| [docs/UC01_ADMISSION_PLAN.md](docs/UC01_ADMISSION_PLAN.md) | Selected next slice, dependencies, ordered design/implementation work and verification plan |
+| [docs/IDENTITY_ACCEPTANCE.md](docs/IDENTITY_ACCEPTANCE.md) | Separate pending IA-AC-01 through IA-AC-32 baseline tracker |
+| [Identity/authorization v1.4](docs/requirements/Enterprise_MCP_Identity_Authorization_Requirements_v1.4.md) | Preserved owner-supplied enterprise behavioral requirements |
 | `AGENTS.md`, `CLAUDE.md` | Shared AI guidance and Claude entry point |
 | `WORKLOG.md` | Verified state, work history, blockers and next action |
 | `docs/IMPLEMENTATION_PLAN.md`, `docs/ACCEPTANCE.md` | Stages and evidence tracker |

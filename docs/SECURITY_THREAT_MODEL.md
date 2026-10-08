@@ -4,6 +4,13 @@ The secured mode protects one loopback MCP resource and admits requests to
 unchanged coordinator/payment REST services. It is a bounded learning foundation,
 not a deployment of enterprise identity, backend storage isolation or HA.
 
+The next [UC-01 admission slice](UC01_ADMISSION_PLAN.md) has stronger v1.4
+requirements and no implementation evidence yet. Its design must extend threat
+coverage to app/human/delegation separation, catalog eligibility, durable audit,
+revocation races and context-scoped credentials. Keep its
+[identity acceptance evidence](IDENTITY_ACCEPTANCE.md) separate from this model's
+verified foundation controls.
+
 | Boundary / asset | Threat | Enforced control / evidence |
 | --- | --- | --- |
 | Caller/host → MCP HTTP | Missing, forged, expired or misdirected credentials | Boot-managed RS256 JWT validation; issuer, canonical resource audience, time claims, subject, tenant and access-token type; SecuredGatewayIT |

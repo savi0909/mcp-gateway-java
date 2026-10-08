@@ -4,6 +4,15 @@
 
 Read `AGENTS.md`, the current state/latest entry in `WORKLOG.md`, and `docs/IMPLEMENTATION_PLAN.md`. For code work read the full handoff documents and relevant AC rows. Inspect `git status --short`, existing sources and tests. Work from actual files rather than a previous assistant's completion claims.
 
+For the selected enterprise UC-01 task, also read
+[the slice plan](UC01_ADMISSION_PLAN.md), [identity acceptance](IDENTITY_ACCEPTANCE.md),
+[requirements v1.4](requirements/Enterprise_MCP_Identity_Authorization_Requirements_v1.4.md)
+and [ADR 0008](decisions/0008-uc01-admission-first.md). Design and implementation
+are pending; obtain catalog v1.3 before finalizing its contracts. Follow U1-U5,
+record the architecture choices separately and keep baseline identity evidence
+separate from completed foundation evidence. The original full-milestone prompt
+does not expand a UC-01 request into all enterprise phases.
+
 The original `docs/IMPLEMENTATION_PROMPT.md` requests the entire milestone. A user asking for a single stage narrows the work to that stage. Do not silently convert a scaffolding request into full implementation. For an explicitly requested full milestone, continue through 1A-1E and do not pause for routine confirmations.
 
 ## Implement a stage

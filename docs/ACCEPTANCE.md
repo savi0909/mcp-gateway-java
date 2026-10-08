@@ -2,6 +2,12 @@
 
 `docs/FUNCTIONAL_SPEC.md` section 7 is authoritative. Mark a row `verified` only after an actual automated run demonstrates all parts. Use `partial` for limited scaffold/unit evidence and `pending` for missing tests. Record commands/results in `WORKLOG.md`.
 
+This page records completed foundation evidence only. The selected next
+[UC-01 slice](UC01_ADMISSION_PLAN.md) has no new functional evidence.
+[Identity acceptance](IDENTITY_ACCEPTANCE.md) separately tracks v1.4 IA-AC-01
+through IA-AC-32, all pending. Existing Verified rows below do not satisfy the
+new identity baseline or its full first-release gate.
+
 The owner explicitly resumed independent tests on 2026-10-07. Full Wrapper
 verification passed with **121 unit/startup tests and 20 integration tests**, zero
 failures/errors/skips, using `-Dgateway.build-directory=target/foundation` to

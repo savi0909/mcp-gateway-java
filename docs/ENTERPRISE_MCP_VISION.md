@@ -5,6 +5,12 @@ guides project context and future design work. It does not request implementatio
 or change the completed foundation's external contract, dependency versions,
 acceptance evidence or running services.
 
+Subsequent selection: [UC-01 admission](UC01_ADMISSION_PLAN.md) and
+[ADR 0008](decisions/0008-uc01-admission-first.md) make delegated ordinary-read
+admission the next slice before broad federation. v1.4's minimal catalog
+eligibility, durable admission audit and supported-context revocation are early
+prerequisites; the full first release still requires all 32 identity criteria.
+
 ## Objective and current position
 
 Design a platform that manages hundreds of MCP servers, thousands of tools,
@@ -99,7 +105,7 @@ and P2 adds advanced protocol capabilities where every hop supports them.
 
 ## First major subsystem: federated registry
 
-Start future implementation with federation. A useful design exercise is 50
+After the selected UC-01 admission prerequisite, expand federation. A useful design exercise is 50
 servers exposing 500 tools; it is a workload model, not proof of capacity.
 Present a unified catalog while retaining upstream ownership, schema version,
 security context and lifecycle state for every tool.
@@ -248,7 +254,10 @@ replica and which are global; prove behavior during coordination failure.
 ## Enterprise roadmap
 
 These enterprise phases use **E1-E4** to avoid confusing them with the completed
-foundation milestone 1. All are pending; this context update starts none of them.
+foundation milestone 1. All are pending. The selected UC-01 prerequisite now
+comes first; see its plan for U1-U5 and the v1.4 first-release gate. E2/E4 remain
+broader integration/operations goals, not permission to defer baseline identity,
+durable admission audit or bounded revocation from UC-01.
 
 | Phase | Selected direction for a future implementation request | Required demonstration |
 | --- | --- | --- |

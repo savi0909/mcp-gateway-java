@@ -5,6 +5,12 @@ or `payments`. Legacy profiles and `mock` are unauthenticated local demos.
 Default MCP remains disabled. See [ADR 0006](decisions/0006-secured-mcp-foundation.md)
 and the [threat model](SECURITY_THREAT_MODEL.md) for the enforced boundary.
 
+The selected next [UC-01 enterprise slice](UC01_ADMISSION_PLAN.md) is pending.
+Its v1.4 contract adds separate application/human/delegation facts, catalog
+eligibility, durable admission audit and bounded revocation. This foundation's
+shared discovery, restart-only tenant policy and terminal logs do not establish
+those guarantees; see [the separate identity tracker](IDENTITY_ACCEPTANCE.md).
+
 ## Run with your existing authorization server
 
 Build and select a different loopback gateway port without restarting existing demos:
