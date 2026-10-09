@@ -4,14 +4,16 @@
 
 Read `AGENTS.md`, the current state/latest entry in `WORKLOG.md`, and `docs/IMPLEMENTATION_PLAN.md`. For code work read the full handoff documents and relevant AC rows. Inspect `git status --short`, existing sources and tests. Work from actual files rather than a previous assistant's completion claims.
 
-For the selected enterprise UC-01 task, also read
+For enterprise admission work, also read [the handover](HANDOVER_UC01.md),
 [the slice plan](UC01_ADMISSION_PLAN.md), [identity acceptance](IDENTITY_ACCEPTANCE.md),
-[requirements v1.4](requirements/Enterprise_MCP_Identity_Authorization_Requirements_v1.4.md)
-and [ADR 0008](decisions/0008-uc01-admission-first.md). Design and implementation
-are pending; obtain catalog v1.3 before finalizing its contracts. Follow U1-U5,
-record the architecture choices separately and keep baseline identity evidence
-separate from completed foundation evidence. The original full-milestone prompt
-does not expand a UC-01 request into all enterprise phases.
+[catalog acceptance](CATALOG_ACCEPTANCE.md),
+[requirements v1.4](requirements/Enterprise_MCP_Identity_Authorization_Requirements_v1.4.md),
+[catalog v1.3](requirements/Enterprise_MCP_Discovery_Catalog_Requirements_v1.3.md)
+and [ADR 0009](decisions/0009-uc01-local-admission-design.md). Local UC-01 is
+implemented with executed mock evidence; U5 and full-release acceptance remain
+partial/pending. Catalog v1.3 has been supplied and reviewed. Keep enterprise
+identity/catalog evidence separate from completed foundation evidence. Recommended
+UC-03 work requires its own requested scope; a handover does not start it.
 
 The original `docs/IMPLEMENTATION_PROMPT.md` requests the entire milestone. A user asking for a single stage narrows the work to that stage. Do not silently convert a scaffolding request into full implementation. For an explicitly requested full milestone, continue through 1A-1E and do not pause for routine confirmations.
 
@@ -23,7 +25,7 @@ The original `docs/IMPLEMENTATION_PROMPT.md` requests the entire milestone. A us
 4. Implement the smallest useful slice. Keep the coordinator independent, request handling asynchronous, and the catalog/REST/SDK responsibilities clear.
 5. Run meaningful tests against mocks; protocol changes require SDK-client integration. Then run Wrapper `verify`. Investigate failures instead of suppressing them or loosening assertions to obtain green output.
 6. Inspect the diff. Update plan state and acceptance evidence only for proven behavior. Append a worklog entry with exact commands, results, limitations and next action.
-7. Report what changed, what was tested and what remains. Do not commit, push or deploy without an explicit request. Do not delete files without permission.
+7. Report what changed, what was tested and what remains. The standing repository instruction authorizes committing completed work and pushing to origin after relevant checks. Deployment needs a separate request. Do not delete files without permission.
 
 No project hook invokes tests, model calls or worker allocation automatically. The workflows use repository instructions, shared prompts and normal build commands. They do not require installing external plugins or MCP servers.
 

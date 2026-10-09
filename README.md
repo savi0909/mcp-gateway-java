@@ -29,6 +29,10 @@ The [plan](docs/UC01_ADMISSION_PLAN.md) and [catalog tracker](docs/CATALOG_ACCEP
 record tested scope and limits; [all 32 identity acceptance criteria](docs/IDENTITY_ACCEPTANCE.md) remain
 required for the full first release, separately from foundation evidence.
 
+For resuming work, use the [UC-01 handover](docs/HANDOVER_UC01.md), which records
+the pushed implementation baseline, verification evidence, remaining gaps and
+recommended UC-03 scope.
+
 Start with the [independent standalone mock demo](docs/MOCK_DEMO.md). For caller
 security and the response-loss/cancellation demonstration, see
 [the secured foundation guide](docs/SECURED_MCP.md) and
@@ -139,9 +143,11 @@ Public metadata, method/path/body/JSON Pointer and version-3 argument mappings b
 
 Pinned baseline: Java 21, Spring Boot 4.0.8, Spring AI BOM 2.0.1, Maven 3.9.11, Wrapper 3.3.4. The WebFlux MCP server starter is BOM-managed; the build adds no model starter or independently pinned MCP SDK. Surefire runs `*Test`; Failsafe runs `*IT` during `verify`.
 
-Final command: `.\mvnw.cmd -B -ntp '-Dgateway.build-directory=target/foundation' verify`
-passed with 121 Surefire and 20 Failsafe tests, zero failures/errors/skips, and an
-executable JAR. The separate build directory avoids the existing Windows demo's
+Final combined verification on 2026-10-08:
+`.\mvnw.cmd -B -ntp '-Dgateway.build-directory=target/foundation' verify`
+passed with 128 Surefire and 34 Failsafe tests, zero failures/errors/skips, and an
+executable JAR. This includes the original foundation's 121/20 tests. The separate
+build directory avoids the existing Windows demo's
 JAR lock. CI executes full tests on Windows/Linux; no hosted CI run is claimed.
 Boot 4.0.8 manages Spring Security 7.0.7 and Nimbus 10.4; AI/SDK versions stay pinned.
 
