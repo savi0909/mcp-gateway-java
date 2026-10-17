@@ -162,10 +162,11 @@ must be labeled as such; it does not establish live identity-provider integratio
 
 Reuse evidence and patterns from the [secured foundation](SECURED_MCP.md): JWT
 validation, SDK-owned protocol handling, trusted asynchronous context, Origin and
-negative-counter tests. Existing Caller lacks separate app/human/delegation and
-organization facts; TenantPolicy is immutable and specific to coordinator tools;
-shared discovery and terminal logs do not meet enterprise filtering/durable audit.
-These are extension points, not already verified v1.4 capabilities.
+negative-counter tests. The foundation's Caller/TenantPolicy remain separate
+from the implemented UC-01 AdmissionIdentity/AdmissionService and scoped journal.
+FilteredMcpTransport supplies caller-specific discovery through public SDK SPI.
+These local ordinary-read extensions have executed evidence; full v1.4 lifecycle,
+workload, approval, provider and retention guarantees remain partial/pending.
 
 v1.4 selects behavior, not vendors or token formats. ADR 0009 records this
 increment's proof mapping, persistence, publication consistency, audit recovery,

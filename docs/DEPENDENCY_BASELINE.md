@@ -1,6 +1,9 @@
 # Verified dependency and API baseline
 
-Checked on 2026-10-07 for this scaffold. This is source inspection and build evidence, not a completed protocol integration.
+Initial source/API inspection: 2026-10-07. Later foundation and UC-01 protocol
+verification is recorded in [WORKLOG](../WORKLOG.md) and the acceptance trackers;
+the current combined baseline is 128 unit/startup and 34 integration tests.
+The stack below is unchanged. Dated initial observations are historical evidence.
 
 | Component | Version / evidence |
 | --- | --- |
@@ -20,17 +23,19 @@ Checked on 2026-10-07 for this scaffold. This is source inspection and build evi
 - SDK `AsyncToolSpecification` contains an `McpSchema.Tool` and a `BiFunction<McpAsyncServerExchange, McpSchema.CallToolRequest, Mono<McpSchema.CallToolResult>>`. Its builder offers `tool(...)`, `callHandler(...)`, and `build()`.
 - `CallToolResult.Builder` supports `structuredContent(Object)` and `isError(Boolean)`. Construct success/error results using resolved SDK types; execution tests must prove advertised-schema behavior.
 - `HttpClientStreamableHttpTransport.builder(String baseUri)` supports `.endpoint(String)` and `.build()`. Configure the origin and endpoint separately rather than guessing URL concatenation.
-- `McpClient.async(McpClientTransport)` builds an async client with configurable `requestTimeout(Duration)`. `McpAsyncClient` exposes reactive `initialize()`, `listTools()`, `callTool(CallToolRequest)` and `closeGracefully()`. Integration/smoke code must perform initialization and bounded cleanup; no client has yet negotiated with this scaffold.
+- `McpClient.async(McpClientTransport)` builds an async client with configurable `requestTimeout(Duration)`. `McpAsyncClient` exposes reactive `initialize()`, `listTools()`, `callTool(CallToolRequest)` and `closeGracefully()`. Integration/smoke code performs initialization and bounded cleanup; real Boot/SDK tests now verify protocol `2025-11-25`.
 
-These signatures were read from the Maven Central source JARs corresponding to the resolved binaries. They still need compilation and behavioral verification in the stages that use them.
+These signatures were read from matching Maven Central source JARs. Subsequent
+compilation and protocol tests verify their actual use; new API changes still
+require inspection against the pinned resolved binaries.
 
 ## Starter properties inspected
 
 The 2.0.1 configuration metadata confirms `enabled`, `name`, `version`, `type`, `protocol`, `request-timeout`, `annotation-scanner.enabled`, `capabilities.{tool,resource,prompt,completion}`, the three change-notification flags, and `streamable-http.mcp-endpoint`, under `spring.ai.mcp.server`.
 
-`tool-callback-converter` is enforced by a `ConditionalOnProperty` in `ToolCallbackConverterAutoConfiguration` even though it is absent from the inspected configuration metadata list. It is explicitly false in the scaffold to support later low-level registration.
+`tool-callback-converter` is enforced by a `ConditionalOnProperty` in `ToolCallbackConverterAutoConfiguration` even though it is absent from the inspected configuration metadata list. It remains explicitly false alongside the implemented low-level registration.
 
-The WebFlux streamable transport source uses `McpServerStreamableHttpProperties.getMcpEndpoint()` to configure its transport route. Keep the fixed endpoint `/worker-coordinator/mcp`. Application-specific `gateway.*` keys are proposed properties to implement, not starter behavior.
+The WebFlux streamable transport source uses `McpServerStreamableHttpProperties.getMcpEndpoint()` to configure its transport route. Keep the fixed endpoint `/worker-coordinator/mcp`. Application-specific `gateway.*` keys are implemented by GatewayProperties; they are not starter properties.
 
 ## Reproduce and continue
 
@@ -46,7 +51,13 @@ Wrapper properties include SHA-256 checksums for the Maven distribution and wrap
 
 Stage 1B inspection: resolved Reactor Netty HTTP/core 1.3.7, Spring WebFlux 7.0.9 and Jackson 3.1.5. Read their matching source artifacts, including `HttpClient.disableRetry(boolean)`, `followRedirect(boolean)`, `responseTimeout(Duration)`, `ConnectionProvider` pool/queue/acquire bounds, WebClient's response release behavior, JSON Pointer compilation and integral-number parsing. The executor explicitly disables connector retries and redirects, uses a total Reactor deadline, and joins raw DataBuffers with a byte limit. WebClient body release can drain an unconsumed error response; the executor subscribes and cancels that body before release.
 
-User-authorized application retries are described in ADR 0002. Payment SDK tool/client APIs now compile and the local live demo negotiated `2025-11-25`, discovered `create_sample_payment` and completed two invocations. Final automated connector/error/catalog tests remain deferred; successful live calls do not prove failure-induced retry recovery. The SDK's three-argument `CallToolRequest(name, arguments, meta)` is used; its older two-argument constructor is deprecated in 2.0.0.
+User-authorized application retries are described in ADR 0002. The historical
+local live demo negotiated `2025-11-25`, discovered `create_sample_payment` and
+completed two invocations. Subsequent independent connector/error/catalog and
+response-loss tests now supply bounded failure/retry evidence. Live successful
+calls alone do not prove that behavior. The SDK's three-argument
+`CallToolRequest(name, arguments, meta)` is used; its older two-argument constructor
+is deprecated in 2.0.0. UC-01 authorized reads use a separate single-attempt path.
 
 ## Official references
 

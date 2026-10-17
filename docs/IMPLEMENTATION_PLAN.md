@@ -9,6 +9,29 @@ control plane) are pending and separate from this completed foundation milestone
 Recording that direction does not begin implementation or change acceptance rows.
 The subsequent owner-selected UC-01 prerequisite refines execution order below.
 
+## Engineering harness Phase 1
+
+Owner-requested on 2026-10-17; separate from gateway product milestones. The
+[refined handover plan](handover/refined-autonomous-development-plan.md),
+[ADR 0010](decisions/0010-engineering-harness.md) and [usage guide](HARNESS.md)
+govern the bounded standard-library Python runner. Preserve existing requirements
+and acceptance identifiers; this work does not implement UC-03 or federation.
+
+P1-01–P1-11 are directly bootstrapped in this phase: strict task state and approval
+hashes, independent cross-platform verification, dry-run, isolated worktrees/OS
+locking, fresh Codex process adapter, candidate/report validation, independent
+review and three-repair limit, interruption/commit reconciliation, mocked lifecycle
+tests, disabled batch and usage/handoff documentation. Final executed evidence is
+recorded in [the handover](HANDOVER_PHASE1.md) and WORKLOG.
+
+Phase 1 state: **complete within the mocked runner boundary**. The final 49-test
+harness suite passes; the actual PowerShell verifier passes 128 unit/startup and
+34 integration tests, all with zero failures/errors/skips. CLI/model preflight and
+dry-run pass; real Codex sandbox/provider execution and hosted Linux CI remain
+unverified. `tasks/backlog.json` contains 12
+pending future tasks; the proposed real pilot is `PILOT-01`. Phase 2 approval and
+batch approval are separate gates. No product acceptance row is promoted here.
+
 ## Selected slice: UC-01 (local implementation; release incomplete)
 
 Follow [UC01_ADMISSION_PLAN.md](UC01_ADMISSION_PLAN.md) and

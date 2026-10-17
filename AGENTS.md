@@ -91,6 +91,17 @@ tenant-aware; caller JWTs never become downstream bearer tokens.
 
 ## Working and handoff rules
 
+The approved engineering harness is documented in `docs/HARNESS.md` and ADR 0010.
+Phase 1 builds/tests the runner only; the real pilot and batch require separate
+owner approval. `tasks/backlog.json` is the machine task-state authority. Run the
+trusted harness from its controlling checkout, never from an agent's candidate
+worktree. An assigned task may change only its exact approved paths. Agents must
+not edit task approval/state, verification policy, the harness, build or CI;
+must not stage/commit/push themselves; and must not delete files or spawn agents.
+The external runner owns independent validation/review and scoped Git commits.
+For harness changes run `python -B -m unittest discover -s harness/tests -v`;
+preserve test fixtures and worktrees until deletion is explicitly authorized.
+
 Work in the stage order in `docs/IMPLEMENTATION_PLAN.md`; implement only the requested scope. When asked for the full milestone, continue through all stages without routine confirmation. Explain consequential choices briefly so the user can learn the code.
 
 Preserve the supplied handoff documents and unrelated changes. Do not delete files or directories, run `clean`, reset/discard work, or use destructive Git commands without explicit user permission. The user's standing instruction is to commit completed repository work and push to `origin` after the relevant checks; no repeated confirmation is needed. Do not publish releases, deploy, or modify the live coordinator unless requested. Do not spawn additional agents unless requested.

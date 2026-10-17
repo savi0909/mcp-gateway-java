@@ -1,6 +1,9 @@
 # Refined autonomous-development plan
 
-Date: 2026-10-17. Status: **proposed; awaiting Phase 0 approval**.
+Date: 2026-10-17. Status: **Phase 1 approved by the owner; implementation/evidence
+recorded in [ADR 0010](../decisions/0010-engineering-harness.md) and
+[the Phase 1 handover](../HANDOVER_PHASE1.md)**. The sections below preserve the
+reviewed proposal; pilot and batch remain separate approval gates.
 Baseline: `1e1c4fe9411321804d4019d19467e6951c7ba63d`.
 Read the [repository assessment](repository-assessment.md) for inspected source,
 implemented boundaries, exact verification and limitations.
@@ -310,11 +313,12 @@ single machine task-state authority, trust boundary, model/default limits and
 Windows-first verification approach. The concrete plan above is reviewable; no
 implementation or batch permission is inferred from its existence.
 
-Current readiness: repository baseline available; harness **dry-run not ready**;
-**single-task pilot not ready**; **batch disabled/not approved**. Phase 1 ends only
+Original Phase 0 readiness: repository baseline available; harness dry-run and
+single-task pilot were not ready; batch disabled/not approved. Phase 1 ends only
 when P1-01–P1-11 have executed evidence and separate readiness verdicts, with any
 unavailable host/sandbox/model behavior labeled unverified. Stop there for pilot
 approval, and stop again after the pilot for bounded-batch approval.
 
-Phase 1 has not started. The next action is the owner's approval of this refined
-Phase 1 plan, as required by the supplied handover's first-run stop condition.
+The owner subsequently requested Phase 1 and then its completion plus a handover.
+See the linked Phase 1 handover for current evidence and readiness. This approval
+does not start the real pilot or authorize batch execution.

@@ -1,0 +1,22 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "verdict": {"type": "string", "enum": ["approve", "request_changes"]},
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "severity": {"type": "string", "enum": ["low", "medium", "high", "critical"]},
+          "code": {"type": "string", "enum": ["correctness", "test_weakened", "scope_violation", "evidence_gap", "security_boundary"]},
+          "file": {"type": "string", "minLength": 1},
+          "line": {"type": "integer", "minimum": 1}
+        },
+        "required": ["severity", "code", "file", "line"]
+      }
+    }
+  },
+  "required": ["verdict", "findings"]
+}

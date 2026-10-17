@@ -28,6 +28,12 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
+      - name: Set up Python 3.13 for the engineering harness
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Verify engineering harness with isolated fake processes
+        run: python -B -m unittest discover -s harness/tests -v
       - name: Verify on Linux
         if: runner.os != 'Windows'
         run: sh ./mvnw -B -ntp verify

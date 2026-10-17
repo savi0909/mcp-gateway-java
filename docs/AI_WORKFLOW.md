@@ -27,7 +27,11 @@ The original `docs/IMPLEMENTATION_PROMPT.md` requests the entire milestone. A us
 6. Inspect the diff. Update plan state and acceptance evidence only for proven behavior. Append a worklog entry with exact commands, results, limitations and next action.
 7. Report what changed, what was tested and what remains. The standing repository instruction authorizes committing completed work and pushing to origin after relevant checks. Deployment needs a separate request. Do not delete files without permission.
 
-No project hook invokes tests, model calls or worker allocation automatically. The workflows use repository instructions, shared prompts and normal build commands. They do not require installing external plugins or MCP servers.
+No project hook invokes tests, model calls or worker allocation automatically.
+The optional [engineering harness](HARNESS.md) runs only when explicitly invoked
+for an approved task. It uses existing requirements and normal Wrapper commands;
+no external plugin or MCP-server installation is required. Runner-owned state,
+independent verification and review are separate from the implementation agent.
 
 ## Review a stage
 
@@ -77,7 +81,8 @@ Do not edit files or run live allocations.
 Prepare a factual handoff in WORKLOG.md: current behavior, changed files,
 commands/results, unfinished work, unresolved questions and the next
 specific task. Update stage and acceptance states only with evidence.
-Do not commit or discard work. The next session may use a different AI tool.
+Preserve unfinished/unrelated work. Commit completed verified work and push under
+the standing owner instruction; do not discard work. The next session may use a different AI tool.
 ```
 
 ## Worklog entry template

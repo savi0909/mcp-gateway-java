@@ -1,0 +1,463 @@
+{
+  "schema_version": 1,
+  "pilot_authorization": null,
+  "tasks": [
+    {
+      "id": "PILOT-01",
+      "title": "Prove ordinary catalog membership activation",
+      "status": "pending",
+      "priority": "high",
+      "risk": "low",
+      "dependencies": [],
+      "spec_refs": [
+        "docs/handover/refined-autonomous-development-plan.md",
+        "docs/IDENTITY_ACCEPTANCE.md",
+        "docs/CATALOG_ACCEPTANCE.md"
+      ],
+      "scope": [
+        "src/test/java/dev/mcp/gateway/admission/Uc01AdmissionIT.java",
+        "src/test/java/dev/mcp/gateway/admission/AdmissionFixtures.java",
+        "docs/CATALOG_ACCEPTANCE.md",
+        "WORKLOG.md"
+      ],
+      "acceptance_criteria": [
+        "Membership absent: hidden discovery and zero direct business calls",
+        "Authorized owner activates pinned ordinary membership; same SDK session discovers and executes exactly one read",
+        "Unauthorized owner cannot activate; scoped before/after audit contains no credential"
+      ],
+      "tests": [
+        "maven-verify"
+      ],
+      "requires_human_approval": true,
+      "review_required": true,
+      "model_role": "implement",
+      "phase": 2,
+      "base_commit": "62baec97862e28b2cfa80bb9e1cb804ea51ad41e",
+      "approval": null,
+      "attempts": 0,
+      "run_id": null,
+      "content_commit": null,
+      "evidence": null,
+      "block_reason": null
+    },
+    {
+      "id": "AUDIT-01",
+      "title": "Specify pre-identity authentication audit contract",
+      "status": "pending",
+      "priority": "high",
+      "risk": "high",
+      "dependencies": [
+        "PILOT-01"
+      ],
+      "spec_refs": [
+        "docs/handover/refined-autonomous-development-plan.md",
+        "docs/IDENTITY_ACCEPTANCE.md",
+        "docs/CATALOG_ACCEPTANCE.md"
+      ],
+      "scope": [
+        "docs/decisions/0011-authentication-audit-contract.md",
+        "WORKLOG.md"
+      ],
+      "acceptance_criteria": [
+        "Define trustworthy attribution, redaction, durable failure semantics and bounded denial logging",
+        "Obtain owner contract approval before implementation"
+      ],
+      "tests": [
+        "maven-verify"
+      ],
+      "requires_human_approval": true,
+      "review_required": true,
+      "model_role": "complex_implement",
+      "phase": 3,
+      "base_commit": "62baec97862e28b2cfa80bb9e1cb804ea51ad41e",
+      "approval": null,
+      "attempts": 0,
+      "run_id": null,
+      "content_commit": null,
+      "evidence": null,
+      "block_reason": null
+    },
+    {
+      "id": "AUDIT-02",
+      "title": "Implement approved authentication audit boundary",
+      "status": "pending",
+      "priority": "high",
+      "risk": "high",
+      "dependencies": [
+        "AUDIT-01"
+      ],
+      "spec_refs": [
+        "docs/handover/refined-autonomous-development-plan.md",
+        "docs/IDENTITY_ACCEPTANCE.md",
+        "docs/CATALOG_ACCEPTANCE.md"
+      ],
+      "scope": [
+        "src/main/java/dev/mcp/gateway/security/SecurityConfiguration.java",
+        "src/test/java/dev/mcp/gateway/mcp/SecuredGatewayIT.java",
+        "WORKLOG.md"
+      ],
+      "acceptance_criteria": [
+        "Reject invalid tokens with no business execution",
+        "Durable sanitized authentication-denial evidence under approved audit contract"
+      ],
+      "tests": [
+        "maven-verify"
+      ],
+      "requires_human_approval": true,
+      "review_required": true,
+      "model_role": "complex_implement",
+      "phase": 3,
+      "base_commit": "62baec97862e28b2cfa80bb9e1cb804ea51ad41e",
+      "approval": null,
+      "attempts": 0,
+      "run_id": null,
+      "content_commit": null,
+      "evidence": null,
+      "block_reason": null
+    },
+    {
+      "id": "AUDIT-03",
+      "title": "Design controlled retention and journal recovery",
+      "status": "pending",
+      "priority": "high",
+      "risk": "high",
+      "dependencies": [
+        "PILOT-01"
+      ],
+      "spec_refs": [
+        "docs/handover/refined-autonomous-development-plan.md",
+        "docs/IDENTITY_ACCEPTANCE.md",
+        "docs/CATALOG_ACCEPTANCE.md"
+      ],
+      "scope": [
+        "docs/decisions/0012-audit-retention-design.md",
+        "WORKLOG.md"
+      ],
+      "acceptance_criteria": [
+        "Specify 90-day retention, archival, capacity, restart and controlled expiry",
+        "No deletion implementation until explicitly authorized"
+      ],
+      "tests": [
+        "maven-verify"
+      ],
+      "requires_human_approval": true,
+      "review_required": true,
+      "model_role": "complex_implement",
+      "phase": 3,
+      "base_commit": "62baec97862e28b2cfa80bb9e1cb804ea51ad41e",
+      "approval": null,
+      "attempts": 0,
+      "run_id": null,
+      "content_commit": null,
+      "evidence": null,
+      "block_reason": null
+    },
+    {
+      "id": "IDENTITY-01",
+      "title": "Prove authority-scoped stable human identity",
+      "status": "pending",
+      "priority": "high",
+      "risk": "medium",
+      "dependencies": [
+        "PILOT-01"
+      ],
+      "spec_refs": [
+        "docs/handover/refined-autonomous-development-plan.md",
+        "docs/IDENTITY_ACCEPTANCE.md",
+        "docs/CATALOG_ACCEPTANCE.md"
+      ],
+      "scope": [
+        "src/test/java/dev/mcp/gateway/admission/Uc01AdmissionIT.java",
+        "src/test/java/dev/mcp/gateway/admission/AdmissionFixtures.java",
+        "docs/IDENTITY_ACCEPTANCE.md",
+        "WORKLOG.md"
+      ],
+      "acceptance_criteria": [
+        "Display/email variation cannot transfer authority",
+        "Equal email from a different authority cannot inherit grants"
+      ],
+      "tests": [
+        "maven-verify"
+      ],
+      "requires_human_approval": true,
+      "review_required": true,
+      "model_role": "implement",
+      "phase": 3,
+      "base_commit": "62baec97862e28b2cfa80bb9e1cb804ea51ad41e",
+      "approval": null,
+      "attempts": 0,
+      "run_id": null,
+      "content_commit": null,
+      "evidence": null,
+      "block_reason": null
+    },
+    {
+      "id": "CATALOG-01",
+      "title": "Expand unauthorized catalog owner matrix",
+      "status": "pending",
+      "priority": "high",
+      "risk": "medium",
+      "dependencies": [
+        "PILOT-01"
+      ],
+      "spec_refs": [
+        "docs/handover/refined-autonomous-development-plan.md",
+        "docs/IDENTITY_ACCEPTANCE.md",
+        "docs/CATALOG_ACCEPTANCE.md"
+      ],
+      "scope": [
+        "src/test/java/dev/mcp/gateway/admission/Uc01AdmissionIT.java",
+        "docs/CATALOG_ACCEPTANCE.md",
+        "WORKLOG.md"
+      ],
+      "acceptance_criteria": [
+        "Cross-tenant/non-owner requests denied without membership change",
+        "Other catalog remains unaffected with exact execution counters"
+      ],
+      "tests": [
+        "maven-verify"
+      ],
+      "requires_human_approval": true,
+      "review_required": true,
+      "model_role": "implement",
+      "phase": 3,
+      "base_commit": "62baec97862e28b2cfa80bb9e1cb804ea51ad41e",
+      "approval": null,
+      "attempts": 0,
+      "run_id": null,
+      "content_commit": null,
+      "evidence": null,
+      "block_reason": null
+    },
+    {
+      "id": "REVOKE-01",
+      "title": "Expand local publication and grant revocation evidence",
+      "status": "pending",
+      "priority": "high",
+      "risk": "medium",
+      "dependencies": [
+        "PILOT-01"
+      ],
+      "spec_refs": [
+        "docs/handover/refined-autonomous-development-plan.md",
+        "docs/IDENTITY_ACCEPTANCE.md",
+        "docs/CATALOG_ACCEPTANCE.md"
+      ],
+      "scope": [
+        "src/test/java/dev/mcp/gateway/admission/Uc01AdmissionIT.java",
+        "docs/IDENTITY_ACCEPTANCE.md",
+        "WORKLOG.md"
+      ],
+      "acceptance_criteria": [
+        "Revocation affects subsequent admission on existing sessions",
+        "Denied requested-tool execution and protected output counters remain zero"
+      ],
+      "tests": [
+        "maven-verify"
+      ],
+      "requires_human_approval": true,
+      "review_required": true,
+      "model_role": "implement",
+      "phase": 3,
+      "base_commit": "62baec97862e28b2cfa80bb9e1cb804ea51ad41e",
+      "approval": null,
+      "attempts": 0,
+      "run_id": null,
+      "content_commit": null,
+      "evidence": null,
+      "block_reason": null
+    },
+    {
+      "id": "WORKLOAD-01",
+      "title": "Design UC-03 workload-read identity contract",
+      "status": "pending",
+      "priority": "high",
+      "risk": "high",
+      "dependencies": [
+        "IDENTITY-01",
+        "REVOKE-01"
+      ],
+      "spec_refs": [
+        "docs/handover/refined-autonomous-development-plan.md",
+        "docs/IDENTITY_ACCEPTANCE.md",
+        "docs/CATALOG_ACCEPTANCE.md"
+      ],
+      "scope": [
+        "docs/decisions/0013-uc03-workload-read-design.md",
+        "WORKLOG.md"
+      ],
+      "acceptance_criteria": [
+        "Separate workload/application with no represented-human fallback",
+        "Define lifecycle, grants, credential binding, audit and revocation tests"
+      ],
+      "tests": [
+        "maven-verify"
+      ],
+      "requires_human_approval": true,
+      "review_required": true,
+      "model_role": "complex_implement",
+      "phase": 3,
+      "base_commit": "62baec97862e28b2cfa80bb9e1cb804ea51ad41e",
+      "approval": null,
+      "attempts": 0,
+      "run_id": null,
+      "content_commit": null,
+      "evidence": null,
+      "block_reason": null
+    },
+    {
+      "id": "WORKLOAD-02",
+      "title": "Implement approved workload-read slice",
+      "status": "pending",
+      "priority": "high",
+      "risk": "high",
+      "dependencies": [
+        "WORKLOAD-01"
+      ],
+      "spec_refs": [
+        "docs/handover/refined-autonomous-development-plan.md",
+        "docs/IDENTITY_ACCEPTANCE.md",
+        "docs/CATALOG_ACCEPTANCE.md"
+      ],
+      "scope": [
+        "src/main/java/dev/mcp/gateway/admission/AdmissionIdentity.java",
+        "src/main/java/dev/mcp/gateway/admission/AdmissionPolicy.java",
+        "src/main/java/dev/mcp/gateway/admission/AdmissionService.java",
+        "src/test/java/dev/mcp/gateway/admission/Uc01AdmissionIT.java",
+        "WORKLOG.md"
+      ],
+      "acceptance_criteria": [
+        "Ordinary internal workload read intersects explicit app/workload grants",
+        "Sensitive reads, mutations and third-party contexts remain disabled"
+      ],
+      "tests": [
+        "maven-verify"
+      ],
+      "requires_human_approval": true,
+      "review_required": true,
+      "model_role": "complex_implement",
+      "phase": 3,
+      "base_commit": "62baec97862e28b2cfa80bb9e1cb804ea51ad41e",
+      "approval": null,
+      "attempts": 0,
+      "run_id": null,
+      "content_commit": null,
+      "evidence": null,
+      "block_reason": null
+    },
+    {
+      "id": "WORKLOAD-03",
+      "title": "Prove mixed delegated/workload context isolation",
+      "status": "pending",
+      "priority": "high",
+      "risk": "high",
+      "dependencies": [
+        "WORKLOAD-02"
+      ],
+      "spec_refs": [
+        "docs/handover/refined-autonomous-development-plan.md",
+        "docs/IDENTITY_ACCEPTANCE.md",
+        "docs/CATALOG_ACCEPTANCE.md"
+      ],
+      "scope": [
+        "src/test/java/dev/mcp/gateway/admission/Uc01AdmissionIT.java",
+        "src/test/java/dev/mcp/gateway/admission/AdmissionFixtures.java",
+        "docs/IDENTITY_ACCEPTANCE.md",
+        "WORKLOG.md"
+      ],
+      "acceptance_criteria": [
+        "100 interleaved calls preserve app/principal/tenant credentials and audit scope",
+        "Forged human attribution cannot increase workload scope"
+      ],
+      "tests": [
+        "maven-verify"
+      ],
+      "requires_human_approval": true,
+      "review_required": true,
+      "model_role": "complex_implement",
+      "phase": 3,
+      "base_commit": "62baec97862e28b2cfa80bb9e1cb804ea51ad41e",
+      "approval": null,
+      "attempts": 0,
+      "run_id": null,
+      "content_commit": null,
+      "evidence": null,
+      "block_reason": null
+    },
+    {
+      "id": "APPROVAL-01",
+      "title": "Design UC-02 exact-action single-use approval",
+      "status": "pending",
+      "priority": "high",
+      "risk": "high",
+      "dependencies": [
+        "WORKLOAD-03",
+        "AUDIT-03"
+      ],
+      "spec_refs": [
+        "docs/handover/refined-autonomous-development-plan.md",
+        "docs/IDENTITY_ACCEPTANCE.md",
+        "docs/CATALOG_ACCEPTANCE.md"
+      ],
+      "scope": [
+        "docs/decisions/0014-uc02-approval-design.md",
+        "WORKLOG.md"
+      ],
+      "acceptance_criteria": [
+        "Independent exact-action approval expires within 10 minutes",
+        "Concurrent consumption, revocation and uncertain mutations cannot cause automatic replay"
+      ],
+      "tests": [
+        "maven-verify"
+      ],
+      "requires_human_approval": true,
+      "review_required": true,
+      "model_role": "complex_implement",
+      "phase": 3,
+      "base_commit": "62baec97862e28b2cfa80bb9e1cb804ea51ad41e",
+      "approval": null,
+      "attempts": 0,
+      "run_id": null,
+      "content_commit": null,
+      "evidence": null,
+      "block_reason": null
+    },
+    {
+      "id": "PROVIDER-01",
+      "title": "Specify approved-provider credential trust boundary",
+      "status": "pending",
+      "priority": "high",
+      "risk": "high",
+      "dependencies": [
+        "WORKLOAD-03"
+      ],
+      "spec_refs": [
+        "docs/handover/refined-autonomous-development-plan.md",
+        "docs/IDENTITY_ACCEPTANCE.md",
+        "docs/CATALOG_ACCEPTANCE.md"
+      ],
+      "scope": [
+        "docs/decisions/0015-provider-trust-design.md",
+        "WORKLOG.md"
+      ],
+      "acceptance_criteria": [
+        "Define approved destinations, issuer/scope verification and least disclosure",
+        "Provider choices and positive external execution require separate approval"
+      ],
+      "tests": [
+        "maven-verify"
+      ],
+      "requires_human_approval": true,
+      "review_required": true,
+      "model_role": "complex_implement",
+      "phase": 3,
+      "base_commit": "62baec97862e28b2cfa80bb9e1cb804ea51ad41e",
+      "approval": null,
+      "attempts": 0,
+      "run_id": null,
+      "content_commit": null,
+      "evidence": null,
+      "block_reason": null
+    }
+  ]
+}
