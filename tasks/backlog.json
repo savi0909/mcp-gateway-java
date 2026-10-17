@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "pilot_authorization": null,
+  "pilot_authorization": "docs/handover/pilot01-authorization.md",
   "tasks": [
     {
       "id": "PILOT-01",
       "title": "Prove ordinary catalog membership activation",
-      "status": "pending",
+      "status": "ready",
       "priority": "high",
       "risk": "low",
       "dependencies": [],
@@ -28,12 +28,16 @@
       "tests": [
         "maven-verify"
       ],
-      "requires_human_approval": true,
+      "requires_human_approval": false,
       "review_required": true,
       "model_role": "implement",
       "phase": 2,
-      "base_commit": "62baec97862e28b2cfa80bb9e1cb804ea51ad41e",
-      "approval": null,
+      "base_commit": "200b7f943b57c44830b37360b95a1abd70c0ab57",
+      "approval": {
+        "reference": "docs/handover/pilot01-authorization.md",
+        "scope_sha256": "e313afbfb8f83aeae59166845f2baeaf06f3babfa754cdf37652a44ec4e38582",
+        "approved_by": "owner"
+      },
       "attempts": 0,
       "run_id": null,
       "content_commit": null,
