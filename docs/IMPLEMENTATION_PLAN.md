@@ -28,9 +28,16 @@ Phase 1 state: **complete within the mocked runner boundary**. The final 49-test
 harness suite passes; the actual PowerShell verifier passes 128 unit/startup and
 34 integration tests, all with zero failures/errors/skips. CLI/model preflight and
 dry-run pass; real Codex sandbox/provider execution and hosted Linux CI remain
-unverified. `tasks/backlog.json` contains 12
-pending future tasks; the proposed real pilot is `PILOT-01`. Phase 2 approval and
-batch approval are separate gates. No product acceptance row is promoted here.
+unverified. The owner subsequently authorized the single `PILOT-01` cycle
+([record](handover/pilot01-authorization.md)). Its first real attempt on
+2026-10-18 stopped with `Malformed Codex JSONL` before candidate validation,
+Maven verification or independent review. `tasks/backlog.json` records
+`needs_review`, one attempt and run `43d56cc99c694b6781f51674d0165b69`; the retained
+worktree is clean and the other 11 tasks remain pending. The pilot is incomplete.
+Next: separately scope and review process-adapter diagnosis/repair, then refresh
+approval against the repaired trusted baseline before another pilot attempt.
+Do not replay this run, reset its counter or infer batch approval. No product
+acceptance row is promoted here.
 
 ## Selected slice: UC-01 (local implementation; release incomplete)
 

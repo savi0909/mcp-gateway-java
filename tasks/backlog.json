@@ -5,7 +5,7 @@
     {
       "id": "PILOT-01",
       "title": "Prove ordinary catalog membership activation",
-      "status": "ready",
+      "status": "needs_review",
       "priority": "high",
       "risk": "low",
       "dependencies": [],
@@ -38,11 +38,11 @@
         "scope_sha256": "e313afbfb8f83aeae59166845f2baeaf06f3babfa754cdf37652a44ec4e38582",
         "approved_by": "owner"
       },
-      "attempts": 0,
-      "run_id": null,
+      "attempts": 1,
+      "run_id": "43d56cc99c694b6781f51674d0165b69",
       "content_commit": null,
       "evidence": null,
-      "block_reason": null
+      "block_reason": "Malformed Codex JSONL"
     },
     {
       "id": "AUDIT-01",

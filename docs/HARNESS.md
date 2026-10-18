@@ -6,9 +6,13 @@ trackers. See [ADR 0010](decisions/0010-engineering-harness.md), the
 [approved plan](handover/refined-autonomous-development-plan.md) and
 [Phase 1 handover](HANDOVER_PHASE1.md).
 
-The real pilot has not run. All 12 queued tasks are pending, with no pilot approval
-record. Batch is disabled. No gateway business behavior or dependency version is
-changed by this harness.
+The owner authorized `PILOT-01` after Phase 1; see the committed
+[authorization](handover/pilot01-authorization.md). The first real attempt on
+2026-10-18 stopped with `Malformed Codex JSONL` before candidate validation,
+Maven verification or independent review. Its state is `needs_review`, with one
+attempt and a clean retained worktree; the other 11 tasks remain pending. See
+WORKLOG for the run ID and evidence. Batch is disabled. No gateway business
+behavior or dependency version changed, and the real pilot is not complete.
 
 ## Files and responsibilities
 
