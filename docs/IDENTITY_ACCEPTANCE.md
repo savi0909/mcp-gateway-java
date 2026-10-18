@@ -102,9 +102,19 @@ Wrapper run and [ADR 0012](decisions/0012-local-admission-hardening.md).
 ## Executed UC-01 traceability
 
 All evidence below uses synthetic approved-issuer and independent HTTP fixtures.
-No row is promoted to full baseline completion: authentication failures before
-enterprise identity extraction are not yet durably audited; positive workloads,
-action approvals, provider integration and controlled physical retention remain.
+No row is promoted to full baseline completion. Early HTTP authentication
+rejections now have the durable sanitized evidence listed above; positive
+workloads, action approvals, provider integration and controlled physical
+retention remain outstanding.
+
+The 2026-10-18 U5 continuation adds `AdmissionBoundaryTest` evidence for frozen/
+backward clock snapshots, cursor boundary/anchor/timestamp validation, retained
+journal reopen, exact expiry during continuation, revoked reviewer roles, and
+rejection of a blue-tenant cursor by an independently authorized green-tenant
+reviewer. The real HTTP pagination test after SDK execution now injects a later
+backdated record and proves its exclusion. This supplements IA-AC-24/31; physical
+purge and full-release obligations remain outstanding. See
+[ADR 0013](decisions/0013-audit-export-append-boundary.md) and the latest WORKLOG.
 
 | IA rows | Named test evidence | Limits |
 | --- | --- | --- |

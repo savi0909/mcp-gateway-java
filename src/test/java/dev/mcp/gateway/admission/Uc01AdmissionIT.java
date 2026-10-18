@@ -367,6 +367,14 @@ class Uc01AdmissionIT {
             var body = AdmissionFixtures.JSON.readTree(response.body());
             for (var record : body.path("records")) records.add(AdmissionFixtures.JSON.convertValue(record, new tools.jackson.core.type.TypeReference<Map<String, Object>>() { }));
             snapshot = body.path("snapshotAt").asText(); next = body.path("nextCursor").asText(); if (next.isEmpty()) break;
+            if (page == 0) {
+                app.getBean(AdmissionJournal.class).appendAudit(Map.of("id", "late-backdated-page-record", "organization", "organization-north",
+                        "tenant", "tenant-blue", "decision", "LATE_FIXTURE", "at", java.time.Instant.parse(snapshot).minusSeconds(1).toString(),
+                        "retainUntil", java.time.Instant.now().plusSeconds(3600).toString()));
+                var missingSnapshot = http.send(HttpRequest.newBuilder(URI.create(origin + "/control/audit/page?after=" + next))
+                        .timeout(Duration.ofSeconds(4)).header("Authorization", "Bearer " + console("security-admin")).GET().build(), HttpResponse.BodyHandlers.ofString());
+                assertThat(missingSnapshot.statusCode()).isEqualTo(403);
+            }
         }
         assertThat(next).isEmpty(); assertThat(records).hasSize(2);
         assertThat(records).extracting(r -> r.get("decision")).containsExactly("ADMITTED", "OUTCOME");

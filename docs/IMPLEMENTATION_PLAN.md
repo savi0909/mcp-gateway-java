@@ -30,6 +30,14 @@ bounded audit pagination and expanded local revocation/catalog tests; see
 for final verification. Physical purge/external archival and broader release
 guarantees remain outstanding. This does not select workload/federation implementation.
 
+Continuation on 2026-10-18 corrects a bounded U5 defect within package A:
+audit pagination must freeze its append boundary even with repeated/backward wall
+clock timestamps. Preserve the HTTP response fields, current scoped authorization,
+retention filtering and durable access audit. Add deterministic regressions and
+real HTTP/SDK verification; keep U5 Partial and workload execution unselected.
+See [ADR 0013](decisions/0013-audit-export-append-boundary.md) and the
+[post-hardening U5 review](UC01_U5_REVIEW.md) for the result and remaining gaps.
+
 ## Selected slice: UC-01 (local implementation; release incomplete)
 
 Follow [UC01_ADMISSION_PLAN.md](UC01_ADMISSION_PLAN.md) and

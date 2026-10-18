@@ -11,7 +11,7 @@ IA-AC identifiers. Evidence is independent mock/SDK behavior, not live integrati
 
 | Source ID | State | Evidence and remaining scope |
 | --- | --- | --- |
-| AC-CAT-01 | Partial | Publishing v2 creates no membership; authorized owner removal is independent of another catalog; scoped owner requests are implemented. Full ordinary add/activate and unauthorized-owner catalog matrix remain to expand. |
+| AC-CAT-01 | Partial | Publishing v2 creates no membership; authorized owner removal is independent of another catalog; scoped owner requests are implemented. The 2026-10-18 owner reactivation/publisher-denial evidence below covers that local ordinary lifecycle. Broader registration/ownership combinations remain to expand. |
 | AC-GOV-01 | Partial | Sensitive request remains pending; sensitive execution is disabled. Positive separate approval, withdrawal and reassessment need the later approval increment. |
 | AC-DIS-01 | Partial | Two users of one app see different ordinary tools; direct hidden call fails; current context checked each invocation. Sensitive authorized-positive/workload paths are later. |
 | AC-VER-01 | Partial | Publishing v2 leaves v1 membership; retiring v1 denies without substitution; fingerprint mismatch denies. Migration approval/compatibility classification and retirement notice policy remain later. |
@@ -27,13 +27,13 @@ partial where broader registration/migration/approval/distributed coverage is ab
 
 | Tracker ID (source E2E suffix) | State | Executed evidence / remaining requirement |
 | --- | --- | --- |
-| CAT-E2E-01 | Partial | `scopesAuditAccessAndPreservesPinnedContracts`: publication adds no catalog entry. Ordinary explicit addition lifecycle needs broader end-to-end coverage. |
+| CAT-E2E-01 | Partial | `scopesAuditAccessAndPreservesPinnedContracts`: publication adds no catalog entry. `ordinaryMembershipRequiresTheCorrectOwnerAndCanBeExplicitlyReactivated` covers local removal/request/reactivation and publisher denial; broader initial registration/addition combinations remain. |
 | CAT-E2E-02 | Partial | `currentGrantIntersectionDelegationExpiryAndSensitiveMembershipAreEnforced`: sensitive membership stays PENDING; no sensitive execution enabled. Positive independent approval is later. |
 | CAT-E2E-03 | Verified for ordinary reads | `filtersPerUserAndEnforcesDirectCallsWithIsolatedCredentialsAndDurableAudit`: same app, different users receive one/two eligible tools. |
 | CAT-E2E-04 | Verified for ordinary reads | Same test and `sessionOwnershipAndUntrustedMetadataCannotChangeAuthority`: constructed hidden, cross-resource and forged-context calls produce errors with no protected output or requested read. |
 | CAT-E2E-05 | Verified for local pinning | `scopesAuditAccessAndPreservesPinnedContracts`: v2 publication does not alter v1 membership. |
 | CAT-E2E-06 | Verified for local catalogs | `membershipRemovalIsImmediateAndDoesNotAffectOtherCatalogs`: remove A, B still executes once with its own credentials. |
-| CAT-E2E-07 | Partial | Local membership/delegation revocation and contract retirement deny on existing sessions; broader suspended-publication matrix/distributed propagation remains later. |
+| CAT-E2E-07 | Partial | Local membership/delegation revocation, contract retirement, and the 2026-10-18 administrative server/publication suspension matrix deny on existing sessions. Distributed propagation and later execution modes remain later. |
 | CAT-E2E-08 | Pending | Third-party execution and positive provider approval are disabled. |
 | CAT-E2E-09 | Partial | Fingerprint mismatch denies; immutable new contract registration does not modify old membership. Compatibility classification and migration workflow remain later. |
 | CAT-E2E-10 | Partial | Membership request and revision changes audited, including before/after. No sensitive approval record exists yet. |

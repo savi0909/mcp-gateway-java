@@ -8,7 +8,15 @@ and verified product evidence to choose work here.
 
 ## Product state
 
-- Latest local hardening verification on 2026-10-18: **139 unit/startup and 38
+- U5 continuation fixes audit-export snapshots under repeated/backward wall
+  clocks: opaque cursors bind a scoped append boundary, with current permission
+  and expiry checks on every page. Read [ADR 0013](decisions/0013-audit-export-append-boundary.md)
+  and the latest WORKLOG verification: 143 unit/startup and 38 Boot/SDK integration
+  tests passed, zero failures/errors/skips, Wrapper `verify` in 2:06. Log:
+  `target/u5-pagination-final.log`; JAR/reports: `target/u5-pagination-final`.
+  U5 remains Partial; workload execution is still unselected.
+
+- Earlier local hardening verification on 2026-10-18: **139 unit/startup and 38
   Boot/SDK integration tests**, zero failures/errors/skips; Wrapper `verify`
   passed in 2:06. Log: `target/admission-hardening-final.log`; reports/JAR:
   `target/admission-hardening-final`. ADR 0012 adds rejection audit, retained
@@ -58,8 +66,14 @@ revocation/catalog evidence are implemented under ADR 0012. Read the latest
 WORKLOG verification before continuing. Physical audit purge/external archival,
 full-release identity modes and distributed guarantees remain outstanding.
 
+The [post-hardening U5 review](UC01_U5_REVIEW.md) separates the corrected export
+defect from remaining retention, topology, composed queue/revocation and recovery
+obligations. Use it with the latest evidence when selecting the next slice.
+
 Review remaining UC-01/U5 gaps before extending execution modes: physical retention
 operations, broader topology administration and release-wide revocation evidence.
+The timestamp-only pagination defect found during that review is corrected under
+ADR 0013; in-progress hash-only exports need to restart after updating binaries.
 The existing detailed handover proposes UC-03
 ordinary workload reads and mixed-context isolation after that review. Select
 a concrete gateway slice with its requirements and acceptance evidence before

@@ -426,33 +426,47 @@ public final class AdmissionService implements AutoCloseable {
         return disk(() -> {
             synchronized (journal) {
                 Instant snapshot = snapshotAt == null ? clock.instant() : snapshotAt;
-                if (limit < 1 || limit > 200 || snapshot.isAfter(clock.instant())
-                        || after != null && !after.matches("[0-9a-f]{64}")) throw AdmissionFailure.denied();
+                if (limit < 1 || limit > 200 || after == null && snapshot.isAfter(clock.instant())
+                        || after != null && (snapshotAt == null || !after.matches("[0-9a-f]{64}"))) throw AdmissionFailure.denied();
+                int end = after == null ? Integer.MAX_VALUE : Integer.parseUnsignedInt(after.substring(0, 8), 16);
+                int anchor = after == null ? 0 : Integer.parseUnsignedInt(after.substring(8, 16), 16);
+                if (end <= 0 || anchor < 0 || after != null && (anchor == 0 || anchor > end)) throw AdmissionFailure.denied();
                 var p = policies.current(); var c = administration(p, i);
                 if (!c.application().administration() || !i.scopes().contains("gateway:audit")
                         || !p.humans().get(c.human()).roles().getOrDefault(i.tenant(), Set.of()).contains("AUDIT_VIEWER")) throw AdmissionFailure.denied();
                 var records = new ArrayList<Map<String, Object>>(); boolean[] found = {after == null};
                 boolean[] more = {false}; int[] bytes = {0};
+                int[] position = {0}, last = {0};
                 try {
                     journal.visitAudits(record -> {
-                        if (!i.organization().equals(record.get("organization")) || !i.tenant().equals(record.get("tenant"))
-                                || !(record.get("at") instanceof String at) || Instant.parse(at).isAfter(snapshot)) return;
-                        if (!found[0]) { if (after.equals(auditCursor(record))) found[0] = true; return; }
+                        if (!i.organization().equals(record.get("organization")) || !i.tenant().equals(record.get("tenant"))) return;
+                        if (++position[0] > end) return;
+                        if (!found[0]) {
+                            if (position[0] == anchor && after.equals(auditCursor(i, snapshot, end, anchor, record))) found[0] = true;
+                            return;
+                        }
+                        if (!(record.get("at") instanceof String at) || Instant.parse(at).isAfter(snapshot)) return;
                         if (!(record.get("retainUntil") instanceof String until) || !Instant.parse(until).isAfter(clock.instant())) return;
                         int recordBytes = json.writeValueAsBytes(record).length;
                         if (!more[0] && records.size() < limit && bytes[0] + recordBytes <= 16 * 1024 * 1024) {
-                            records.add(record); bytes[0] += recordBytes;
+                            records.add(record); bytes[0] += recordBytes; last[0] = position[0];
                         }
                         else more[0] = true;
                     });
                 }
                 catch (IOException failure) { throw AdmissionFailure.unavailable(); }
-                if (!found[0]) throw AdmissionFailure.denied();
+                if (!found[0] || after != null && position[0] < end) throw AdmissionFailure.denied();
                 audit(Map.of("id", UUID.randomUUID().toString(), "organization", i.organization(), "tenant", i.tenant(), "actor", c.human(), "decision", "AUDIT_ACCESS"));
                 return Map.of("records", List.copyOf(records), "snapshotAt", snapshot.toString(),
-                        "nextCursor", more[0] ? auditCursor(records.getLast()) : "");
+                        "nextCursor", more[0] ? auditCursor(i, snapshot, after == null ? position[0] : end, last[0], records.getLast()) : "");
             }
         });
     }
-    private String auditCursor(Map<String, Object> record) { return SegmentedJournal.digest(json.writeValueAsBytes(record)); }
+    private String auditCursor(AdmissionIdentity i, Instant snapshot, int end, int position, Map<String, Object> record) {
+        String prefix = String.format(Locale.ROOT, "%08x%08x", end, position);
+        // Ordered fields keep the cursor stable across JVMs; Map.of iteration order is unspecified.
+        String digest = SegmentedJournal.digest(json.writeValueAsBytes(List.of(prefix,
+                i.organization(), i.tenant(), snapshot.toString(), record)));
+        return prefix + digest.substring(0, 48);
+    }
 }

@@ -98,4 +98,95 @@ class AdmissionBoundaryTest {
             assertThat(h.backend.count()).isZero();
         }
     }
+    @Test void auditSnapshotExcludesLaterWritesWithRepeatedOrBackwardTimestamps() throws Exception {
+        for (boolean backwards : List.of(false, true)) {
+            try (var h = new Harness()) {
+                var admin = new AdmissionIdentity("https://issuer.example", "admin-subject", "console", "organization-north", "tenant-blue",
+                        "ADMINISTRATION", "", "audit-snapshot", h.clock.now.plusSeconds(3600), Set.of("gateway:audit"));
+                for (int n = 0; n < 3; n++) h.journal.appendAudit(Map.of("id", "snapshot-" + n,
+                        "organization", "organization-north", "tenant", "tenant-blue", "decision", "SNAPSHOT_FIXTURE",
+                        "at", h.clock.now.toString(), "retainUntil", h.clock.now.plus(Duration.ofDays(90)).toString()));
+                var first = h.service.auditPage(admin, null, null, 1).block(Duration.ofSeconds(2));
+                String after = (String) first.get("nextCursor"); var snapshot = Instant.parse((String) first.get("snapshotAt"));
+                h.journal.appendAudit(Map.of("id", "late-same-time", "organization", "organization-north", "tenant", "tenant-blue",
+                        "decision", "LATE_FIXTURE", "at", h.clock.now.toString(), "retainUntil", h.clock.now.plusSeconds(3600).toString()));
+                if (backwards) h.clock.now = h.clock.now.minusSeconds(1);
+                h.journal.appendAudit(Map.of("id", "late-backward-time", "organization", "organization-north", "tenant", "tenant-blue",
+                        "decision", "LATE_FIXTURE", "at", h.clock.now.toString(), "retainUntil", h.clock.now.plusSeconds(3600).toString()));
+                var second = h.service.auditPage(admin, after, snapshot, 1).block(Duration.ofSeconds(2));
+                var third = h.service.auditPage(admin, (String) second.get("nextCursor"), snapshot, 1).block(Duration.ofSeconds(2));
+                assertThat(first.get("records").toString()).contains("snapshot-0").doesNotContain("AUDIT_ACCESS", "LATE_FIXTURE");
+                assertThat(second.get("records").toString()).contains("snapshot-1").doesNotContain("AUDIT_ACCESS", "LATE_FIXTURE");
+                assertThat(third.get("records").toString()).contains("snapshot-2").doesNotContain("AUDIT_ACCESS", "LATE_FIXTURE");
+                assertThat(third.get("nextCursor")).isEqualTo("");
+                assertThat(h.backend.count()).isZero();
+            }
+        }
+    }
+    @Test void auditCursorRejectsChangedBoundaryAnchorSnapshotAndMissingSnapshot() throws Exception {
+        try (var h = new Harness()) {
+            var admin = new AdmissionIdentity("https://issuer.example", "admin-subject", "console", "organization-north", "tenant-blue",
+                    "ADMINISTRATION", "", "audit-cursor", h.clock.now.plusSeconds(3600), Set.of("gateway:audit"));
+            for (int n = 0; n < 2; n++) h.journal.appendAudit(Map.of("id", "cursor-" + n,
+                    "organization", "organization-north", "tenant", "tenant-blue", "decision", "CURSOR_FIXTURE",
+                    "at", h.clock.now.toString(), "retainUntil", h.clock.now.plusSeconds(3600).toString()));
+            var page = h.service.auditPage(admin, null, null, 1).block(Duration.ofSeconds(2));
+            String cursor = (String) page.get("nextCursor"); var snapshot = Instant.parse((String) page.get("snapshotAt"));
+            assertThat(cursor).matches("[0-9a-f]{64}");
+            for (String changed : List.of("00000003" + cursor.substring(8), cursor.substring(0, 8) + "00000002" + cursor.substring(16), "f".repeat(64))) {
+                assertThatThrownBy(() -> h.service.auditPage(admin, changed, snapshot, 1).block(Duration.ofSeconds(2))).isInstanceOf(AdmissionFailure.class);
+            }
+            assertThatThrownBy(() -> h.service.auditPage(admin, cursor, snapshot.plusNanos(1), 1).block(Duration.ofSeconds(2))).isInstanceOf(AdmissionFailure.class);
+            assertThatThrownBy(() -> h.service.auditPage(admin, cursor, null, 1).block(Duration.ofSeconds(2))).isInstanceOf(AdmissionFailure.class);
+            assertThatThrownBy(() -> h.service.auditPage(admin, null, snapshot.plusNanos(1), 1).block(Duration.ofSeconds(2))).isInstanceOf(AdmissionFailure.class);
+            assertThat(h.backend.count()).isZero();
+        }
+    }
+    @Test void auditCursorSurvivesReopenButStillChecksCurrentRetentionAndReviewerAuthority() throws Exception {
+        try (var h = new Harness()) {
+            var admin = new AdmissionIdentity("https://issuer.example", "admin-subject", "console", "organization-north", "tenant-blue",
+                    "ADMINISTRATION", "", "audit-reopen", h.clock.now.plusSeconds(3600), Set.of("gateway:audit"));
+            for (int n = 0; n < 3; n++) h.journal.appendAudit(Map.of("id", "reopen-" + n,
+                    "organization", "organization-north", "tenant", "tenant-blue", "decision", "REOPEN_FIXTURE",
+                    "at", h.clock.now.toString(), "retainUntil", h.clock.now.plusSeconds(n < 2 ? 1 : 3600).toString()));
+            var first = h.service.auditPage(admin, null, null, 1).block(Duration.ofSeconds(2));
+            String cursor = (String) first.get("nextCursor"); var snapshot = Instant.parse((String) first.get("snapshotAt"));
+            h.service.close(); h.journal.close(); h.journal = new AdmissionJournal(h.settings); h.service = h.service(h.journal);
+            h.clock.now = h.clock.now.plusSeconds(1);
+            var remaining = h.service.auditPage(admin, cursor, snapshot, 200).block(Duration.ofSeconds(2));
+            assertThat(remaining.get("records").toString()).contains("reopen-2").doesNotContain("reopen-0", "reopen-1", "AUDIT_ACCESS");
+            assertThat(remaining.get("nextCursor")).isEqualTo("");
+            var p = h.journal.readPolicy(); var people = new HashMap<>(p.humans()); var viewer = people.get("security-admin");
+            people.put("security-admin", new AdmissionPolicy.Human(viewer.authority(), viewer.subject(), viewer.displayName(), viewer.status(), viewer.tenants(), Map.of()));
+            h.journal.writePolicy(p.next(people, p.applications(), p.servers(), p.capabilities(), p.catalogs(), p.delegations(), p.grants()));
+            assertThatThrownBy(() -> h.service.auditPage(admin, cursor, snapshot, 200).block(Duration.ofSeconds(2))).isInstanceOf(AdmissionFailure.class);
+            assertThat(h.journal.readAudits()).anyMatch(record -> "reopen-1".equals(record.get("id")));
+            assertThat(h.backend.count()).isZero();
+        }
+    }
+    @Test void auditCursorCannotBeReboundToAnotherIndependentlyAuthorizedTenant() throws Exception {
+        try (var h = new Harness()) {
+            var p = h.journal.readPolicy(); var people = new HashMap<>(p.humans()); var apps = new HashMap<>(p.applications());
+            var person = people.get("security-admin"); var console = apps.get("console"); var tenants = Set.of("tenant-blue", "tenant-green");
+            people.put("security-admin", new AdmissionPolicy.Human(person.authority(), person.subject(), person.displayName(), person.status(), tenants,
+                    Map.of("tenant-blue", Set.of("AUDIT_VIEWER"), "tenant-green", Set.of("AUDIT_VIEWER"))));
+            apps.put("console", new AdmissionPolicy.Application(console.organization(), console.owner(), console.status(), tenants, true));
+            h.journal.writePolicy(p.next(people, apps, p.servers(), p.capabilities(), p.catalogs(), p.delegations(), p.grants()));
+            for (String tenant : tenants) for (int n = 0; n < 2; n++) h.journal.appendAudit(Map.of("id", tenant + "-" + n,
+                    "organization", "organization-north", "tenant", tenant, "decision", "SCOPED_FIXTURE",
+                    "at", h.clock.now.toString(), "retainUntil", h.clock.now.plusSeconds(3600).toString()));
+            var blue = new AdmissionIdentity("https://issuer.example", "admin-subject", "console", "organization-north", "tenant-blue",
+                    "ADMINISTRATION", "", "audit-blue", h.clock.now.plusSeconds(3600), Set.of("gateway:audit"));
+            var green = new AdmissionIdentity(blue.authority(), blue.subject(), blue.application(), blue.organization(), "tenant-green",
+                    blue.mode(), blue.delegation(), "audit-green", blue.expiresAt(), blue.scopes());
+            var first = h.service.auditPage(blue, null, null, 1).block(Duration.ofSeconds(2));
+            String cursor = (String) first.get("nextCursor"); var snapshot = Instant.parse((String) first.get("snapshotAt"));
+            assertThat(h.service.auditPage(green, null, null, 1).block(Duration.ofSeconds(2)).get("records").toString()).contains("tenant-green-0");
+            assertThatThrownBy(() -> h.service.auditPage(green, cursor, snapshot, 1).block(Duration.ofSeconds(2))).isInstanceOf(AdmissionFailure.class);
+            var rest = h.service.auditPage(blue, cursor, snapshot, 200).block(Duration.ofSeconds(2));
+            assertThat(rest.get("records").toString()).contains("tenant-blue-1").doesNotContain("tenant-green", "AUDIT_ACCESS");
+            assertThat(rest.get("nextCursor")).isEqualTo("");
+            assertThat(h.backend.count()).isZero();
+        }
+    }
 }

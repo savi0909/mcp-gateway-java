@@ -125,6 +125,13 @@ separate downstream credentials in every later execution mode.
 
 ## Remaining work and release status
 
+Continuation on 2026-10-18 corrected audit-export snapshots to use scoped append
+boundaries rather than timestamps alone. Repeated/backward clocks and later
+backdated records cannot grow an export; current reviewer authority and retention
+still apply. See [ADR 0013](decisions/0013-audit-export-append-boundary.md) and the
+latest WORKLOG for fresh evidence. Older in-progress hash-only exports restart
+after this binary update. This does not select UC-03 implementation.
+
 U1/U3/U4 are complete for the documented local ordinary-read scope; U2 is
 implemented within its administrative limits; **U5 remains Partial**. All
 **32 identity baseline criteria** and applicable MUST behavior remain required

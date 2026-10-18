@@ -185,6 +185,15 @@ not extend the snapshot. The legacy export fails unavailable above 10,000 total
 retained records or 16 MiB instead of creating an unbounded response. Expired
 records are excluded exactly at their retention timestamp, including pagination.
 
+The opaque 64-character cursor freezes an organization/tenant-scoped append
+boundary before the first page's access audit. Later writes cannot enter that
+export even if their timestamps repeat or move backward. Continuation requires
+both returned values; the cursor must match its boundary, anchor, scope and
+timestamp. Each page still checks current permission and retention, so records
+may expire during an export. Cursor consistency is not authorization. Retained
+journals support continuation after reopen; older hash-only cursors must restart
+from the first page after this update. See [ADR 0013](decisions/0013-audit-export-append-boundary.md).
+
 ## Failure, timing and durability
 
 Admission is serialized with local administration. Each decision obtains current

@@ -2,7 +2,7 @@
 
 An enterprise MCP gateway project in Java. The current local increment exposes the existing coordinator's worker lease and namespace APIs alongside its separate payment sample. The coordinator manages leases, the payment worker generates payment IDs, and the gateway adapts REST and MCP.
 
-**Current state:** the foundation plus opt-in local UC-01 increment pass **139 unit/startup tests and 38 real Boot/SDK integration tests** with independent mocks. Default MCP is disabled. `worker-payments` exposes nine coordinator tools plus payment; optional `secured` adds JWT authentication, scopes, tenant admission and session ownership. `workers,secured,uc01` adds the enterprise ordinary-read admission described below. The existing demo is unchanged; the latest hardening executable is under `target/admission-hardening-final`.
+**Current state:** the foundation plus opt-in local UC-01 increment pass **143 unit/startup tests and 38 real Boot/SDK integration tests** with independent mocks. Default MCP is disabled. `worker-payments` exposes nine coordinator tools plus payment; optional `secured` adds JWT authentication, scopes, tenant admission and session ownership. `workers,secured,uc01` adds the enterprise ordinary-read admission described below. The existing demo is unchanged; the latest U5 correction executable is under `target/u5-pagination-final`.
 
 See [Worker tools and definitions](docs/WORKER_TOOLS.md) for tools, schemas and run commands, and [the payment demo](docs/PAYMENT_DEMO.md) for Docker setup. The documented demo MCP address is `http://127.0.0.1:8080/worker-coordinator/mcp`; see the worklog for dated runtime checks.
 
@@ -32,6 +32,8 @@ required for the full first release, separately from foundation evidence.
 For resuming work, start with the [current gateway handover](docs/HANDOVER_GATEWAY.md).
 The [UC-01 implementation handover](docs/HANDOVER_UC01.md) preserves the detailed
 baseline, verification evidence, remaining gaps and proposed UC-03 scope.
+Audit export's scoped append boundary and cursor compatibility are documented in
+[ADR 0013](docs/decisions/0013-audit-export-append-boundary.md).
 
 Start with the [independent standalone mock demo](docs/MOCK_DEMO.md). For caller
 security and the response-loss/cancellation demonstration, see
