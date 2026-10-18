@@ -8,6 +8,12 @@ and verified product evidence to choose work here.
 
 ## Product state
 
+- Latest local hardening verification on 2026-10-18: **139 unit/startup and 38
+  Boot/SDK integration tests**, zero failures/errors/skips; Wrapper `verify`
+  passed in 2:06. Log: `target/admission-hardening-final.log`; reports/JAR:
+  `target/admission-hardening-final`. ADR 0012 adds rejection audit, retained
+  journal rollover, bounded queueing and audit pagination; U5 remains partial.
+
 - Foundation stages 1A–1E, worker-tool extension and secured foundation are complete
   within their recorded boundaries: SDK-owned MCP, REST adapters, startup catalogs,
   Origin checks, JWT/scopes/tenant/session controls and bounded failure handling.
@@ -45,12 +51,16 @@ and verified product evidence to choose work here.
 Read the [2026-10-18 source review and proposed roadmap](GATEWAY_REVIEW_AND_NEXT_FEATURES.md)
 for prioritized audit/journal/admission findings, the verified Uber reference,
 custom-requirement boundaries and proposed feature packages. The review proposes
-UC-01/U5 closure before UC-03, then registry/virtual servers and native federation;
-it does not itself implement or complete those features.
+UC-01/U5 closure before UC-03, then registry/virtual servers and native federation.
+The owner subsequently authorized package A: local rejection audit, retained
+journal rollover, bounded admission work, audit pagination and added local
+revocation/catalog evidence are implemented under ADR 0012. Read the latest
+WORKLOG verification before continuing. Physical audit purge/external archival,
+full-release identity modes and distributed guarantees remain outstanding.
 
-Review remaining UC-01/U5 gaps before extending execution modes: pre-identity
-authentication-denial audit, controlled retention/archival, broader revocation
-and catalog activation evidence. The existing detailed handover proposes UC-03
+Review remaining UC-01/U5 gaps before extending execution modes: physical retention
+operations, broader topology administration and release-wide revocation evidence.
+The existing detailed handover proposes UC-03
 ordinary workload reads and mixed-context isolation after that review. Select
 a concrete gateway slice with its requirements and acceptance evidence before
 implementation. No new feature is selected by this context correction alone.

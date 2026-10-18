@@ -45,7 +45,7 @@ class AdmissionBoundaryTest {
             var exchange = new McpAsyncServerExchange("supplementary-unit-session", null, null, null, McpTransportContext.create(Map.of(AdmissionIdentity.ATTRIBUTE, identity)));
             return service.invoke(tool, new McpSchema.CallToolRequest("get_product", Map.of("productId", "item-0"), null), exchange).block(Duration.ofSeconds(2));
         }
-        @Override public void close() throws Exception { journal.close(); backend.close(); connections.disposeLater().block(Duration.ofSeconds(2)); }
+        @Override public void close() throws Exception { service.close(); journal.close(); backend.close(); connections.disposeLater().block(Duration.ofSeconds(2)); }
     }
     @Test void delegationAllowsImmediatelyBeforeExpiryAndDeniesExactlyAtExpiry() throws Exception {
         try (var h = new Harness()) {
@@ -77,9 +77,25 @@ class AdmissionBoundaryTest {
             h.backend.takeRequest(); h.journal.close();
             var result = future.get(3, java.util.concurrent.TimeUnit.SECONDS);
             assertThat(result.isError()).isTrue(); assertThat(result.structuredContent()).isNull(); assertThat(result.content().toString()).contains("VERIFICATION_UNAVAILABLE", "unknown").doesNotContain("not_attempted");
-            h.journal = new AdmissionJournal(h.settings); h.service = h.service(h.journal);
+            h.service.close(); h.journal = new AdmissionJournal(h.settings); h.service = h.service(h.journal);
             assertThat(h.journal.readAudits()).anyMatch(record -> "UNKNOWN_AFTER_RESTART".equals(record.get("outcome")));
             assertThat(h.backend.count()).isEqualTo(1);
+        }
+    }
+    @Test void auditVisibilityExpiresExactlyAtBoundaryWhileEvidenceRemainsRetained() throws Exception {
+        try (var h = new Harness()) {
+            var admin = new AdmissionIdentity("https://issuer.example", "admin-subject", "console", "organization-north", "tenant-blue",
+                    "ADMINISTRATION", "", "audit-boundary", h.clock.now.plus(Duration.ofDays(100)), Set.of("gateway:audit"));
+            String id = UUID.randomUUID().toString();
+            h.journal.appendAudit(Map.of("id", id, "organization", "organization-north", "tenant", "tenant-blue",
+                    "decision", "RETENTION_FIXTURE", "at", h.clock.now.minus(Duration.ofDays(90)).plusSeconds(1).toString(),
+                    "retainUntil", h.clock.now.plusSeconds(1).toString()));
+            h.clock.now = h.clock.now.plusSeconds(1).minusNanos(1);
+            assertThat(h.service.auditPage(admin, null, null, 200).block(Duration.ofSeconds(2)).get("records").toString()).contains(id);
+            h.clock.now = h.clock.now.plusNanos(1);
+            assertThat(h.service.auditPage(admin, null, null, 200).block(Duration.ofSeconds(2)).get("records").toString()).doesNotContain(id);
+            assertThat(h.journal.readAudits()).anyMatch(record -> id.equals(record.get("id")));
+            assertThat(h.backend.count()).isZero();
         }
     }
 }

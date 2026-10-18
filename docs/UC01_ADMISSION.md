@@ -176,12 +176,36 @@ organization/tenant's records within the 90-day visibility period. There is no
 audit edit/delete route. Mutating control calls require `gateway:admin`. Origin
 validation also protects control routes.
 
+For larger histories use `GET /control/audit/page?limit=100`. The response contains
+`records`, `snapshotAt`, and `nextCursor` (empty at the end). Pass the returned
+`snapshotAt` and `nextCursor` as `snapshotAt` and `after` on the next request.
+Every page rechecks current reviewer authority and tenant scope. Pages contain
+at most 200 records and 16 MiB of serialized records; later access-audit events do
+not extend the snapshot. The legacy export fails unavailable above 10,000 total
+retained records or 16 MiB instead of creating an unbounded response. Expired
+records are excluded exactly at their retention timestamp, including pagination.
+
 ## Failure, timing and durability
 
 Admission is serialized with local administration. Each decision obtains current
 policy, checks eligibility and forces its audit record to disk before dispatch.
 Work whose publisher has not yet subscribed is checked when subscribed. Already
 admitted work may finish after revocation; revocation does not undo external effects.
+
+Disk work uses a dedicated single worker with at most 256 queued tasks and a
+five-second queue budget. Overload/queue expiry returns verification unavailable;
+expired or cancelled queued tasks do not later execute. Authorization occurs only
+after dequeueing. A forced disk operation already underway is not cancelled by
+the queue timer; an OS-level stalled write is not covered by a hard I/O deadline.
+This local bound is not tenant fairness or distributed traffic management.
+
+On protected MCP/control paths, HTTP 401/403 responses (including authentication,
+Origin and session rejection) first append a durable sanitized rejection record.
+No raw request, token, supplied identity, session ID or Origin is recorded. These
+records are marked unverified and kept as unscoped operator evidence; tenant audit
+exports do not disclose them. Audit failure changes the rejection to HTTP 503 and
+never resumes the rejected operation. SDK-owned protocol errors are not parsed by
+this HTTP observer. Successful authentication is still insufficient for admission.
 
 Policy fallback uses monotonic time, at most 30 seconds from successful authority
 verification. Cached reads and failed refreshes never renew it. Invalid, conflicting
@@ -195,13 +219,38 @@ output is absent from errors. Outcomes after dispatch remain `unknown` if respon
 or outcome evidence is unavailable. Admission records remain durable; restart
 marks unresolved work `UNKNOWN_AFTER_RESTART` and does not replay it.
 
-`policy.jsonl` and `audit.jsonl` each have a 16 MiB limit and exclusive writer lock.
-Policy revisions append and audit uses `FileChannel.force(true)`. Startup rejects
-incomplete journals. There is no compaction, audit archival or controlled physical
-expiry yet; capacity exhaustion fails closed. OS/power-loss durability, clustered
-distribution and rollback recovery from backups are not proven. Keep the full
-retention and release criteria pending rather than treating forced local writes as
-a production audit platform.
+`policy.jsonl` and `audit.jsonl` remain the first segments with exclusive writer
+locks. At 16 MiB, each journal rolls into numbered files such as
+`audit.000001.jsonl`; earlier segments remain the local archive. Digest-linked
+lifecycle records are forced before new segment data. Defaults are 16 MiB per
+segment and 256 MiB retained per journal (`admission.journal-segment-bytes` and
+`admission.journal-max-bytes`); the segment count is also capped at 1,024. Do not
+lower these limits below existing data sizes. `AdmissionJournal.storageStatus()`
+reports bytes, segment counts and the configured budget; operators can also inspect
+the private journal directory's file sizes without exposing record contents.
+
+Back up and restore the complete directory while the writer is stopped; never
+copy only the original two files or remove individual segments. After rollover,
+do not point an older gateway binary at this directory: the older implementation
+does not understand numbered segments and could read obsolete authority from the
+first policy file. Binary downgrade requires a separately validated migration;
+no downgrade or automatic old-backup restore is provided here.
+
+Current authoritative bytes are read/hashed while unchanged policy objects are
+reused, avoiding deserializing full policy history on every call. Startup validates
+retained history and segment links; missing/partial/corrupt history fails closed.
+An empty final segment from interrupted creation is completed safely, with no
+business replay. Recovery tracks at most 10,000 unresolved records/16 MiB before
+requiring operator intervention. Sealed-file metadata changes reject the running
+store; this is not protection against a privileged attacker rewriting files and
+metadata or restoring a complete older backup.
+
+No records are deleted or overwritten. Physical expiry, external archival and
+power-loss/directory-entry durability remain unproven; total capacity exhaustion
+still fails closed. Retained archives are not indefinite storage or an HA system.
+See [ADR 0012](decisions/0012-local-admission-hardening.md). Full retention and
+release criteria remain partial rather than treating forced local writes as a
+production audit platform.
 
 ## Executed verification and limits
 

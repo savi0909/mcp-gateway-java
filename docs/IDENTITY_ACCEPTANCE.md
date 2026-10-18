@@ -62,6 +62,22 @@ retain their original meanings.
 
 ## Evidence and dependencies
 
+### 2026-10-18 local admission hardening
+
+The following evidence extends the local UC-01 scope; no full baseline row is
+promoted because workloads, approvals, providers, physical audit purge and other
+release-wide obligations remain outstanding. See the latest WORKLOG for the final
+Wrapper run and [ADR 0012](decisions/0012-local-admission-hardening.md).
+
+| Rows | Additional tests | Scope and remaining limit |
+| --- | --- | --- |
+| IA-AC-20, 24, 25 | `earlyHttpRejectionsAreDurableSanitizedAndAuditFailureIsUnavailable` | Real HTTP authentication/Origin/session rejections persisted without token/identity claims; restart retains records; audit failure returns 503; zero business calls. Unscoped rejection evidence is private operator data, not tenant export. |
+| IA-AC-08, 28 | `ordinaryMembershipRequiresTheCorrectOwnerAndCanBeExplicitlyReactivated` | Owner-only explicit ordinary activation/removal with live SDK discovery, independent other catalog and one allowed read. Sensitive approvals remain later. |
+| IA-AC-21 | `administrativeRevocationMatrixDeniesExistingSessionsWithinBound` | Human/application/server/grant/publication changes via HTTP deny subsequent SDK calls within 60 seconds; no downstream calls. Existing delegation/resource/credential tests remain. Distributed/topology/later-mode revocation remains later. |
+| IA-AC-22, 23, 25 | `AdmissionWorkQueueTest` | Bounded queue rejection, fresh state after queueing, timeout while worker is busy and no delayed execution. This supplements SDK revocation tests; it is not a measured filesystem-I/O or cluster deadline. |
+| IA-AC-24, 31 | `auditPaginationIsScopedStableAndDoesNotRepeatAdmissionOutcomePairs`; `auditVisibilityExpiresExactlyAtBoundaryWhileEvidenceRemainsRetained` | Tenant-scoped bounded pages do not repeat admission/outcome pairs or grow with their own audit accesses; exact visibility expiry. Physical records remain retained, not deleted. |
+| IA-AC-25, 31 | `AdmissionJournalTest` | Retained rollover, forced lifecycle records, restart/latest revision, fixed capacity, writer exclusion, interrupted/partial/missing/corrupt history rejection. No power-loss, off-device archive or complete-backup rollback proof. |
+
 - Catalog [requirements v1.3](requirements/Enterprise_MCP_Discovery_Catalog_Requirements_v1.3.md)
   were supplied, preserved and reviewed. Its [separate tracker](CATALOG_ACCEPTANCE.md)
   records tested ordinary-read behavior and pending approval/governance work.

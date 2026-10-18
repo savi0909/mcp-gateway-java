@@ -30,6 +30,9 @@ public class AdmissionConfiguration {
     @Bean AdmissionService admissionService(AdmissionJournal journal, AdmissionSettings settings, GatewayProperties gateway,
             List<ToolDefinition> tools, RestBindingExecutor executor) { return new AdmissionService(journal, settings, gateway, tools, executor); }
     @Bean AdmissionSessionFilter admissionSessionFilter() { return new AdmissionSessionFilter(); }
+    @Bean AdmissionRejectionAuditFilter admissionRejectionAuditFilter(AdmissionService admission) {
+        return new AdmissionRejectionAuditFilter(admission);
+    }
     @Bean WebFluxStreamableServerTransportProvider enterpriseTransport(@Qualifier("mcpServerJsonMapper") JsonMapper json) {
         return WebFluxStreamableServerTransportProvider.builder().jsonMapper(new JacksonMcpJsonMapper(json))
                 .messageEndpoint("/worker-coordinator/mcp").maxSessions(256).sessionIdleTimeout(Duration.ofMinutes(15))
@@ -48,7 +51,12 @@ public class AdmissionConfiguration {
                     .flatMap(change -> admission.change(identity(request), change)).flatMap(result -> ServerResponse.ok().bodyValue(result))
                     .onErrorResume(this::failure))
                 .GET("/control/audit", request -> admission.auditExport(identity(request)).flatMap(result -> ServerResponse.ok().bodyValue(result))
-                    .onErrorResume(this::failure)).build();
+                    .onErrorResume(this::failure))
+                .GET("/control/audit/page", request -> Mono.defer(() -> admission.auditPage(identity(request),
+                        request.queryParam("after").orElse(null),
+                        request.queryParam("snapshotAt").map(java.time.Instant::parse).orElse(null),
+                        Integer.parseInt(request.queryParam("limit").orElse("100"))))
+                    .flatMap(result -> ServerResponse.ok().bodyValue(result)).onErrorResume(this::failure)).build();
     }
     private AdmissionIdentity identity(ServerRequest request) {
         Object raw = request.attributes().get(AdmissionIdentity.ATTRIBUTE);

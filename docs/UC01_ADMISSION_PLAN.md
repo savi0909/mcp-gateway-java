@@ -178,6 +178,14 @@ this accepted sequencing record.
 
 ## Later increments and release gate
 
+On 2026-10-18 the owner authorized package A from the gateway review. Local
+hardening now adds early HTTP rejection auditing, retained segmented journals,
+bounded queueing, paginated export and additional catalog/revocation evidence.
+See [ADR 0012](decisions/0012-local-admission-hardening.md), the acceptance
+supplement and final WORKLOG command/results. U5 remains Partial: physical
+expiry/external archival, full topology administration and release-wide guarantees
+are not completed by this local increment.
+
 After UC-01, deliver UC-03 ordinary workload reads and mixed-context isolation,
 then UC-02 approvals and remaining internal/approved-third-party requirements.
 Expand revocation and audit evidence to every newly supported principal, approval

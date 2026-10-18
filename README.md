@@ -2,7 +2,7 @@
 
 An enterprise MCP gateway project in Java. The current local increment exposes the existing coordinator's worker lease and namespace APIs alongside its separate payment sample. The coordinator manages leases, the payment worker generates payment IDs, and the gateway adapts REST and MCP.
 
-**Current state:** the foundation plus opt-in local UC-01 increment pass **128 unit/startup tests and 34 real Boot/SDK integration tests** with independent mocks. Default MCP is disabled. `worker-payments` exposes nine coordinator tools plus payment; optional `secured` adds JWT authentication, scopes, tenant admission and session ownership. `workers,secured,uc01` adds the enterprise ordinary-read admission described below. The existing demo is unchanged; the updated executable is under `target/foundation`.
+**Current state:** the foundation plus opt-in local UC-01 increment pass **139 unit/startup tests and 38 real Boot/SDK integration tests** with independent mocks. Default MCP is disabled. `worker-payments` exposes nine coordinator tools plus payment; optional `secured` adds JWT authentication, scopes, tenant admission and session ownership. `workers,secured,uc01` adds the enterprise ordinary-read admission described below. The existing demo is unchanged; the latest hardening executable is under `target/admission-hardening-final`.
 
 See [Worker tools and definitions](docs/WORKER_TOOLS.md) for tools, schemas and run commands, and [the payment demo](docs/PAYMENT_DEMO.md) for Docker setup. The documented demo MCP address is `http://127.0.0.1:8080/worker-coordinator/mcp`; see the worklog for dated runtime checks.
 
@@ -145,6 +145,14 @@ These properties are now bound and validated. `.env.example` is reference text w
 Public metadata, method/path/body/JSON Pointer and version-3 argument mappings belong to the catalog. Backend origin, token and budgets belong to deployment properties. Defaults are connection timeout 2s, total upstream deadline 5s, response limit 64 KiB and MCP budget 10s. User-authorized automatic retries use exponential 100ms-to-1s backoff within that total deadline; redirects and hidden connector retries remain disabled. See [ADR 0002](docs/decisions/0002-user-authorized-allocation-retries.md) for this explicit change to the original no-retry policy.
 
 ## Build baseline and evidence
+
+Latest local hardening verification (2026-10-18):
+`.\mvnw.cmd -B -ntp '-Dgateway.build-directory=target/admission-hardening-final' verify`
+passed **139 unit/startup and 38 integration tests**, zero failures/errors/skips,
+and packaged the executable. See [UC-01 hardening and limits](docs/UC01_ADMISSION.md)
+and [ADR 0012](docs/decisions/0012-local-admission-hardening.md) for rejection audit,
+retained journal segments, bounded queueing and paginated audit export. This is
+local mock/SDK evidence, not production availability or completed U5 acceptance.
 
 Pinned baseline: Java 21, Spring Boot 4.0.8, Spring AI BOM 2.0.1, Maven 3.9.11, Wrapper 3.3.4. The WebFlux MCP server starter is BOM-managed; the build adds no model starter or independently pinned MCP SDK. Surefire runs `*Test`; Failsafe runs `*IT` during `verify`.
 

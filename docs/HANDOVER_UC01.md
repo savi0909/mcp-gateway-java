@@ -69,6 +69,12 @@ tool-list mutation. Backend REST services remain unchanged.
 
 ## Verification baseline
 
+Latest hardening verification, 2026-10-18 at 21:33:52 +05:30:
+`.\mvnw.cmd -B -ntp '-Dgateway.build-directory=target/admission-hardening-final' verify`
+passed **139 unit/startup and 38 integration tests**, zero failures/errors/skips,
+BUILD SUCCESS in 2:06. Log/reports are under the corresponding ignored target
+paths. This supersedes the counts below for current code; those remain historical.
+
 The final implementation verification completed on **2026-10-08 at
 18:14:18 +05:30**:
 
@@ -108,8 +114,8 @@ process does not automatically acquire the new JAR.
 | Delegation | Explicit human/application/tenant scope; maximum 15 minutes; expiry and current status checked per invocation. |
 | Downstream credential | Separate exact-context reference, approved backend audience and expiry; no inbound token passthrough or shared-account fallback. |
 | Execution | Ordinary internal GET only; one application attempt with bounded deadlines/response size. Missing outcome evidence remains unknown. |
-| Persistence | Single process, exclusive writer locks, append/force writes; each journal limited to 16 MiB. Capacity or audit failure prevents new dispatch. |
-| Audit retention | 90-day visibility/retention metadata; physical expiry, archival and compaction are not implemented. |
+| Persistence | Single process, exclusive writer locks, append/force writes; 16 MiB digest-linked retained segments, 256 MiB default budget per journal. Capacity or audit failure prevents new dispatch. See ADR 0012. |
+| Audit retention | 90-day visibility/retention metadata; sealed segments retained locally and paginated export supported. Physical purge/external archival are not implemented. |
 | Catalog/environment | One catalog per application identity; explicit membership and approved version, no silent substitution. |
 
 Do not inherit legacy payment retries for future approved mutations. UC-02/AC-27
@@ -129,8 +135,9 @@ Remaining gaps include:
 
 - Positive workload reads, sensitive-action approvals and approved third-party
   execution, with revocation/evidence for each newly supported context.
-- Durable audit coverage for authentication failures before enterprise identity
-  extraction, controlled physical expiry/archival, and full outcome/retention evidence.
+- Controlled physical expiry/external archival and full outcome/retention evidence.
+  Early HTTP authentication/Origin/session rejection auditing and retained local
+  segment rollover are now implemented; see the 2026-10-18 worklog and ADR 0012.
 - Live downstream issuer/scope verification, credential rotation and token exchange.
   Current opaque credentials rely on trusted provisioning; known-secret echo checks
   do not provide general response-content policy or data-loss prevention.

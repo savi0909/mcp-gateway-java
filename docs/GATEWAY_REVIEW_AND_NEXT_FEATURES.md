@@ -5,6 +5,13 @@ Scope: focused source, requirements and evidence review; proposed product roadma
 This is not an exhaustive security audit or authorization to implement every phase.
 Development harness work is outside this repository (ADR 0011).
 
+Implementation follow-up: the owner authorized package A after this review.
+[ADR 0012](decisions/0012-local-admission-hardening.md) and
+[the UC-01 guide](UC01_ADMISSION.md) describe the added rejection audit,
+retained-segment rollover, bounded scheduling and export. Findings below describe
+the reviewed revision, not the later implementation. Physical purge/external
+archival and the full enterprise release remain incomplete; see the latest worklog.
+
 ## Assessment
 
 The project is a working local MCP-to-REST gateway with a meaningful delegated-read

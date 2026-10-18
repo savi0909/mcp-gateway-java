@@ -15,11 +15,11 @@ import dev.mcp.gateway.rest.RestBindingExecutor;
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 import tools.jackson.databind.json.JsonMapper;
 
 /** Serializes fresh admission and administrative commits; disk work stays off event-loop threads. */
-public final class AdmissionService {
+public final class AdmissionService implements AutoCloseable {
+    private final AdmissionWorkQueue workQueue = new AdmissionWorkQueue();
     private final AdmissionJournal journal;
     private final VerifiedPolicyCache policies;
     private final AdmissionSettings settings;
@@ -47,7 +47,17 @@ public final class AdmissionService {
         synchronized (journal) {
             try {
                 var latest = new LinkedHashMap<String, Map<String, Object>>();
-                for (var record : journal.readAudits()) latest.put((String) record.get("id"), record);
+                int[] pendingBytes = {0};
+                journal.visitAudits(record -> {
+                    String id = (String) record.get("id");
+                    var previous = latest.remove(id);
+                    if (previous != null) pendingBytes[0] -= json.writeValueAsBytes(previous).length;
+                    if (Set.of("ADMITTED", "ADMIN_PREPARED").contains(record.get("decision"))) {
+                        pendingBytes[0] += json.writeValueAsBytes(record).length;
+                        if (latest.size() >= 10000 || pendingBytes[0] > 16 * 1024 * 1024) throw AdmissionFailure.unavailable();
+                        latest.put(id, record);
+                    }
+                });
                 for (var record : latest.values()) {
                     if ("ADMITTED".equals(record.get("decision"))) {
                         var recovered = new LinkedHashMap<>(record); recovered.put("decision", "OUTCOME"); recovered.put("outcome", "UNKNOWN_AFTER_RESTART"); audit(recovered);
@@ -61,7 +71,18 @@ public final class AdmissionService {
             catch (IOException failure) { throw AdmissionFailure.unavailable(); }
         }
     }
-    private <T> Mono<T> disk(Supplier<T> work) { return Mono.fromSupplier(work).subscribeOn(Schedulers.boundedElastic()); }
+    private <T> Mono<T> disk(Supplier<T> work) { return workQueue.submit(work); }
+    @Override public void close() { workQueue.close(); }
+    public Mono<Boolean> recordHttpRejection(int status, boolean administration) {
+        return disk(() -> {
+            synchronized (journal) {
+                audit(Map.of("id", UUID.randomUUID().toString(), "decision", status == 401 ? "HTTP_AUTHENTICATION_REJECTED" : "HTTP_ACCESS_REJECTED",
+                        "verified", false, "authenticatedEvidence", false, "outcome", "NOT_ATTEMPTED",
+                        "surface", administration ? "CONTROL" : "MCP", "reason", "REJECTED_BEFORE_HTTP_COMPLETION"));
+                return true;
+            }
+        });
+    }
     public Mono<List<String>> discover(AdmissionIdentity identity) {
         return disk(() -> {
             synchronized (journal) {
@@ -215,6 +236,7 @@ public final class AdmissionService {
     }
     private void audit(Map<String, Object> facts) {
         var record = new LinkedHashMap<>(facts); Instant at = clock.instant(); record.put("at", at.toString());
+        record.put("recordId", UUID.randomUUID().toString());
         record.put("retainUntil", at.plus(Duration.ofDays(90)).toString());
         try { journal.appendAudit(record); } catch (IOException | RuntimeException failure) { throw AdmissionFailure.unavailable(); }
     }
@@ -400,4 +422,37 @@ public final class AdmissionService {
             }
         });
     }
+    public Mono<Map<String, Object>> auditPage(AdmissionIdentity i, String after, Instant snapshotAt, int limit) {
+        return disk(() -> {
+            synchronized (journal) {
+                Instant snapshot = snapshotAt == null ? clock.instant() : snapshotAt;
+                if (limit < 1 || limit > 200 || snapshot.isAfter(clock.instant())
+                        || after != null && !after.matches("[0-9a-f]{64}")) throw AdmissionFailure.denied();
+                var p = policies.current(); var c = administration(p, i);
+                if (!c.application().administration() || !i.scopes().contains("gateway:audit")
+                        || !p.humans().get(c.human()).roles().getOrDefault(i.tenant(), Set.of()).contains("AUDIT_VIEWER")) throw AdmissionFailure.denied();
+                var records = new ArrayList<Map<String, Object>>(); boolean[] found = {after == null};
+                boolean[] more = {false}; int[] bytes = {0};
+                try {
+                    journal.visitAudits(record -> {
+                        if (!i.organization().equals(record.get("organization")) || !i.tenant().equals(record.get("tenant"))
+                                || !(record.get("at") instanceof String at) || Instant.parse(at).isAfter(snapshot)) return;
+                        if (!found[0]) { if (after.equals(auditCursor(record))) found[0] = true; return; }
+                        if (!(record.get("retainUntil") instanceof String until) || !Instant.parse(until).isAfter(clock.instant())) return;
+                        int recordBytes = json.writeValueAsBytes(record).length;
+                        if (!more[0] && records.size() < limit && bytes[0] + recordBytes <= 16 * 1024 * 1024) {
+                            records.add(record); bytes[0] += recordBytes;
+                        }
+                        else more[0] = true;
+                    });
+                }
+                catch (IOException failure) { throw AdmissionFailure.unavailable(); }
+                if (!found[0]) throw AdmissionFailure.denied();
+                audit(Map.of("id", UUID.randomUUID().toString(), "organization", i.organization(), "tenant", i.tenant(), "actor", c.human(), "decision", "AUDIT_ACCESS"));
+                return Map.of("records", List.copyOf(records), "snapshotAt", snapshot.toString(),
+                        "nextCursor", more[0] ? auditCursor(records.getLast()) : "");
+            }
+        });
+    }
+    private String auditCursor(Map<String, Object> record) { return SegmentedJournal.digest(json.writeValueAsBytes(record)); }
 }

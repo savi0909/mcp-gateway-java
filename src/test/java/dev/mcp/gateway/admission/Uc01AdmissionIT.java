@@ -286,4 +286,92 @@ class Uc01AdmissionIT {
         fixturePolicy(seed.withResources(ownership));
         denied(call(reader, "get_product", Map.of("productId", "item-0")), "ACCESS_DENIED"); assertThat(backend.count()).isZero();
     }
+    @Test void earlyHttpRejectionsAreDurableSanitizedAndAuditFailureIsUnavailable(CapturedOutput output) throws Exception {
+        var http = HttpClient.newHttpClient();
+        String invalid = "untrusted-token-canary";
+        for (String method : List.of("GET", "POST", "DELETE")) {
+            var response = http.send(HttpRequest.newBuilder(URI.create(origin + "/worker-coordinator/mcp"))
+                    .timeout(Duration.ofSeconds(4)).header("Authorization", "Bearer " + invalid)
+                    .method(method, HttpRequest.BodyPublishers.noBody()).build(), HttpResponse.BodyHandlers.ofString());
+            assertThat(response.statusCode()).isEqualTo(401);
+        }
+        var originDenial = http.send(HttpRequest.newBuilder(URI.create(origin + "/worker-coordinator/mcp"))
+                .timeout(Duration.ofSeconds(4)).header("Origin", "https://untrusted-origin-canary.example").GET().build(), HttpResponse.BodyHandlers.ofString());
+        assertThat(originDenial.statusCode()).isEqualTo(403);
+        var reader = connect(token(0, Map.of())); reader.listTools().toFuture().get(4, TimeUnit.SECONDS);
+        var sessionDenial = http.send(HttpRequest.newBuilder(URI.create(origin + "/worker-coordinator/mcp"))
+                .timeout(Duration.ofSeconds(4)).header("Authorization", "Bearer " + token(2, Map.of()))
+                .header("Mcp-Session-Id", sessions.get(reader).get()).DELETE().build(), HttpResponse.BodyHandlers.ofString());
+        assertThat(sessionDenial.statusCode()).isEqualTo(403);
+        var records = app.getBean(AdmissionJournal.class).readAudits();
+        assertThat(records.stream().filter(r -> "HTTP_AUTHENTICATION_REJECTED".equals(r.get("decision")))).hasSize(3);
+        assertThat(records.stream().filter(r -> "HTTP_ACCESS_REJECTED".equals(r.get("decision")))).hasSize(2);
+        records.stream().filter(r -> r.get("decision").toString().startsWith("HTTP_")).forEach(record -> {
+            assertThat(record).containsEntry("verified", false).containsEntry("outcome", "NOT_ATTEMPTED")
+                    .doesNotContainKeys("subject", "tenant", "application", "authorization", "session");
+        });
+        assertThat(AdmissionFixtures.JSON.writeValueAsString(records)).doesNotContain(invalid, "untrusted-origin-canary");
+        app.getBean(AdmissionJournal.class).close();
+        var unavailable = http.send(HttpRequest.newBuilder(URI.create(origin + "/worker-coordinator/mcp"))
+                .timeout(Duration.ofSeconds(4)).header("Authorization", "Bearer " + invalid).GET().build(), HttpResponse.BodyHandlers.ofString());
+        assertThat(unavailable.statusCode()).isEqualTo(503);
+        try (var restored = new AdmissionJournal(app.getBean(AdmissionSettings.class))) {
+            assertThat(restored.readAudits().stream().filter(r -> r.get("decision").toString().startsWith("HTTP_"))).hasSize(5);
+        }
+        assertThat(backend.count()).isZero(); assertThat(output.getAll()).doesNotContain(invalid);
+    }
+    @Test void ordinaryMembershipRequiresTheCorrectOwnerAndCanBeExplicitlyReactivated() throws Exception {
+        var alpha = connect(token(0, Map.of())); var beta = connect(token(1, Map.of()));
+        var request = new HashMap<String, Object>(Map.of("action", "MEMBERSHIP", "catalog", "catalog-alpha",
+                "capability", "inventory.lookup@1", "version", "1", "state", "REMOVE", "purpose", "ordinary-read", "reason", "test lifecycle"));
+        request.put("expectedRevision", revision()); assertThat(change("human-0", request).statusCode()).isEqualTo(200);
+        request.put("state", "REQUEST"); request.put("expectedRevision", revision());
+        assertThat(change("publisher", request).statusCode()).isEqualTo(403);
+        assertThat(alpha.listTools().toFuture().get(4, TimeUnit.SECONDS).tools()).isEmpty();
+        assertThat(beta.listTools().toFuture().get(4, TimeUnit.SECONDS).tools()).extracting(McpSchema.Tool::name).contains("get_product");
+        assertThat(change("human-0", request).statusCode()).isEqualTo(200);
+        assertThat(alpha.listTools().toFuture().get(4, TimeUnit.SECONDS).tools()).extracting(McpSchema.Tool::name).containsExactly("get_product");
+        reply(0); assertThat(call(alpha, "get_product", Map.of("productId", "item-0")).isError()).isFalse();
+        assertThat(backend.count()).isEqualTo(1);
+    }
+    @Test void administrativeRevocationMatrixDeniesExistingSessionsWithinBound() throws Exception {
+        var reader = connect(token(0, Map.of()));
+        var human = seed.humans().get("human-0"); var application = seed.applications().get("application-alpha"); var server = seed.servers().get("coordinator");
+        var grant = seed.grants().stream().filter(g -> g.kind().equals("HUMAN") && g.principal().equals("human-0")).findFirst().orElseThrow();
+        List<Map<String, Object>> changes = List.of(
+                Map.of("action", "HUMAN", "target", "human-0", "human", new AdmissionPolicy.Human(human.authority(), human.subject(), human.displayName(), "SUSPENDED", human.tenants(), human.roles())),
+                Map.of("action", "APPLICATION", "target", "application-alpha", "application", new AdmissionPolicy.Application(application.organization(), application.owner(), "SUSPENDED", application.tenants(), application.administration())),
+                Map.of("action", "SERVER", "target", "coordinator", "server", new AdmissionPolicy.Server(server.organization(), server.owner(), "SUSPENDED", server.trust(), server.backendRef(), server.origin())),
+                Map.of("action", "REVOKE_GRANT", "grant", grant),
+                Map.of("action", "PUBLICATION", "target", "inventory.lookup@1", "state", "SUSPENDED"));
+        for (var change : changes) {
+            fixturePolicy(seed); var body = new HashMap<String, Object>(change);
+            body.put("reason", "revocation matrix"); body.put("expectedRevision", revision());
+            long started = System.nanoTime();
+            var response = change("security-admin", body);
+            assertThat(response.statusCode()).isEqualTo(200); assertThat(response.body()).contains("\"effective\":true");
+            denied(call(reader, "get_product", Map.of("productId", "item-0")), "ACCESS_DENIED");
+            assertThat(Duration.ofNanos(System.nanoTime() - started)).isLessThan(Duration.ofSeconds(60));
+        }
+        assertThat(backend.count()).isZero();
+    }
+    @Test void auditPaginationIsScopedStableAndDoesNotRepeatAdmissionOutcomePairs() throws Exception {
+        var reader = connect(token(0, Map.of())); reply(0); call(reader, "get_product", Map.of("productId", "item-0"));
+        // Real HTTP export follows SDK execution; pagination must not include its own later access records.
+        var http = HttpClient.newHttpClient(); String next = "", snapshot = null; var records = new ArrayList<Map<String, Object>>();
+        for (int page = 0; page < 10; page++) {
+            String url = origin + "/control/audit/page?limit=1" + (snapshot == null ? "" : "&snapshotAt=" + java.net.URLEncoder.encode(snapshot, java.nio.charset.StandardCharsets.UTF_8) + "&after=" + next);
+            var response = http.send(HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(4))
+                    .header("Authorization", "Bearer " + console("security-admin")).GET().build(), HttpResponse.BodyHandlers.ofString());
+            assertThat(response.statusCode()).isEqualTo(200); assertThat(response.body()).doesNotContain("tenant-green", "isolated-0-canary");
+            var body = AdmissionFixtures.JSON.readTree(response.body());
+            for (var record : body.path("records")) records.add(AdmissionFixtures.JSON.convertValue(record, new tools.jackson.core.type.TypeReference<Map<String, Object>>() { }));
+            snapshot = body.path("snapshotAt").asText(); next = body.path("nextCursor").asText(); if (next.isEmpty()) break;
+        }
+        assertThat(next).isEmpty(); assertThat(records).hasSize(2);
+        assertThat(records).extracting(r -> r.get("decision")).containsExactly("ADMITTED", "OUTCOME");
+        var denied = http.send(HttpRequest.newBuilder(URI.create(origin + "/control/audit/page")).timeout(Duration.ofSeconds(4))
+                .header("Authorization", "Bearer " + token(0, Map.of())).GET().build(), HttpResponse.BodyHandlers.ofString());
+        assertThat(denied.statusCode()).isEqualTo(403); assertThat(backend.count()).isEqualTo(1);
+    }
 }

@@ -23,6 +23,13 @@ then workload reads, registry/virtual servers and native federation. This is a
 planning proposal; existing acceptance states and selected implementation scope
 are unchanged.
 
+Owner authorized proceeding on 2026-10-18. Package A local hardening implements
+early rejection audit, bounded admission scheduling, retained journal segments,
+bounded audit pagination and expanded local revocation/catalog tests; see
+[ADR 0012](decisions/0012-local-admission-hardening.md) and the current worklog
+for final verification. Physical purge/external archival and broader release
+guarantees remain outstanding. This does not select workload/federation implementation.
+
 ## Selected slice: UC-01 (local implementation; release incomplete)
 
 Follow [UC01_ADMISSION_PLAN.md](UC01_ADMISSION_PLAN.md) and

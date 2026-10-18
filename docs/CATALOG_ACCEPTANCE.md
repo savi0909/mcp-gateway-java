@@ -18,6 +18,13 @@ IA-AC identifiers. Evidence is independent mock/SDK behavior, not live integrati
 
 ## End-to-end checklist
 
+Additional 2026-10-18 evidence: `ordinaryMembershipRequiresTheCorrectOwnerAndCanBeExplicitlyReactivated`
+proves ordinary owner removal/request/reactivation, publisher denial, independent
+catalog visibility and one SDK-authorized read. `administrativeRevocationMatrixDeniesExistingSessionsWithinBound`
+adds HTTP server/publication suspension with zero downstream calls on an existing
+SDK session. These extend CAT-E2E-01/06/07 and AC-CAT-01; full source rows remain
+partial where broader registration/migration/approval/distributed coverage is absent.
+
 | Tracker ID (source E2E suffix) | State | Executed evidence / remaining requirement |
 | --- | --- | --- |
 | CAT-E2E-01 | Partial | `scopesAuditAccessAndPreservesPinnedContracts`: publication adds no catalog entry. Ordinary explicit addition lifecycle needs broader end-to-end coverage. |

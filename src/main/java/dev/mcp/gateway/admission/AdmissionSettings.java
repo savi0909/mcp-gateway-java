@@ -11,11 +11,18 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 
 @ConfigurationProperties(prefix = "admission", ignoreUnknownFields = false)
 public record AdmissionSettings(Path bootstrap, Path journalDirectory, @DefaultValue("30s") Duration policyMaxAge,
-        Map<String, Credential> credentials) {
+        Map<String, Credential> credentials, @DefaultValue("16777216") int journalSegmentBytes,
+        @DefaultValue("268435456") long journalMaxBytes) {
+    public AdmissionSettings(Path bootstrap, Path journalDirectory, Duration policyMaxAge, Map<String, Credential> credentials) {
+        this(bootstrap, journalDirectory, policyMaxAge, credentials, 16 * 1024 * 1024, 256L * 1024 * 1024);
+    }
+    @org.springframework.boot.context.properties.bind.ConstructorBinding
     public AdmissionSettings {
         AdmissionPolicy.require(bootstrap != null && !bootstrap.toString().isBlank() && journalDirectory != null && !journalDirectory.toString().isBlank() && policyMaxAge != null
                 && policyMaxAge.compareTo(Duration.ofSeconds(30)) <= 0 && !policyMaxAge.isNegative() && !policyMaxAge.isZero());
         credentials = credentials == null ? Map.of() : Map.copyOf(credentials);
+        AdmissionPolicy.require(journalSegmentBytes >= 65536 && journalSegmentBytes <= 16 * 1024 * 1024
+                && journalMaxBytes >= journalSegmentBytes && journalMaxBytes <= 1024L * 1024 * 1024);
     }
     public record Credential(String token, URI audience, Instant expiresAt) {
         public Credential { AdmissionPolicy.require(token != null && token.matches("[A-Za-z0-9._~+/-]+=*")
