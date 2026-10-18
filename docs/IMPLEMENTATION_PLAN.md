@@ -33,7 +33,8 @@ unverified. The owner subsequently authorized the single `PILOT-01` cycle
 2026-10-18 stopped with `Malformed Codex JSONL` before candidate validation,
 Maven verification or independent review. `tasks/backlog.json` records
 `needs_review`, one attempt and run `43d56cc99c694b6781f51674d0165b69`; the retained
-worktree is clean and the other 11 tasks remain pending. The pilot is incomplete.
+worktree is clean and the other 11 tasks remain pending. The pilot is incomplete;
+[the Phase 2 handover](HANDOVER_PHASE2.md) records evidence and safe restart steps.
 Next: separately scope and review process-adapter diagnosis/repair, then refresh
 approval against the repaired trusted baseline before another pilot attempt.
 Do not replay this run, reset its counter or infer batch approval. No product

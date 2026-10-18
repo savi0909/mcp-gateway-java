@@ -32,6 +32,9 @@ The optional [engineering harness](HARNESS.md) runs only when explicitly invoked
 for an approved task. It uses existing requirements and normal Wrapper commands;
 no external plugin or MCP-server installation is required. Runner-owned state,
 independent verification and review are separate from the implementation agent.
+For harness work, start with [the Phase 2 handover](HANDOVER_PHASE2.md): the first
+real pilot stopped with malformed JSONL and remains `needs_review`. Its repair
+and any new attempt need explicit scope and state reconciliation.
 
 ## Review a stage
 

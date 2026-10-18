@@ -11,7 +11,8 @@ The owner authorized `PILOT-01` after Phase 1; see the committed
 2026-10-18 stopped with `Malformed Codex JSONL` before candidate validation,
 Maven verification or independent review. Its state is `needs_review`, with one
 attempt and a clean retained worktree; the other 11 tasks remain pending. See
-WORKLOG for the run ID and evidence. Batch is disabled. No gateway business
+[the Phase 2 handover](HANDOVER_PHASE2.md) for retained evidence, read-only
+inspection commands and the proposed adapter repair scope. Batch is disabled. No gateway business
 behavior or dependency version changed, and the real pilot is not complete.
 
 ## Files and responsibilities

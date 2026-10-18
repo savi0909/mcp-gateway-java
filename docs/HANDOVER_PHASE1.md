@@ -4,6 +4,10 @@ Date: 2026-10-17. Scope: the owner requested Phase 1 completion followed by a
 handover. Phase 2 pilot and batch have not started. Read [usage](HARNESS.md) and
 [ADR 0010](decisions/0010-engineering-harness.md) for the operational contract.
 
+Subsequent status (2026-10-18): the owner authorized one real pilot, which stopped
+with malformed JSONL. Read [the Phase 2 handover](HANDOVER_PHASE2.md) for current
+state and next action. The Phase 1 evidence below remains historical.
+
 ## Read order
 
 1. [AGENTS.md](../AGENTS.md), [WORKLOG current state/latest entry](../WORKLOG.md)

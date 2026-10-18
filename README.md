@@ -45,7 +45,9 @@ and interactive OAuth/host walkthroughs are not established by these tests.
 The optional [engineering harness](docs/HARNESS.md) provides strict task state,
 dry-run, isolated single-task execution and independent validation/review.
 Phase 1 is separate from gateway features; its [handover](docs/HANDOVER_PHASE1.md)
-records readiness and the approval still required before the real pilot.
+records the mocked runner evidence. The [Phase 2 handover](docs/HANDOVER_PHASE2.md)
+records the authorized pilot's JSONL failure, retained evidence and proposed repair
+scope; the pilot remains incomplete and batch is disabled.
 
 Requires Java 21. The Maven Wrapper pins Maven 3.9.11; its first use needs network access to Maven Central. No model-provider API key is needed by the application.
 
