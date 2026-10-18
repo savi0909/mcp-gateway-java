@@ -17,22 +17,25 @@ and requested validation of project documentation to prevent wrong context.
 
 - This repository's active project is the Java MCP gateway and its product tests,
   requirements, documentation and deployment/build verification.
-- Do not develop, repair, run or extend the retained LLM engineering harness,
-  launch its pilot/batch, refresh approvals or use its phase numbers as gateway
-  milestones. This supersedes ADR 0010's active workflow for this repository.
+- Do not develop or execute LLM automation here or use its phase numbers as
+  gateway milestones. The owner subsequently explicitly authorized moving that
+  work to `D:/Projects/llm-harness` and removing it from this repository.
 - Resume through [the gateway handover](../HANDOVER_GATEWAY.md), the product
-  implementation plan and foundation/identity/catalog evidence. Historical
-  `tasks/backlog.json` is not the gateway product task authority.
-- Preserve existing harness code, backlog, approval/run state, fixtures and
-  worktrees. Historical documents receive explicit notices. No deletion, move,
-  extraction or creation of a separate repository is authorized by this decision.
+  implementation plan and foundation/identity/catalog evidence. The automation
+  project's task backlog does not select gateway product work.
+- The original runner, tests, scripts, backlog, documentation and evidence are
+  preserved at `D:/Projects/llm-harness/imports/mcp-gateway-engineering-harness`.
+  Shared gateway-context snapshots and a source-history bundle preserve their
+  provenance. The failed worktree is an offline snapshot, no longer registered
+  with this checkout; original control metadata and attempt evidence are retained
+  at the destination. Product source, requirements and acceptance stay here.
 - Gateway CI runs its existing Windows/Linux Maven verification without harness
   Python setup or test execution. No runtime Java, dependencies or product
   acceptance state changes as part of this scope correction.
 
 ## Consequences
 
-The stopped harness pilot and proposed successor do not block gateway maintenance.
+The separate automation project's execution history does not block gateway maintenance.
 Product scope still comes from the owner's request and existing requirements;
 this correction does not silently approve UC-03, federation or a full release.
 Historical test counts remain evidence for the revisions and boundaries recorded,

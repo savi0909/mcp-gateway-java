@@ -7,8 +7,9 @@ Read `AGENTS.md`, the current state/latest entry in `WORKLOG.md`, `docs/IMPLEMEN
 Use [the current gateway handover](HANDOVER_GATEWAY.md) to resume unspecified
 work. This repository's scope is the MCP gateway. LLM development automation is
 a separate project under [ADR 0011](decisions/0011-gateway-project-scope.md).
-Retained harness handovers, pilot proposals and task state are historical inputs;
-do not use them to select work or launch model processes in this repository.
+Automation code, handovers, tasks and evidence were moved to
+`D:/Projects/llm-harness`. They do not select gateway work or authorize model
+processes in this repository.
 
 For enterprise admission work, also read [the handover](HANDOVER_UC01.md),
 [the slice plan](UC01_ADMISSION_PLAN.md), [identity acceptance](IDENTITY_ACCEPTANCE.md),
@@ -34,9 +35,8 @@ The original `docs/IMPLEMENTATION_PROMPT.md` requests the entire milestone. A us
 7. Report what changed, what was tested and what remains. The standing repository instruction authorizes committing completed work and pushing to origin after relevant checks. Deployment needs a separate request. Do not delete files without permission.
 
 No project hook invokes tests, model calls or worker allocation automatically.
-Run gateway checks directly through the Maven Wrapper. Preserve the historical
-[engineering harness records](HARNESS.md) without executing or extending that
-workflow. Its stopped pilot does not block gateway work or authorize new tasks.
+Run gateway checks directly through the Maven Wrapper. The separate automation
+project's execution state does not block gateway work or authorize new tasks.
 
 ## Review a stage
 

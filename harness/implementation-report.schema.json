@@ -1,6 +1,0 @@
-{
-  "type": "object",
-  "additionalProperties": false,
-  "properties": {"status": {"type": "string", "enum": ["completed", "blocked"]}},
-  "required": ["status"]
-}

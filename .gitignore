@@ -15,5 +15,3 @@ CLAUDE.local.md
 .claude/settings.local.json
 .codex/config.local.toml
 /config/local/
-__pycache__/
-*.pyc

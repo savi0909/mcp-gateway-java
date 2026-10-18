@@ -8,18 +8,17 @@ Explicit user instructions take precedence. `docs/FUNCTIONAL_SPEC.md` is authori
 
 ## Project scope: MCP gateway
 
-The owner clarified on 2026-10-18 that this repository is the MCP gateway project.
-LLM/agent development automation belongs to a separate project. Do not develop,
-repair, run or extend the retained engineering harness, launch its pilot/batch,
-refresh its approvals or use its phases to describe gateway progress here.
+The owner clarified on 2026-10-18 that this repository builds an enterprise-class
+MCP gateway. LLM/agent development automation belongs to the separate repository
+at `D:/Projects/llm-harness`; its code, tasks and evidence have been relocated there.
+Do not develop or execute that automation here or use its phases as gateway progress.
 Read [ADR 0011](docs/decisions/0011-gateway-project-scope.md) for this scope decision.
 
 For an unspecified "continue" or "handover", use `docs/HANDOVER_GATEWAY.md`
-and the gateway plan/acceptance trackers. The harness Phase 1/2 handovers,
-restart proposal and ADR 0010 are historical records, not the active roadmap.
-`tasks/backlog.json` describes that historical harness workflow; it does not
-select or authorize gateway product work. Preserve its state and retained
-artifacts. Do not delete or move files or create the separate project implicitly.
+and the gateway plan/acceptance trackers. Product work must establish concrete
+guarantees for isolation, identity, policy, audit, revocation, bounded execution,
+configuration integrity and recovery under concurrency and failures. Keep
+measured evidence distinct from future scale and availability targets.
 
 ## Long-term project direction
 
@@ -107,9 +106,8 @@ tenant-aware; caller JWTs never become downstream bearer tokens.
 ## Working and handoff rules
 
 Develop and verify the gateway directly using the shared workflow and Maven
-Wrapper. Historical harness-only approval, task ownership and runner-owned Git
-rules do not govern ordinary gateway maintenance. Keep unrelated harness files,
-task state, fixtures and worktrees untouched; cleanup requires explicit permission.
+Wrapper. The separate automation project's task/approval rules do not govern
+gateway maintenance. Keep work scoped to the requested gateway requirements.
 
 Work in the stage order in `docs/IMPLEMENTATION_PLAN.md`; implement only the requested scope. When asked for the full milestone, continue through all stages without routine confirmation. Explain consequential choices briefly so the user can learn the code.
 

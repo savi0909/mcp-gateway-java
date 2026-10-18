@@ -1,9 +1,10 @@
 # Current MCP gateway handover
 
 Updated 2026-10-18. This is the entry point for continuing this repository.
-The owner clarified that LLM development automation is a separate project.
-Read [ADR 0011](decisions/0011-gateway-project-scope.md). Do not resume the
-historical harness Phase 1/2 handovers or proposed pilot here.
+The owner clarified that this project builds an enterprise-class MCP gateway.
+LLM development automation was moved to `D:/Projects/llm-harness`. Read
+[ADR 0011](decisions/0011-gateway-project-scope.md). Use gateway requirements
+and verified product evidence to choose work here.
 
 ## Product state
 
@@ -17,11 +18,12 @@ historical harness Phase 1/2 handovers or proposed pilot here.
   and the separate catalog requirements remain release obligations. Workloads,
   sensitive-action approvals, third-party execution and distributed guarantees
   are not established by the current local ordinary-read evidence.
-- Last recorded gateway verification: 128 unit/startup plus 34 real Boot/SDK
-  integration tests passed against independent mocks during the 2026-10-18
-  subprocess repair checks. No gateway Java changed on October 17–18; these were
-  regression checks, not new gateway capabilities. No fresh Maven run is claimed
-  for this documentation/CI separation.
+- Fresh post-relocation verification on 2026-10-18: 128 unit/startup plus 34 real
+  Boot/SDK integration tests passed against independent mocks, zero failures,
+  errors or skips, with Wrapper `verify` and packaged JAR under
+  `target/gateway-relocation-20261018`. Log: `target/gateway-relocation-verify.log`.
+  No gateway Java changed during the automation work or its removal; this is
+  regression evidence, not a new product capability.
 
 ## Read order and requirements
 
@@ -53,22 +55,19 @@ sensitive reads/mutations/autonomous/third-party execution disabled unless their
 own product scope is explicitly selected and implemented. Keep standing no-delete,
 no-live-allocation, no-deployment and commit/push rules.
 
-## What October 17–18 accomplished
+## Separate development automation
 
-October 17: repository assessment and engineering automation runner, isolated
-task execution, verification/review/recovery controls and mocked tests.
-October 18: first real runner attempt failed; stream handling was repaired,
-63 harness tests passed and independent code review approved the repair. The
-planned gateway membership-activation test was not delivered by that attempt.
-These were automation activities; the gateway product implementation remained
-unchanged. Preserve their records as history while continuing gateway work here.
+The unrelated automation work from October 17–18, its original documentation and
+local evidence were moved to `D:/Projects/llm-harness/imports/mcp-gateway-engineering-harness`.
+That work added no gateway product capability. Its task state is not a gateway
+implementation gate or product acceptance result.
 
 ## Copyable continuation prompt
 
 ```text
 Read AGENTS.md, WORKLOG.md, docs/IMPLEMENTATION_PLAN.md and
 docs/HANDOVER_GATEWAY.md. This project is the MCP gateway. LLM harness work is
-a separate project; do not run or extend its retained code or pilot workflow.
+a separate project; do not run or extend its workflow here.
 Review UC-01/U5 gaps and the product requirements/acceptance trackers. Implement
 only the requested gateway slice, preserve the foundation and pinned stack, use
 independent mocks and real SDK checks where needed, run appropriate Wrapper

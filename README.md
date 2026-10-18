@@ -1,6 +1,6 @@
 # MCP Gateway Server
 
-A local Java MCP gateway exposing the existing coordinator's worker lease and namespace APIs alongside its separate payment sample. The coordinator manages leases, the payment worker generates payment IDs, and the gateway adapts REST and MCP.
+An enterprise MCP gateway project in Java. The current local increment exposes the existing coordinator's worker lease and namespace APIs alongside its separate payment sample. The coordinator manages leases, the payment worker generates payment IDs, and the gateway adapts REST and MCP.
 
 **Current state:** the foundation plus opt-in local UC-01 increment pass **128 unit/startup tests and 34 real Boot/SDK integration tests** with independent mocks. Default MCP is disabled. `worker-payments` exposes nine coordinator tools plus payment; optional `secured` adds JWT authentication, scopes, tenant admission and session ownership. `workers,secured,uc01` adds the enterprise ordinary-read admission described below. The existing demo is unchanged; the updated executable is under `target/foundation`.
 
@@ -42,10 +42,10 @@ and interactive OAuth/host walkthroughs are not established by these tests.
 
 ## Start development
 
-This repository develops the MCP gateway. The owner separated LLM development
-automation into another project on 2026-10-18; the retained
-[engineering harness records](docs/HARNESS.md) are historical. Gateway work uses
-the Maven Wrapper and product requirements/acceptance trackers directly.
+This repository develops the enterprise MCP gateway. LLM development automation
+was moved to the separate `D:/Projects/llm-harness` repository on 2026-10-18.
+Gateway work uses the Maven Wrapper and product requirements/acceptance trackers
+directly.
 
 Requires Java 21. The Maven Wrapper pins Maven 3.9.11; its first use needs network access to Maven Central. No model-provider API key is needed by the application.
 
