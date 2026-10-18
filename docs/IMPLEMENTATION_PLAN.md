@@ -16,6 +16,13 @@ This repository develops the MCP gateway. Start with
 UC-01/U5 gaps and the selected product scope below. Development automation lives
 separately at `D:/Projects/llm-harness` and is independent of gateway milestones.
 
+The [2026-10-18 implementation review and proposed next features](GATEWAY_REVIEW_AND_NEXT_FEATURES.md)
+compares current source/evidence with Uber's gateway architecture and the custom
+identity/catalog requirements. It recommends closing supported UC-01/U5 gaps,
+then workload reads, registry/virtual servers and native federation. This is a
+planning proposal; existing acceptance states and selected implementation scope
+are unchanged.
+
 ## Selected slice: UC-01 (local implementation; release incomplete)
 
 Follow [UC01_ADMISSION_PLAN.md](UC01_ADMISSION_PLAN.md) and

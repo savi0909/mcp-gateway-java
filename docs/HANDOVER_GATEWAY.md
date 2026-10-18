@@ -42,6 +42,12 @@ and verified product evidence to choose work here.
 
 ## Next gateway decision
 
+Read the [2026-10-18 source review and proposed roadmap](GATEWAY_REVIEW_AND_NEXT_FEATURES.md)
+for prioritized audit/journal/admission findings, the verified Uber reference,
+custom-requirement boundaries and proposed feature packages. The review proposes
+UC-01/U5 closure before UC-03, then registry/virtual servers and native federation;
+it does not itself implement or complete those features.
+
 Review remaining UC-01/U5 gaps before extending execution modes: pre-identity
 authentication-denial audit, controlled retention/archival, broader revocation
 and catalog activation evidence. The existing detailed handover proposes UC-03
