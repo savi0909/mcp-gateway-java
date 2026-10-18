@@ -12,8 +12,11 @@ The owner authorized `PILOT-01` after Phase 1; see the committed
 Maven verification or independent review. Its state is `needs_review`, with one
 attempt and a clean retained worktree; the other 11 tasks remain pending. See
 [the Phase 2 handover](HANDOVER_PHASE2.md) for retained evidence, read-only
-inspection commands and the subsequent local adapter repair. The repair still
-requires independent review before renewed pilot approval. Batch is disabled. No gateway business
+inspection commands and the subsequent local adapter repair. Independent review
+approved repair commit `2ddc658` after an inline-evidence follow-up; the
+[restart proposal](handover/pilot-restart-proposal.md) preserves the failed run
+and defines a separately authorized successor. No new approval or task-state
+change has been applied. Batch is disabled. No gateway business
 behavior or dependency version changed, and the real pilot is not complete.
 
 ## Files and responsibilities

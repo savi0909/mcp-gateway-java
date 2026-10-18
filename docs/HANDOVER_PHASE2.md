@@ -148,12 +148,13 @@ Evidence: ignored `target/phase2-streams-maven-result.json` and
 `target/harness/verify-03479bc4466e4ce7a7156cbd4a0bd4b3/`.
 This validates the shared subprocess path locally, not the failed pilot candidate.
 
-The implementation review performed in this session is self-review, not the
-separate independent review required before renewed pilot approval. Preserve
+The implementation review performed during the repair was self-review, not the
+separate independent review required before renewed pilot approval. That later
+review is recorded below. Preserve
 `PILOT-01` as `needs_review`, attempts 1, with its original run/approval/deadline.
-No reconciliation or new approval was written. Before any new attempt, independently
-review this repaired trust root, then agree and document how renewed authorization
-and the preserved failed attempt are represented. Do not reset the old counter or
+No reconciliation or new approval was written. At that handoff the next gate was
+independent trust-root review, followed by agreement on renewed authorization
+and preservation of the failed attempt. Do not reset the old counter or
 use `resume` to replay it. A successful local suite does not remove that gate.
 
 ## Safe next-session checks
@@ -194,11 +195,48 @@ docs/HANDOVER_PHASE2.md, docs/HARNESS.md and ADR 0010.
 Inspect PILOT-01 run 43d56cc99c694b6781f51674d0165b69 and its retained worktree.
 The task is needs_review after one Malformed Codex JSONL failure; it is incomplete.
 The merged-stream defect was reproduced locally and repaired; the discarded pilot
-line's exact cause remains unconfirmed. Review the adapter/fixture changes and
-the fresh 63-test evidence independently; self-review is not independent approval.
+line's exact cause remains unconfirmed. Subsequent independent read-only review
+approved repair commit 2ddc658 after an inline-evidence follow-up. Read
+docs/handover/pilot-restart-proposal.md for that review and the proposed PILOT-02
+state transition; the proposal is not new-attempt authorization.
 Do not replay the run, reset counters, broaden scope or promote old product evidence.
-Before a separately authorized new attempt, document how the preserved failed task
-and renewed authorization will be represented, then reconcile state and refresh
-approval against the reviewed new baseline. Batch remains disabled; do not merge,
+After separate owner authorization, apply the proposal's explicit state disposition
+and refresh approval against the reviewed new baseline. Until then preserve task
+state and do not launch a successor. Batch remains disabled; do not merge,
 deploy or delete files.
 ```
+
+## Subsequent independent review and restart preparation (2026-10-18)
+
+The owner's next instruction, `continue with handover`, selected the next
+independent review and concrete restart preparation. Two bounded read-only
+`gpt-6-astra` / high review processes examined repair commit
+`2ddc658ccb5c50e0b1d6f51d1cdc15173fb6f6ec` against parent `fe54904`.
+The first completed review returned a high `evidence_gap` at
+`harness/processes.py:1`, without explanatory prose under the restricted schema.
+A follow-up supplied the exact diff, complete numbered source, surrounding
+callers and existing local verification summaries inline. It returned
+`{"verdict":"approve","findings":[]}`; structured schema and scope validation
+accepted it. No source changed between those reviews. Safe process metadata and
+the inline evidence hash are recorded in the
+[restart proposal](handover/pilot-restart-proposal.md).
+
+This is successful real structured read-only reviewer exchange evidence, not
+workspace-write implementation or pilot completion. No automatic infrastructure
+retry, model fallback, approval refresh, original-run replay or task-state change
+occurred. The independent approval applies to the committed repair, not these
+later preparatory documentation edits or an unexecuted successor task.
+
+The proposal defines `PILOT-02` with the original four-file scope and criteria,
+an explicit blocked disposition for the failed predecessor preserving attempts
+and run history, and rewiring only its five direct future dependents. These are
+proposed administrative changes, not applied changes. Separate owner authorization
+for one new cycle remains required by this handover before recording approval,
+reconciling the backlog and executing against a reviewed new base/hash. The
+original `PILOT-01` remains `needs_review`, attempts 1; all 11 other tasks remain
+pending. Batch remains disabled. See the latest WORKLOG entry for fresh checks.
+
+Fresh `python -B -m unittest discover -s harness/tests -v` passed **63 tests in
+135.960 seconds**, zero failures/errors/skips, exit 0; retained log
+`target/harness-tests-phase2-review.log`. Maven was not rerun for this
+documentation-only follow-up; its earlier repair evidence remains historical.

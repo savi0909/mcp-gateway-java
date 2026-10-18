@@ -38,8 +38,12 @@ worktree is clean and the other 11 tasks remain pending. The pilot is incomplete
 The owner's subsequent continuation selected bounded process-adapter repair.
 Concurrent separate stdout/stderr handling and local regression tests are now
 implemented; WORKLOG and the Phase 2 handover record fresh verification separately
-from the failed pilot. Independent review of this trusted-runner change remains
-required before reconciling the failed task and refreshing pilot approval.
+from the failed pilot. Subsequent independent read-only review approved repair
+commit `2ddc658` with no findings after an inline-evidence follow-up. The
+[restart proposal](handover/pilot-restart-proposal.md) defines a new `PILOT-02`
+and preservation of the failed predecessor; it is not approval. Separate new-cycle
+authorization, explicit state disposition and a refreshed source/hash remain
+required before execution; no backlog or original run state has changed.
 Do not replay this run, reset its counter or infer batch approval. No product
 acceptance row is promoted here.
 
