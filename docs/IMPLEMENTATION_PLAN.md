@@ -35,8 +35,11 @@ Maven verification or independent review. `tasks/backlog.json` records
 `needs_review`, one attempt and run `43d56cc99c694b6781f51674d0165b69`; the retained
 worktree is clean and the other 11 tasks remain pending. The pilot is incomplete;
 [the Phase 2 handover](HANDOVER_PHASE2.md) records evidence and safe restart steps.
-Next: separately scope and review process-adapter diagnosis/repair, then refresh
-approval against the repaired trusted baseline before another pilot attempt.
+The owner's subsequent continuation selected bounded process-adapter repair.
+Concurrent separate stdout/stderr handling and local regression tests are now
+implemented; WORKLOG and the Phase 2 handover record fresh verification separately
+from the failed pilot. Independent review of this trusted-runner change remains
+required before reconciling the failed task and refreshing pilot approval.
 Do not replay this run, reset its counter or infer batch approval. No product
 acceptance row is promoted here.
 

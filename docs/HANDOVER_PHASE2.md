@@ -2,8 +2,10 @@
 
 Date: 2026-10-18. **PILOT-01 is incomplete and requires review.** Its first real
 attempt stopped with `Malformed Codex JSONL` before producing a candidate or
-reaching independent Maven verification/review. This handover records the failure;
-it does not approve harness repair, another model call, batch or gateway changes.
+reaching independent Maven verification/review. The original handover recorded the
+failure without approving repair. The owner's subsequent instruction to continue
+from this document selected the bounded adapter repair described below. No new
+pilot attempt, model call, batch or gateway change was included in that repair.
 
 ## Read first
 
@@ -68,8 +70,8 @@ Raw child output was discarded by design and cannot be recovered from this state
 
 ## Diagnosis boundary and next repair scope
 
-Static inspection found that `run_process` merges stderr into stdout and
-`Codex.execute` then parses each resulting line as JSON. A diagnostic outside JSON
+At the failed-run revision, `run_process` merged stderr into stdout and
+`Codex.execute` parsed each resulting line as JSON. A diagnostic outside JSON
 could explain the failure. This is a hypothesis; the malformed line was discarded,
 so the exact cause is unconfirmed. The existing fake-process suite did not prove
 compatibility with this real CLI run.
@@ -95,9 +97,64 @@ that trust boundary. Suggested scope for review:
    is represented before launching it; the current runner rejects an outstanding
    needs-review task and previously attempted tasks.
 
-This is proposed repair scope, not authorization to implement it. The documentation
-request starts no repair, live model call or new pilot attempt. A later successful
-pilot still requires separate review before any batch policy change.
+This was proposed scope at the original documentation handoff. The subsequent
+continuation selected local repair, with the exact paths and results recorded
+below. A later successful pilot still requires separate review before any batch
+policy change.
+
+## Subsequent bounded adapter repair (2026-10-18)
+
+The owner resumed with `continue - .../docs/HANDOVER_PHASE2.md`. This selected
+the proposed local diagnosis/repair, not replay of the failed task. Exact repair
+paths: `harness/processes.py`, `harness/tests/test_process_streams.py`,
+`harness/tests/test_harness.py`, `docs/HARNESS.md`, `docs/IMPLEMENTATION_PLAN.md`,
+this handover and `WORKLOG.md`. The configuration, orchestrator, task state,
+approval record, build/CI and gateway source remain unchanged.
+
+A deterministic child emitting valid JSONL on stdout and a diagnostic on stderr
+reproduced `Malformed Codex JSONL` before the change. The supervisor now drains
+both streams concurrently, returns stdout only and counts/discards stderr under
+the same combined byte cap. Failure metadata contains only safe exit/duration/
+stream-count fields. Malformed stdout, explicit failure events, missing completion
+or messages and malformed/schema-invalid reports remain blocking failures;
+there is no retry or sandbox-policy change.
+
+Local CLI 0.162.1 `exec --help` confirms JSONL events are written to stdout and
+the required flags exist. Event/message shapes were cross-checked against
+[official non-interactive documentation](https://developers.openai.com/codex/noninteractive/).
+Neither help nor documentation establishes a successful live exchange with this
+installed CLI. The original pilot's exact malformed line remains unrecoverable.
+
+The full suite exposed a separate test isolation defect: synthetic repositories
+copied the real pilot's attempt and run state. The first expanded run had 9
+failures and 16 errors across 62 tests because the replay guard correctly rejected
+those already-attempted fixtures. The fixture now defines its own fresh task;
+the real backlog and replay guard were not changed. A review-fixture byte-count
+assertion also initially failed due to Windows CRLF; its child now emits explicit
+bytes. Both exploratory logs/fixtures and the failed pilot are retained.
+
+Fresh command: `python -B -m unittest discover -s harness/tests -v`.
+**63 tests passed in 115.936 seconds, zero failures/errors/skips**. The 14 new
+stream tests exercise diagnostics, sandbox arguments for both roles, malformed/missing/failure
+events and reports, combined output bounds, concurrent drains, timeout,
+cancellation, no infrastructure retry and secret-safe persisted run failure.
+Log: ignored `target/harness-tests-phase2-streams-final.log`.
+
+The actual `MavenVerifier(...).verify(...)` was also executed through the repaired
+supervisor with a 900-second budget. It invoked the unchanged PowerShell/Wrapper
+verification path and accepted fresh reports: **128 unit/startup + 34 integration
+tests, zero failures/errors/skips**, packaged JAR, exit 0 in 133.842 seconds.
+Evidence: ignored `target/phase2-streams-maven-result.json` and
+`target/harness/verify-03479bc4466e4ce7a7156cbd4a0bd4b3/`.
+This validates the shared subprocess path locally, not the failed pilot candidate.
+
+The implementation review performed in this session is self-review, not the
+separate independent review required before renewed pilot approval. Preserve
+`PILOT-01` as `needs_review`, attempts 1, with its original run/approval/deadline.
+No reconciliation or new approval was written. Before any new attempt, independently
+review this repaired trust root, then agree and document how renewed authorization
+and the preserved failed attempt are represented. Do not reset the old counter or
+use `resume` to replay it. A successful local suite does not remove that gate.
 
 ## Safe next-session checks
 
@@ -124,8 +181,10 @@ not fresh results for this attempt. Hosted CI/Linux behavior remains unverified.
 No gateway Java, dependency, endpoint, runtime policy or live service changed;
 identity/catalog acceptance was not promoted.
 
-This documentation follow-up checks current run state, backlog consistency and
-Markdown/text integrity only. See the latest WORKLOG entry for its executed checks.
+The original documentation follow-up checked only state and text integrity.
+The subsequent repair adds fresh local regression evidence above; see the latest
+WORKLOG entry for all executed checks. No new model exchange or pilot outcome is
+established by those tests.
 
 ## Copyable next-session prompt
 
@@ -134,11 +193,12 @@ Read AGENTS.md, WORKLOG.md, docs/IMPLEMENTATION_PLAN.md,
 docs/HANDOVER_PHASE2.md, docs/HARNESS.md and ADR 0010.
 Inspect PILOT-01 run 43d56cc99c694b6781f51674d0165b69 and its retained worktree.
 The task is needs_review after one Malformed Codex JSONL failure; it is incomplete.
-Treat merged diagnostic stderr as an unconfirmed hypothesis. Do not replay the run,
-reset counters, broaden pilot scope or claim old tests as fresh evidence.
-If the owner explicitly requests harness repair, define its exact paths/criteria,
-reproduce locally, preserve strict protocol validation and bounded secret-safe
-process handling, run the full harness suite and review the repaired trust root.
-Reconcile failed state and refresh pilot approval before any separately authorized
-new real attempt. Batch remains disabled; do not merge, deploy or delete files.
+The merged-stream defect was reproduced locally and repaired; the discarded pilot
+line's exact cause remains unconfirmed. Review the adapter/fixture changes and
+the fresh 63-test evidence independently; self-review is not independent approval.
+Do not replay the run, reset counters, broaden scope or promote old product evidence.
+Before a separately authorized new attempt, document how the preserved failed task
+and renewed authorization will be represented, then reconcile state and refresh
+approval against the reviewed new baseline. Batch remains disabled; do not merge,
+deploy or delete files.
 ```

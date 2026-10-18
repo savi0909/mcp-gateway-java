@@ -105,40 +105,51 @@ class WindowsJob:
 
 
 def run_process(argv, cwd, timeout, *, stdin="", cancel=None, heartbeat=None, max_output=2_000_000):
-    """Capture bounded output in memory. Kill descendants on success, timeout or cancel."""
+    """Capture stdout, count/discard stderr, and bound their combined bytes.
+
+    Kill descendants on success, timeout or cancel. Diagnostics never enter the
+    protocol stream or returned metadata, including on failure.
+    """
     require(timeout > 0, "Runtime budget exhausted")
     job = WindowsJob() if os.name == "nt" else None
     process = None
     failure = None
     output = bytearray()
+    counts = {"stdout_bytes": 0, "stderr_bytes": 0}
+    output_lock = threading.Lock()
     too_large = threading.Event()
-    done = threading.Event()
+    readers = []
+    read_failed = threading.Event()
     started = time.monotonic()
     try:
         process = subprocess.Popen(argv, cwd=cwd, env=safe_environment(), stdin=subprocess.PIPE,
-                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                    creationflags=0x4 if os.name == "nt" else 0,
                                    start_new_session=os.name != "nt")
         if job:
             job.attach_and_resume(process)
-        def drain():
+        def drain(stream, name):
             try:
-                while chunk := process.stdout.read(4096):
-                    if len(output) + len(chunk) > max_output:
-                        too_large.set()
-                    elif not too_large.is_set():
-                        output.extend(chunk)
-            finally:
-                done.set()
+                while chunk := stream.read1(4096):
+                    with output_lock:
+                        counts[name] += len(chunk)
+                        if counts["stdout_bytes"] + counts["stderr_bytes"] > max_output:
+                            too_large.set()
+                        elif name == "stdout_bytes" and not too_large.is_set():
+                            output.extend(chunk)
+            except OSError:
+                read_failed.set()
         def feed():
             try:
                 process.stdin.write(stdin.encode("utf-8"))
                 process.stdin.close()
             except (BrokenPipeError, OSError):
                 pass
-        reader = threading.Thread(target=drain, daemon=True)
+        readers = [threading.Thread(target=drain, args=(stream, name), daemon=True)
+                   for stream, name in ((process.stdout, "stdout_bytes"), (process.stderr, "stderr_bytes"))]
         writer = threading.Thread(target=feed, daemon=True)
-        reader.start()
+        for reader in readers:
+            reader.start()
         writer.start()
         next_heartbeat = started + 15
         while process.poll() is None:
@@ -149,6 +160,8 @@ def run_process(argv, cwd, timeout, *, stdin="", cancel=None, heartbeat=None, ma
                 raise ProcessFailure("Process timeout")
             if too_large.is_set():
                 raise ProcessFailure("Process output limit exceeded")
+            if read_failed.is_set():
+                raise ProcessFailure("Cannot read process output")
             if heartbeat and now >= next_heartbeat:
                 heartbeat()
                 next_heartbeat = now + 15
@@ -160,10 +173,13 @@ def run_process(argv, cwd, timeout, *, stdin="", cancel=None, heartbeat=None, ma
                 os.killpg(process.pid, signal.SIGKILL)
             except ProcessLookupError:
                 pass
-        require(done.wait(5), "Process output pipe did not close")
+        for reader in readers:
+            reader.join(timeout=5)
+        require(not any(reader.is_alive() for reader in readers), "Process output pipe did not close")
+        require(not read_failed.is_set(), "Cannot read process output")
         require(not too_large.is_set(), "Process output limit exceeded")
         return {"exit_code": process.returncode, "output": output.decode("utf-8", errors="replace"),
-                "duration_seconds": round(time.monotonic() - started, 3)}
+                "duration_seconds": round(time.monotonic() - started, 3), **counts}
     except (Halt, OSError) as error:
         failure = ProcessFailure(str(error) if isinstance(error, Halt) else "Cannot launch required executable",
                                  {"duration_seconds": round(time.monotonic() - started, 3)})
@@ -180,9 +196,13 @@ def run_process(argv, cwd, timeout, *, stdin="", cancel=None, heartbeat=None, ma
             elif process.poll() is None:
                 process.kill()
             process.wait(timeout=5)
+            for reader in readers:
+                reader.join(timeout=5)
             if failure:
                 failure.metadata["exit_code"] = process.returncode
-            for stream in (process.stdin, process.stdout):
+                with output_lock:
+                    failure.metadata.update(counts)
+            for stream in (process.stdin, process.stdout, process.stderr):
                 if stream and not stream.closed:
                     stream.close()
 
@@ -232,29 +252,39 @@ class Codex:
                   "--json", "--output-schema", str(schema), "-"]
         result = run_process(command, root, timeout, stdin=prompt, cancel=cancel,
                              heartbeat=lambda: print("Agent process running; deadline remains enforced.", flush=True))
+        metadata = {k: result[k] for k in ("exit_code", "duration_seconds", "stdout_bytes", "stderr_bytes")}
         if result["exit_code"] != 0:
-            raise ProcessFailure("Codex process failed; no automatic infrastructure retry",
-                                 {k: result[k] for k in ("exit_code", "duration_seconds")})
+            raise ProcessFailure("Codex process failed; no automatic infrastructure retry", metadata)
         messages, event_count, completed = [], 0, False
         for line in result["output"].splitlines():
             try:
                 event = json.loads(line)
             except ValueError as error:
-                raise ProcessFailure("Malformed Codex JSONL") from error
-            require(isinstance(event, dict), "Malformed Codex event")
+                raise ProcessFailure("Malformed Codex JSONL", metadata) from error
+            if not isinstance(event, dict) or not isinstance(event.get("type"), str):
+                raise ProcessFailure("Malformed Codex event", metadata)
             event_count += 1
-            require(event.get("type") not in ("error", "turn.failed"), "Codex reported failure")
+            if event["type"] in ("error", "turn.failed"):
+                raise ProcessFailure("Codex reported failure", metadata)
             completed |= event.get("type") == "turn.completed"
-            item = event.get("item", {})
-            if event.get("type") == "item.completed" and item.get("type") == "agent_message":
-                messages.append(item.get("text", ""))
-        require(completed and bool(messages), "Missing completed Codex response")
+            if event["type"] == "item.completed":
+                item = event.get("item")
+                if not isinstance(item, dict) or not isinstance(item.get("type"), str):
+                    raise ProcessFailure("Malformed Codex item", metadata)
+                if item["type"] == "agent_message":
+                    if not isinstance(item.get("text"), str):
+                        raise ProcessFailure("Malformed Codex message", metadata)
+                    messages.append(item["text"])
+        if not completed or not messages:
+            raise ProcessFailure("Missing completed Codex response", metadata)
         try:
             report = json.loads(messages[-1])
         except ValueError as error:
-            raise ProcessFailure("Malformed structured agent report") from error
+            raise ProcessFailure("Malformed structured agent report", metadata) from error
         from harness.common import read_json, validate_schema
-        validate_schema(report, read_json(schema))
+        try:
+            validate_schema(report, read_json(schema))
+        except Halt as error:
+            raise ProcessFailure("Invalid structured agent report", metadata) from error
         # Only whitelisted status/count metadata is persisted by the caller.
-        return report, {"exit_code": 0, "event_count": event_count,
-                        "duration_seconds": result["duration_seconds"]}
+        return report, {**metadata, "event_count": event_count}

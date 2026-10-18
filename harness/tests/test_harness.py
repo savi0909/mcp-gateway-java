@@ -103,10 +103,13 @@ def repository():
     (root / "source.txt").write_text("original\n")
     (root / "spec.md").write_text("Approved fixture contract\n")
     (root / ".gitignore").write_text("/target/\n")
-    task = copy.deepcopy(read_json(SOURCE.parent / "tasks/backlog.json")["tasks"][0])
-    task.update(id="TEST-01", title="Fixture change", spec_refs=["spec.md"], scope=["source.txt"],
-                acceptance_criteria=["Apply fixture change and verify independently"],
-                base_commit="0" * 40, requires_human_approval=True)
+    # Synthetic lifecycle state must not inherit attempts/ownership from the real pilot.
+    task = {"id": "TEST-01", "title": "Fixture change", "status": "pending",
+            "priority": "high", "risk": "low", "dependencies": [], "spec_refs": ["spec.md"],
+            "scope": ["source.txt"], "acceptance_criteria": ["Apply fixture change and verify independently"],
+            "tests": ["maven-verify"], "requires_human_approval": True, "review_required": True,
+            "model_role": "implement", "phase": 2, "base_commit": "0" * 40, "approval": None,
+            "attempts": 0, "run_id": None, "content_commit": None, "evidence": None, "block_reason": None}
     data = {"schema_version": 1, "pilot_authorization": None, "tasks": [task]}
     atomic_json(root / "tasks/backlog.json", data)
     git(root, "add", ".")

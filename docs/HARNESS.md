@@ -12,7 +12,8 @@ The owner authorized `PILOT-01` after Phase 1; see the committed
 Maven verification or independent review. Its state is `needs_review`, with one
 attempt and a clean retained worktree; the other 11 tasks remain pending. See
 [the Phase 2 handover](HANDOVER_PHASE2.md) for retained evidence, read-only
-inspection commands and the proposed adapter repair scope. Batch is disabled. No gateway business
+inspection commands and the subsequent local adapter repair. The repair still
+requires independent review before renewed pilot approval. Batch is disabled. No gateway business
 behavior or dependency version changed, and the real pilot is not complete.
 
 ## Files and responsibilities
@@ -27,6 +28,7 @@ behavior or dependency version changed, and the real pilot is not complete.
 | [validator](../harness/validator.py) | Exact changed-path/content checks, fresh Maven reports and independent review verdict |
 | [PowerShell verifier](../scripts/verify.ps1) / [POSIX verifier](../scripts/verify.sh) | Wrapper verify in a fresh per-run build directory; exit-code propagation |
 | [tests](../harness/tests/test_harness.py) | Isolated repositories, fake child processes, local bare remotes, failure/crash cases |
+| [stream regression tests](../harness/tests/test_process_streams.py) | Separate stdout/stderr, shared byte limits, strict JSONL rejection and secret-safe persisted failures |
 
 Use Python 3.13, Java 21, the repository's Maven Wrapper and Git. No Python package
 installation is needed. Live execution also needs a supported authenticated Codex
@@ -182,6 +184,15 @@ their fixtures under ignored `target/harness-tests/` (and adjacent retained
 worktree directories within that fixture area).
 
 ## Validation scope and limitations
+
+The process supervisor drains stdout and stderr concurrently. Its `output` field
+contains stdout only; stderr is counted and discarded. Both streams share the
+existing output byte cap (2,000,000 by default; 8,000,000 for Maven). Codex success
+and failure evidence retains only exit code, duration, stream byte counts and,
+on success, event count. Malformed stdout, explicit protocol failures, missing
+completion/messages and invalid structured reports still stop without retries.
+The new stream suite reproduces the former merged-stream failure with local
+children; it does not establish the exact cause of the discarded pilot output.
 
 The harness suite uses actual isolated Git repositories, local remotes and child
 processes with fake implementation/review/verifier behavior. It exercises task
