@@ -4,7 +4,7 @@ A local Java MCP gateway exposing the existing coordinator's worker lease and na
 
 **Current state:** the foundation plus opt-in local UC-01 increment pass **128 unit/startup tests and 34 real Boot/SDK integration tests** with independent mocks. Default MCP is disabled. `worker-payments` exposes nine coordinator tools plus payment; optional `secured` adds JWT authentication, scopes, tenant admission and session ownership. `workers,secured,uc01` adds the enterprise ordinary-read admission described below. The existing demo is unchanged; the updated executable is under `target/foundation`.
 
-See [Worker tools and definitions](docs/WORKER_TOOLS.md) for tools, schemas and run commands, and [the payment demo](docs/PAYMENT_DEMO.md) for Docker setup. The running MCP address is `http://127.0.0.1:8080/worker-coordinator/mcp`.
+See [Worker tools and definitions](docs/WORKER_TOOLS.md) for tools, schemas and run commands, and [the payment demo](docs/PAYMENT_DEMO.md) for Docker setup. The documented demo MCP address is `http://127.0.0.1:8080/worker-coordinator/mcp`; see the worklog for dated runtime checks.
 
 For manual testing, see [MCP Inspector commands](docs/MCP_INSPECTOR.md): the worker/payment gateway adapts MCP to REST on port 8080, while the native URL shortener tools are available through HAProxy at `http://127.0.0.1:8119/mcp`.
 
@@ -29,9 +29,9 @@ The [plan](docs/UC01_ADMISSION_PLAN.md) and [catalog tracker](docs/CATALOG_ACCEP
 record tested scope and limits; [all 32 identity acceptance criteria](docs/IDENTITY_ACCEPTANCE.md) remain
 required for the full first release, separately from foundation evidence.
 
-For resuming work, use the [UC-01 handover](docs/HANDOVER_UC01.md), which records
-the pushed implementation baseline, verification evidence, remaining gaps and
-recommended UC-03 scope.
+For resuming work, start with the [current gateway handover](docs/HANDOVER_GATEWAY.md).
+The [UC-01 implementation handover](docs/HANDOVER_UC01.md) preserves the detailed
+baseline, verification evidence, remaining gaps and proposed UC-03 scope.
 
 Start with the [independent standalone mock demo](docs/MOCK_DEMO.md). For caller
 security and the response-loss/cancellation demonstration, see
@@ -42,12 +42,10 @@ and interactive OAuth/host walkthroughs are not established by these tests.
 
 ## Start development
 
-The optional [engineering harness](docs/HARNESS.md) provides strict task state,
-dry-run, isolated single-task execution and independent validation/review.
-Phase 1 is separate from gateway features; its [handover](docs/HANDOVER_PHASE1.md)
-records the mocked runner evidence. The [Phase 2 handover](docs/HANDOVER_PHASE2.md)
-records the authorized pilot's JSONL failure, retained evidence and proposed repair
-scope; the pilot remains incomplete and batch is disabled.
+This repository develops the MCP gateway. The owner separated LLM development
+automation into another project on 2026-10-18; the retained
+[engineering harness records](docs/HARNESS.md) are historical. Gateway work uses
+the Maven Wrapper and product requirements/acceptance trackers directly.
 
 Requires Java 21. The Maven Wrapper pins Maven 3.9.11; its first use needs network access to Maven Central. No model-provider API key is needed by the application.
 
@@ -86,8 +84,8 @@ claude
 Use the current worklog to resume with either tool:
 
 ```text
-Read AGENTS.md, WORKLOG.md, docs/IMPLEMENTATION_PLAN.md and the supplied
-handoff documents. Preserve the user-directed worker tools, payment demo and retry decisions.
+Read AGENTS.md, WORKLOG.md, docs/IMPLEMENTATION_PLAN.md and
+docs/HANDOVER_GATEWAY.md. Preserve the user-directed worker tools, payment demo and retry decisions.
 Tests are resumed. Read the final foundation evidence and residual limitations;
 implement only the next selected scope. Update the worklog and acceptance evidence.
 ```

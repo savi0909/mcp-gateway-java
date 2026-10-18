@@ -1,5 +1,10 @@
 # Phase 1 engineering harness handover
 
+> Historical automation handover; inactive in this repository as of 2026-10-18.
+> The owner placed LLM harness work in a separate project. Instructions and
+> copyable prompts below are historical, not current authorization. Continue
+> through [the gateway handover](HANDOVER_GATEWAY.md); preserve existing artifacts.
+
 Date: 2026-10-17. Scope: the owner requested Phase 1 completion followed by a
 handover. Phase 2 pilot and batch have not started. Read [usage](HARNESS.md) and
 [ADR 0010](decisions/0010-engineering-harness.md) for the operational contract.

@@ -1,5 +1,10 @@
 # UC-01 implementation handover
 
+Current continuation starts at [HANDOVER_GATEWAY.md](HANDOVER_GATEWAY.md).
+This document preserves the detailed UC-01 product baseline and proposed next
+feature scope. The separate automation harness is outside this repository's
+active work under [ADR 0011](decisions/0011-gateway-project-scope.md).
+
 Prepared 2026-10-09. Implementation baseline: `b25a205` (`Implement local UC-01
 identity and admission boundaries`), pushed to `origin/main`. The working tree
 was clean and local/remote commits matched before this documentation handover.

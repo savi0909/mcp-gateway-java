@@ -1,5 +1,10 @@
 # Engineering harness
 
+> Historical automation record. The owner separated LLM harness work from this
+> repository on 2026-10-18. Do not execute or continue the workflow below here.
+> Resume gateway work through [HANDOVER_GATEWAY.md](HANDOVER_GATEWAY.md) and
+> [ADR 0011](decisions/0011-gateway-project-scope.md). Preserve retained artifacts.
+
 This is the Phase 1 engineering runner, separate from the MCP gateway product
 control plane. It reuses the existing Java build, requirements and acceptance
 trackers. See [ADR 0010](decisions/0010-engineering-harness.md), the

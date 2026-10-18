@@ -1,5 +1,10 @@
 # PILOT-01 owner authorization
 
+> Historical authorization record. The owner separated LLM harness work from
+> this repository on 2026-10-18. This record does not authorize further execution
+> here. Preserve the failed attempt; use [the gateway handover](../HANDOVER_GATEWAY.md)
+> and [ADR 0011](../decisions/0011-gateway-project-scope.md) for active scope.
+
 Date: 2026-10-17. Authorization source: the owner instructed this session:
 
 > continue with next as per handover at - docs/HANDOVER_PHASE1.md

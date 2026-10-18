@@ -1,5 +1,10 @@
 # ADR 0010: Bounded single-task engineering harness
 
+> Historical decision; superseded for active repository workflow by
+> [ADR 0011](0011-gateway-project-scope.md) on 2026-10-18. The owner placed LLM
+> harness work in a separate project. Preserve implementation/history; do not
+> continue its pilot or batch here. Resume [gateway work](../HANDOVER_GATEWAY.md).
+
 Date: 2026-10-17. Status: accepted for the owner-requested Phase 1 bootstrap.
 The owner approved the refined Phase 0 plan by requesting "start phase 1" and
 subsequently requested completion followed by a handover. This does not approve

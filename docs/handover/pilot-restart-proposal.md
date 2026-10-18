@@ -1,5 +1,10 @@
 # Proposed pilot restart after reviewed process-stream repair
 
+> Historical, unapproved proposal. The owner's subsequent 2026-10-18 direction
+> placed LLM harness work in a separate project. Do not apply this state transition
+> or launch PILOT-02 here. Use [the gateway handover](../HANDOVER_GATEWAY.md)
+> and [ADR 0011](../decisions/0011-gateway-project-scope.md). Preserve existing state.
+
 Date: 2026-10-18. Status: **proposal; not authorization**. The owner's instruction
 `continue with handover` selected independent review and restart preparation.
 It does not supply the separate new-attempt authorization required by the

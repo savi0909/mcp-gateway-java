@@ -2,9 +2,24 @@
 
 ## Read first
 
-Read this file, `WORKLOG.md` (current state and latest entry), and `docs/IMPLEMENTATION_PLAN.md` before changing code. For implementation, read `docs/IMPLEMENTATION_PROMPT.md`, `docs/FUNCTIONAL_SPEC.md`, `docs/DESIGN.md`, and `examples/worker-catalog.json`; use `docs/ACCEPTANCE.md` to find required evidence.
+Read this file, `WORKLOG.md` (current state and latest entry), `docs/IMPLEMENTATION_PLAN.md` and the current gateway handover, `docs/HANDOVER_GATEWAY.md`, before choosing work. For implementation, read `docs/IMPLEMENTATION_PROMPT.md`, `docs/FUNCTIONAL_SPEC.md`, `docs/DESIGN.md`, and `examples/worker-catalog.json`; use `docs/ACCEPTANCE.md` to find required evidence.
 
 Explicit user instructions take precedence. `docs/FUNCTIONAL_SPEC.md` is authoritative for milestone behavior; `docs/DESIGN.md` guides architecture; `docs/IMPLEMENTATION_PROMPT.md` describes the complete implementation request. Repository workflow files do not relax the functional requirements. Ask a focused question if documents conflict or an unresolved choice affects the external contract. Continue independent work while waiting.
+
+## Project scope: MCP gateway
+
+The owner clarified on 2026-10-18 that this repository is the MCP gateway project.
+LLM/agent development automation belongs to a separate project. Do not develop,
+repair, run or extend the retained engineering harness, launch its pilot/batch,
+refresh its approvals or use its phases to describe gateway progress here.
+Read [ADR 0011](docs/decisions/0011-gateway-project-scope.md) for this scope decision.
+
+For an unspecified "continue" or "handover", use `docs/HANDOVER_GATEWAY.md`
+and the gateway plan/acceptance trackers. The harness Phase 1/2 handovers,
+restart proposal and ADR 0010 are historical records, not the active roadmap.
+`tasks/backlog.json` describes that historical harness workflow; it does not
+select or authorize gateway product work. Preserve its state and retained
+artifacts. Do not delete or move files or create the separate project implicitly.
 
 ## Long-term project direction
 
@@ -91,16 +106,10 @@ tenant-aware; caller JWTs never become downstream bearer tokens.
 
 ## Working and handoff rules
 
-The approved engineering harness is documented in `docs/HARNESS.md` and ADR 0010.
-Phase 1 builds/tests the runner only; the real pilot and batch require separate
-owner approval. `tasks/backlog.json` is the machine task-state authority. Run the
-trusted harness from its controlling checkout, never from an agent's candidate
-worktree. An assigned task may change only its exact approved paths. Agents must
-not edit task approval/state, verification policy, the harness, build or CI;
-must not stage/commit/push themselves; and must not delete files or spawn agents.
-The external runner owns independent validation/review and scoped Git commits.
-For harness changes run `python -B -m unittest discover -s harness/tests -v`;
-preserve test fixtures and worktrees until deletion is explicitly authorized.
+Develop and verify the gateway directly using the shared workflow and Maven
+Wrapper. Historical harness-only approval, task ownership and runner-owned Git
+rules do not govern ordinary gateway maintenance. Keep unrelated harness files,
+task state, fixtures and worktrees untouched; cleanup requires explicit permission.
 
 Work in the stage order in `docs/IMPLEMENTATION_PLAN.md`; implement only the requested scope. When asked for the full milestone, continue through all stages without routine confirmation. Explain consequential choices briefly so the user can learn the code.
 

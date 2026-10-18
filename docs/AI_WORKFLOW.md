@@ -2,7 +2,13 @@
 
 ## Starting or resuming
 
-Read `AGENTS.md`, the current state/latest entry in `WORKLOG.md`, and `docs/IMPLEMENTATION_PLAN.md`. For code work read the full handoff documents and relevant AC rows. Inspect `git status --short`, existing sources and tests. Work from actual files rather than a previous assistant's completion claims.
+Read `AGENTS.md`, the current state/latest entry in `WORKLOG.md`, `docs/IMPLEMENTATION_PLAN.md` and `docs/HANDOVER_GATEWAY.md`. For code work read the relevant gateway handoff documents and AC rows. Inspect `git status --short`, existing sources and tests. Work from actual files rather than a previous assistant's completion claims.
+
+Use [the current gateway handover](HANDOVER_GATEWAY.md) to resume unspecified
+work. This repository's scope is the MCP gateway. LLM development automation is
+a separate project under [ADR 0011](decisions/0011-gateway-project-scope.md).
+Retained harness handovers, pilot proposals and task state are historical inputs;
+do not use them to select work or launch model processes in this repository.
 
 For enterprise admission work, also read [the handover](HANDOVER_UC01.md),
 [the slice plan](UC01_ADMISSION_PLAN.md), [identity acceptance](IDENTITY_ACCEPTANCE.md),
@@ -28,13 +34,9 @@ The original `docs/IMPLEMENTATION_PROMPT.md` requests the entire milestone. A us
 7. Report what changed, what was tested and what remains. The standing repository instruction authorizes committing completed work and pushing to origin after relevant checks. Deployment needs a separate request. Do not delete files without permission.
 
 No project hook invokes tests, model calls or worker allocation automatically.
-The optional [engineering harness](HARNESS.md) runs only when explicitly invoked
-for an approved task. It uses existing requirements and normal Wrapper commands;
-no external plugin or MCP-server installation is required. Runner-owned state,
-independent verification and review are separate from the implementation agent.
-For harness work, start with [the Phase 2 handover](HANDOVER_PHASE2.md): the first
-real pilot stopped with malformed JSONL and remains `needs_review`. Its repair
-and any new attempt need explicit scope and state reconciliation.
+Run gateway checks directly through the Maven Wrapper. Preserve the historical
+[engineering harness records](HARNESS.md) without executing or extending that
+workflow. Its stopped pilot does not block gateway work or authorize new tasks.
 
 ## Review a stage
 
@@ -49,8 +51,9 @@ List actual validation commands/results, missing evidence and residual risks. If
 ### Next stage
 
 ```text
-Read AGENTS.md, WORKLOG.md, docs/IMPLEMENTATION_PLAN.md and all handoff
-documents. Implement stage <1A/1B/1C/1D/1E> using docs/AI_WORKFLOW.md.
+Read AGENTS.md, WORKLOG.md, docs/IMPLEMENTATION_PLAN.md,
+docs/HANDOVER_GATEWAY.md and the relevant gateway handoff documents.
+Implement stage <1A/1B/1C/1D/1E> using docs/AI_WORKFLOW.md.
 Preserve the functional specification. Verify the result using the Maven
 Wrapper and relevant AC tests. Update the worklog, stage state and evidence.
 Ask a focused question when an unresolved requirement affects the result.

@@ -1,5 +1,10 @@
 # Phase 0 repository assessment
 
+> Historical assessment from 2026-10-17. Its gateway observations are dated
+> evidence; its automation recommendations are no longer this repository's
+> active work. Use [the gateway handover](../HANDOVER_GATEWAY.md) and
+> [ADR 0011](../decisions/0011-gateway-project-scope.md) for current context.
+
 Assessment date: 2026-10-17. Scope: the first-run Phase 0 requested by
 `Enterprise_MCP_Gateway_Codex_Handover.md` in the owner's Downloads directory.
 Phase 1 and Phase 2 are not authorized by this assessment.

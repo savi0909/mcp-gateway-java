@@ -1,5 +1,11 @@
 # Phase 2 pilot attempt handover
 
+> Historical automation handover; inactive in this repository as of 2026-10-18.
+> The owner placed LLM harness work in a separate project. Do not restart the
+> pilot, refresh approvals or execute the continuation prompts below here.
+> Continue through [the gateway handover](HANDOVER_GATEWAY.md). Preserve the
+> original failed run, task state and worktree.
+
 Date: 2026-10-18. **PILOT-01 is incomplete and requires review.** Its first real
 attempt stopped with `Malformed Codex JSONL` before producing a candidate or
 reaching independent Maven verification/review. The original handover recorded the

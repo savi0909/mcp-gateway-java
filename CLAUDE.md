@@ -2,7 +2,7 @@
 
 @AGENTS.md
 
-The imported file is the shared repository guidance for Claude Code and Codex. Read `WORKLOG.md` and `docs/IMPLEMENTATION_PLAN.md` before choosing the next task.
+The imported file is the shared repository guidance for Claude Code and Codex. Read `WORKLOG.md`, `docs/IMPLEMENTATION_PLAN.md` and `docs/HANDOVER_GATEWAY.md` before choosing the next gateway task. LLM harness work belongs to a separate project; retained harness handovers are historical.
 
 Project skills:
 

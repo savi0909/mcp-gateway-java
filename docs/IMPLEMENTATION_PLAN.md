@@ -9,43 +9,13 @@ control plane) are pending and separate from this completed foundation milestone
 Recording that direction does not begin implementation or change acceptance rows.
 The subsequent owner-selected UC-01 prerequisite refines execution order below.
 
-## Engineering harness Phase 1
+## Active project and continuation
 
-Owner-requested on 2026-10-17; separate from gateway product milestones. The
-[refined handover plan](handover/refined-autonomous-development-plan.md),
-[ADR 0010](decisions/0010-engineering-harness.md) and [usage guide](HARNESS.md)
-govern the bounded standard-library Python runner. Preserve existing requirements
-and acceptance identifiers; this work does not implement UC-03 or federation.
-
-P1-01–P1-11 are directly bootstrapped in this phase: strict task state and approval
-hashes, independent cross-platform verification, dry-run, isolated worktrees/OS
-locking, fresh Codex process adapter, candidate/report validation, independent
-review and three-repair limit, interruption/commit reconciliation, mocked lifecycle
-tests, disabled batch and usage/handoff documentation. Final executed evidence is
-recorded in [the handover](HANDOVER_PHASE1.md) and WORKLOG.
-
-Phase 1 state: **complete within the mocked runner boundary**. The final 49-test
-harness suite passes; the actual PowerShell verifier passes 128 unit/startup and
-34 integration tests, all with zero failures/errors/skips. CLI/model preflight and
-dry-run pass; real Codex sandbox/provider execution and hosted Linux CI remain
-unverified. The owner subsequently authorized the single `PILOT-01` cycle
-([record](handover/pilot01-authorization.md)). Its first real attempt on
-2026-10-18 stopped with `Malformed Codex JSONL` before candidate validation,
-Maven verification or independent review. `tasks/backlog.json` records
-`needs_review`, one attempt and run `43d56cc99c694b6781f51674d0165b69`; the retained
-worktree is clean and the other 11 tasks remain pending. The pilot is incomplete;
-[the Phase 2 handover](HANDOVER_PHASE2.md) records evidence and safe restart steps.
-The owner's subsequent continuation selected bounded process-adapter repair.
-Concurrent separate stdout/stderr handling and local regression tests are now
-implemented; WORKLOG and the Phase 2 handover record fresh verification separately
-from the failed pilot. Subsequent independent read-only review approved repair
-commit `2ddc658` with no findings after an inline-evidence follow-up. The
-[restart proposal](handover/pilot-restart-proposal.md) defines a new `PILOT-02`
-and preservation of the failed predecessor; it is not approval. Separate new-cycle
-authorization, explicit state disposition and a refreshed source/hash remain
-required before execution; no backlog or original run state has changed.
-Do not replay this run, reset its counter or infer batch approval. No product
-acceptance row is promoted here.
+This repository develops the MCP gateway. Start with
+[the current gateway handover](HANDOVER_GATEWAY.md), then review remaining
+UC-01/U5 gaps and the selected product scope below. LLM development automation
+belongs to a separate project. Its retained Phase 1/2 records and
+`tasks/backlog.json` do not select or authorize gateway work.
 
 ## Selected slice: UC-01 (local implementation; release incomplete)
 
@@ -169,3 +139,45 @@ The 1A source/metadata inventory is recorded in `docs/DEPENDENCY_BASELINE.md`. T
 | Remote Git host/CI | Published origin/main exists; CI executes full checks again, but no hosted CI result is claimed |
 
 Do not add custom query/header/business-argument mappings to guess a missing real contract. Ask when that contract becomes necessary. Deferred milestone items remain deferred.
+
+## Historical automation work (outside active gateway scope)
+
+The owner separated LLM harness work into another project on 2026-10-18.
+The record below is historical; its pilot, approval and execution steps are
+inactive here. See [ADR 0011](decisions/0011-gateway-project-scope.md).
+
+Owner-requested on 2026-10-17; separate from gateway product milestones. The
+[refined handover plan](handover/refined-autonomous-development-plan.md),
+[ADR 0010](decisions/0010-engineering-harness.md) and [usage guide](HARNESS.md)
+govern the bounded standard-library Python runner. Preserve existing requirements
+and acceptance identifiers; this work does not implement UC-03 or federation.
+
+P1-01–P1-11 are directly bootstrapped in this phase: strict task state and approval
+hashes, independent cross-platform verification, dry-run, isolated worktrees/OS
+locking, fresh Codex process adapter, candidate/report validation, independent
+review and three-repair limit, interruption/commit reconciliation, mocked lifecycle
+tests, disabled batch and usage/handoff documentation. Final executed evidence is
+recorded in [the handover](HANDOVER_PHASE1.md) and WORKLOG.
+
+Phase 1 state: **complete within the mocked runner boundary**. The final 49-test
+harness suite passes; the actual PowerShell verifier passes 128 unit/startup and
+34 integration tests, all with zero failures/errors/skips. CLI/model preflight and
+dry-run pass; real Codex sandbox/provider execution and hosted Linux CI remain
+unverified. The owner subsequently authorized the single `PILOT-01` cycle
+([record](handover/pilot01-authorization.md)). Its first real attempt on
+2026-10-18 stopped with `Malformed Codex JSONL` before candidate validation,
+Maven verification or independent review. `tasks/backlog.json` records
+`needs_review`, one attempt and run `43d56cc99c694b6781f51674d0165b69`; the retained
+worktree is clean and the other 11 tasks remain pending. The pilot is incomplete;
+[the Phase 2 handover](HANDOVER_PHASE2.md) records evidence and safe restart steps.
+The owner's subsequent continuation selected bounded process-adapter repair.
+Concurrent separate stdout/stderr handling and local regression tests are now
+implemented; WORKLOG and the Phase 2 handover record fresh verification separately
+from the failed pilot. Subsequent independent read-only review approved repair
+commit `2ddc658` with no findings after an inline-evidence follow-up. The
+[restart proposal](handover/pilot-restart-proposal.md) defines a new `PILOT-02`
+and preservation of the failed predecessor; it is not approval. Separate new-cycle
+authorization, explicit state disposition and a refreshed source/hash remain
+required before execution; no backlog or original run state has changed.
+Do not replay this run, reset its counter or infer batch approval. No product
+acceptance row is promoted here.

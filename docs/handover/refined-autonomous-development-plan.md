@@ -1,5 +1,10 @@
 # Refined autonomous-development plan
 
+> Historical automation plan. The owner's 2026-10-18 project-scope correction
+> supersedes its execution roadmap in this repository. Do not continue the
+> harness/pilot/batch here; use [the gateway handover](../HANDOVER_GATEWAY.md)
+> and [ADR 0011](../decisions/0011-gateway-project-scope.md).
+
 Date: 2026-10-17. Status: **Phase 1 approved by the owner; implementation/evidence
 recorded in [ADR 0010](../decisions/0010-engineering-harness.md) and
 [the Phase 1 handover](../HANDOVER_PHASE1.md)**. The sections below preserve the
