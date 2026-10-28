@@ -1,6 +1,6 @@
 # ADR 0014: Gate modern MCP migration on demonstrated compatibility
 
-**Status:** Proposed; no dependency or runtime change selected
+**Status:** Accepted for S0: retain pinned runtime; modern migration blocked
 **Date:** 2026-10-28
 **Deciders:** Project owner, with implementation compatibility evidence
 
@@ -20,7 +20,27 @@ describe different delivery paths; the latter offers a modern server preview
 with missing client/extension features. Neither proves compatibility with this
 repository's starter, Reactor, JSON integration or admission guarantees.
 
-## Proposed decision
+## Decision after S0
+
+S0 completed on 2026-10-28. Select option A: preserve Boot 4.0.8, Spring AI 2.0.1
+and SDK 2.0.0 while continuing protocol-independent S1 work. No modern product
+dependency combination is selected. The [executed findings](../S0_COMPATIBILITY_FINDINGS.md)
+and [normative inventory](../MCP_2026_REQUIREMENTS.md) are the reproducible evidence.
+
+The isolated SDK 2.2.0-M1 modern servlet passed bounded server fixtures, but has
+no modern Java client or modern WebFlux transport. AI 2.0.2 and 2.1.0-RC1 both
+resolve SDK 2.1.0 and register legacy APIs; actual starter/SDK round trips
+negotiated 2025-11-25. Conflicting duplicate method headers and custom parameter
+header/body mismatches reached execution in the preview. Official Java client
+initialization against the independent modern server failed with zero reads.
+These findings prevent a ready S3/S7 migration recommendation.
+
+Release-note Reactor milestone claims differ from the published POM and the
+executed Boot dependency tree, which resolve Reactor Core 3.8.7 and Jackson 3.1.5.
+The probes found no linkage failure; missing role/binding/validation support is
+the demonstrated blocker, not an assumed Reactor/Jackson incompatibility.
+
+## Compatibility gate
 
 Run S0 in the [sprint roadmap](../GATEWAY_SPRINT_ROADMAP.md) before selecting a
 modern dependency set. Preserve the pinned runtime until exact released artifacts,
@@ -43,7 +63,7 @@ the precise dependency blocker. Recheck published artifacts before implementatio
 | B: Adopt compatible official stable SDK through supported starter/BOM | Medium migration/testing cost; exact set unverified | Preferred maintainable route if both roles meet required behavior | Requires source inspection, admission migration and legacy regression evidence |
 | C: Integrate official modern SDK directly or use a milestone experimentally | High integration and ongoing maintenance cost | May enable a bounded modern server experiment sooner | Missing client/headers/dependency compatibility may prevent federation or release; needs a separate supported binding strategy |
 
-Recommendation: A during S0, then B if verified. Evaluate C only with an explicit
+Selection: A after S0, then B if verified. Evaluate C only with an explicit
 bounded experimental contract and documented support costs. Changing a property
 or overriding the SDK version without compatibility evidence is insufficient.
 
@@ -67,20 +87,24 @@ a protocol or client library suggests reconnecting.
 
 ## Consequences
 
-The [protocol acceptance plan](../MCP_PROTOCOL_ACCEPTANCE.md) starts Pending.
-Legacy test success and upstream SDK conformance are separate evidence. S0 may
-complete with a documented blocker, while S3/S7 remain unready. No runtime upgrade,
-new infrastructure, capability enablement or production readiness is approved by
-this proposed ADR.
+The [protocol acceptance plan](../MCP_PROTOCOL_ACCEPTANCE.md) remains Pending.
+Legacy test success, isolated preview tests and upstream SDK conformance are
+separate evidence. S0 is complete with a documented blocker; S3/S7 remain unready.
+No runtime upgrade, new infrastructure, capability enablement or production
+readiness is selected by this ADR. Recheck the gate when an official modern
+client, supported modern Spring binding and required header handling are available.
 
 ## Action items and acceptance evidence
 
-- [ ] Enumerate supported revisions, capabilities and applicable server/client MUSTs.
-- [ ] Inspect exact published artifact sources/metadata and resolved dependency trees.
-- [ ] Compile/run independent modern server and outbound-client probes through SDKs.
-- [ ] Verify two caller contexts, malformed header/body rejection, streaming and legacy behavior.
-- [ ] Record the compatible starter/BOM, coexistence strategy, risks and regression plan.
-- [ ] Update this ADR with executed findings and the selected scoped implementation decision.
+- [x] Enumerate scoped revisions/capabilities, normative obligations and planned tests.
+- [x] Inspect exact published sources/metadata and resolved dependency trees.
+- [x] Run the official modern server with HTTP fixtures and reproduce the official Java client's failure; record absent modern-client API as a blocker.
+- [x] Exercise two caller contexts, header/body errors, SSE/disconnect and legacy SDK behavior; retain the two reproduced header gaps.
+- [x] Record tested legacy starter sets, bounded direct-server set, coexistence limits and regression plan; no viable modern starter/client set found.
+- [x] Record the scoped keep-current-runtime decision and following S1 task.
 
-Evidence at creation: official-source and repository review plus October 28
-legacy Wrapper regression only; no candidate upgrade or modern probe executed.
+Executed evidence: 14 direct SDK experiment tests, one starter test for each of
+AI 2.0.2 and 2.1.0-RC1, plus fresh product Wrapper verify (143 unit/startup and
+38 integration tests), all zero failures/errors/skips. No official conformance
+suite or modern SDK-client positive round trip ran. See the findings for exact
+commands, source digests, reports and unverified boundaries.

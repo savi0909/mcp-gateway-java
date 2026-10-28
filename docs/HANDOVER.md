@@ -1,22 +1,27 @@
-# Next-session handover: S0 protocol compatibility investigation
+# Next-session handover: S1 UC-01 lifecycle and queued revocation
 
 Updated: 2026-10-28. Repository: `D:/ai-projects/mcp-gateway-server-java`.
-Next task: execute the bounded S0 design/compatibility investigation from the
-[sprint roadmap](GATEWAY_SPRINT_ROADMAP.md). Complete S0 before implementing
-the modern protocol migration.
+Next task: implement the bounded S1 UC-01 lifecycle and composed queued-revocation
+slice from the [sprint roadmap](GATEWAY_SPRINT_ROADMAP.md). **S0 is complete with
+modern migration blocked.** This handover does not select S2-S11 or an SDK upgrade.
 
 ## Current state
 
-- Planning baseline: commit `52b59d5` on `main`, pushed to `origin/main`.
-- Gap analysis, S0-S11 sprint plan, protocol acceptance plan and proposed
-  compatibility ADR are complete. No modern compatibility probe has run.
+- S0 starting baseline: commit `0df6579` on `main`. Read
+  [compatibility findings](S0_COMPATIBILITY_FINDINGS.md),
+  [normative inventory](MCP_2026_REQUIREMENTS.md) and accepted
+  [ADR 0014](decisions/0014-modern-protocol-compatibility-proposal.md).
+- Isolated direct SDK probes: 14 passing tests. AI 2.0.2 and 2.1.0-RC1 starter
+  probes: one passing legacy test each. The preview lacks modern Java client and
+  modern WebFlux binding; conflicting duplicate/custom headers can reach execution.
+  Keep all product dependencies pinned. All modern MP rows remain Pending.
 - Runtime: Java 21, Spring Boot 4.0.8, Spring AI BOM 2.0.1 and BOM-managed Java
   SDK 2.0.0. Tested MCP revision: `2025-11-25`; proposed modern target: `2026-07-28`.
-- Latest Wrapper `verify`: 143 unit/startup and 38 integration tests, zero
-  failures/errors/skips, BUILD SUCCESS in 2:03. Evidence:
-  `target/roadmap-review-20261028.log` and `target/roadmap-review-20261028`.
+- Latest product Wrapper `verify`: 143 unit/startup and 38 integration tests, zero
+  failures/errors/skips, BUILD SUCCESS in 2:01. Evidence:
+  `target/s0-product-regression.log` and `target/s0-product-regression`.
   These are independent mock and real Boot/SDK results for the current runtime.
-- Modern protocol rows remain Pending; ADR 0014 is Proposed. Enterprise identity
+- Modern protocol rows remain Pending; ADR 0014 retains current pins. Enterprise identity
   and catalog acceptance remain partial/pending within their documented scopes.
 
 ## Read first
@@ -24,34 +29,39 @@ the modern protocol migration.
 1. [AGENTS.md](../AGENTS.md), [WORKLOG.md](../WORKLOG.md),
    [implementation plan](IMPLEMENTATION_PLAN.md) and
    [current gateway handover](HANDOVER_GATEWAY.md).
-2. [Sprint roadmap](GATEWAY_SPRINT_ROADMAP.md), especially S0-01 through S0-05.
-3. [Protocol acceptance plan](MCP_PROTOCOL_ACCEPTANCE.md).
-4. [Proposed ADR 0014](decisions/0014-modern-protocol-compatibility-proposal.md).
-5. [Dependency baseline](DEPENDENCY_BASELINE.md) and relevant transport/security
-   source, including `FilteredMcpTransport` and the session-owner filters.
+2. [Sprint roadmap](GATEWAY_SPRINT_ROADMAP.md), especially S1 and its concrete
+   lifecycle/revocation exit evidence; [S0 findings](S0_COMPATIBILITY_FINDINGS.md).
+3. [UC-01 handover](HANDOVER_UC01.md), [plan](UC01_ADMISSION_PLAN.md),
+   [guide](UC01_ADMISSION.md), [U5 review](UC01_U5_REVIEW.md), ADRs 0009/0012/0013.
+4. [Identity requirements v1.4](requirements/Enterprise_MCP_Identity_Authorization_Requirements_v1.4.md),
+   [identity acceptance](IDENTITY_ACCEPTANCE.md),
+   [catalog requirements v1.3](requirements/Enterprise_MCP_Discovery_Catalog_Requirements_v1.3.md)
+   and [catalog acceptance](CATALOG_ACCEPTANCE.md).
+5. For code: implementation prompt, functional spec, design, example catalog and
+   foundation acceptance; inspect admission administration, policy/cache, work queue,
+   journals, identity mapping, filters and current protocol test fixtures.
 
 ## Required work
 
-1. Define supported inbound/outbound revisions and capabilities. Enumerate
-   applicable normative requirements beyond the grouped protocol acceptance rows.
-2. Recheck current official SDK releases, published artifacts and Spring
-   compatibility. Earlier research found an outdated SDK roadmap pointing to
-   3.x, while 2.2.0-M1 release notes already offered a modern server with
-   client/header limitations. Verify current facts rather than selecting that
-   prerelease by assumption. Official source links are in ADR 0014 and WORKLOG.
-3. Inspect exact candidate source APIs, configuration metadata and dependency
-   trees, including Reactor/Jackson compatibility and both server/client support.
-4. Create isolated executable probes through official SDKs: modern server
-   discovery, tool listing and one ordinary read; two authorized caller contexts;
-   header/body mismatch rejection; outbound modern client against an independent
-   upstream; and legacy compatibility, streaming and cancellation where supported.
-5. Record a reproducible recommendation: exact viable dependency combination,
-   starter integration, coexistence/migration strategy, blockers and risks.
-   Update ADR 0014, protocol evidence and WORKLOG with actual commands/results.
+1. Implement authorized organization/tenant lifecycle administration and selective
+   multi-tenant membership changes within existing UC-01. Changes affect only the
+   selected memberships; publication/membership alone cannot grant execution.
+2. Prove stable authority/subject identity behavior across claim/display changes.
+   Define and implement versioned timing/policy-default administration consistent
+   with identity v1.4 and current 30-second verified-policy fallback.
+3. Compose real Boot/SDK calls queued behind controlled admission work with
+   administrative revocation. Record policy revision, queued-call identifiers,
+   accepted/effective times, admission order and downstream counters.
+4. Revoked/expired queued work must receive fresh checks and produce zero business
+   execution/protected output. Demonstrate revocation within 60 seconds and no
+   stale authority beyond 30 seconds. If queue saturation blocks administration,
+   provide bounded control-path capacity or priority rather than a supplier-only test.
+5. Add meaningful functional/protocol tests, preserve durable audit before dispatch,
+   update only acceptance obligations actually evidenced, append WORKLOG and handoff.
 
 ## Boundaries and validation
 
-Keep experimental builds isolated from the pinned product runtime. SDKs own
+Keep S0 experimental builds isolated from the pinned product runtime. SDKs own
 protocol handling; do not implement a handwritten JSON-RPC server/controller.
 Use independent local fixtures, random ports and bounded waits. Preserve the
 existing demos, coordinator and enterprise admission guarantees.
@@ -61,7 +71,9 @@ spawn subagents. Any file/directory deletion requires explicit user permission.
 Do not promote identity/catalog acceptance without complete applicable evidence.
 Keep secrets out of source, logs and handovers.
 
-Run checks appropriate to the probes and any repository changes. Product
+Keep workloads, sensitive reads/mutations, autonomous and third-party execution
+disabled. Physical retention/archive/restore is S2 and requires its own contract;
+actual file deletion still needs explicit permission. Run appropriate checks. Product
 Java/configuration changes require full Maven Wrapper `verify`; documentation
 changes require link/format checks. Label experiment results separately from
 product conformance. Commit and push completed repository work under the standing
@@ -69,14 +81,12 @@ authorization; update this handover with the next concrete task.
 
 ## Completion and following task
 
-S0 is complete when its compatibility findings and recommendation are reproducible.
-A precise dependency blocker is a valid S0 outcome, while modern support and
-S3/S7 readiness remain pending. A server-only probe cannot establish outbound
-federation compatibility.
-
-Complete S0 only. If migration is blocked, identify how protocol-independent
-work can continue. The next proposed product slice is **S1: UC-01 lifecycle and
-composed queued-revocation closure**, as defined in the sprint roadmap.
+Complete S1 only. Demonstrate its lifecycle/selective membership and stable
+identity requirements, versioned timing administration and actual queued-call
+revocation evidence; run full Wrapper verify. The next proposed slice is S2's
+audit lifecycle/recovery design, with physical expiry still subject to a concrete
+operational contract and explicit deletion authorization. Modern S3/S7 stay blocked
+until official client/binding/header support satisfies ADR 0014.
 
 ## Start the next session
 

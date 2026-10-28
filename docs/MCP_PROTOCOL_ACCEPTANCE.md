@@ -4,13 +4,18 @@ Date: 2026-10-28. Status: **all modern rows Pending**.
 This is a planning inventory for the proposed `2026-07-28` target, separate from
 [foundation acceptance](ACCEPTANCE.md), [identity acceptance](IDENTITY_ACCEPTANCE.md)
 and [catalog acceptance](CATALOG_ACCEPTANCE.md). Existing `2025-11-25` evidence is
-preserved in those documents and WORKLOG. No modern protocol test has run here.
+preserved in those documents and WORKLOG. S0 now has isolated modern SDK server
+experiments, recorded in [compatibility findings](S0_COMPATIBILITY_FINDINGS.md).
+They are not modern gateway conformance; all product rows remain Pending.
 
 The rows group work; they are not an exhaustive transcription of the normative
 specification. S0 must enumerate each applicable MUST and selected capability,
 map it to a row and named test, and resolve any SDK gaps before migration.
+[The S0 requirement inventory](MCP_2026_REQUIREMENTS.md) supplies that scoped
+ledger and named planned gateway tests. Missing modern client/Spring binding and
+reproduced header gaps currently block migration; no acceptance row is promoted.
 See the [sprint roadmap](GATEWAY_SPRINT_ROADMAP.md) and
-[proposed compatibility ADR](decisions/0014-modern-protocol-compatibility-proposal.md).
+[compatibility ADR](decisions/0014-modern-protocol-compatibility-proposal.md).
 
 ## Sources and support scope
 
@@ -32,7 +37,7 @@ must be inventoried for both. A modern server-only SDK cannot pass outbound rows
 
 | ID | Required observable evidence for the selected scope | Sprint | State |
 | --- | --- | --- | --- |
-| MP-01 | Exact Java/Boot/AI/BOM/SDK/client/transport versions, source API/property inspection and reproducible compile/run evidence; upstream prerelease limitations documented | S0 | Pending |
+| MP-01 | Exact Java/Boot/AI/BOM/SDK/client/transport versions, source API/property inspection and reproducible compile/run evidence; upstream prerelease limitations documented | S0 | Pending for product; S0 investigation complete with blockers and isolated evidence in S0_COMPATIBILITY_FINDINGS.md |
 | MP-02 | Supported revisions/capabilities accurately advertised; mandatory modern discovery and independent version validation; unsupported-version and malformed-request outcomes before business dispatch | S3 | Pending |
 | MP-03 | Required routing/version headers agree with request content; encoded names/custom parameters handled where applicable; missing/duplicate/invalid/mismatched input yields the defined rejection with zero business calls | S3 inbound; S7 outbound | Pending |
 | MP-04 | Modern requests work without initialization/session continuity; per-request verified identities remain isolated; modern handling does not depend on or mint legacy sessions | S3 | Pending |

@@ -13,12 +13,16 @@ The subsequent owner-selected UC-01 prerequisite refines execution order below.
 
 The [October 28 gap analysis and sprint roadmap](GATEWAY_SPRINT_ROADMAP.md)
 refines the remaining enterprise work into S0-S11 with dependencies, exit evidence
-and complete identity/catalog work allocation. Start the next selected slice with
-S0 protocol/SDK compatibility investigation, then S1 supported UC-01 closure.
+and complete identity/catalog work allocation. S0 protocol/SDK investigation is
+complete with a migration blocker; see [executed findings](S0_COMPATIBILITY_FINDINGS.md)
+and [normative inventory](MCP_2026_REQUIREMENTS.md). The next bounded product
+slice is S1 supported UC-01 lifecycle and composed queued-revocation closure.
 The [protocol acceptance plan](MCP_PROTOCOL_ACCEPTANCE.md) is entirely Pending
 for the modern target; [ADR 0014](decisions/0014-modern-protocol-compatibility-proposal.md)
-is Proposed. This is planning, not a runtime/dependency selection or acceptance
-promotion. The current runtime remains tested against MCP `2025-11-25`.
+records the accepted keep-current-runtime decision. No modern dependency upgrade
+or acceptance promotion occurred. Fresh product Wrapper verification remains
+143 unit/startup plus 38 integration tests. The current runtime remains tested
+against MCP `2025-11-25`; experimental evidence is separate.
 
 This repository develops the MCP gateway. Start with
 [the current gateway handover](HANDOVER_GATEWAY.md), then review remaining

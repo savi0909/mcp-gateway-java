@@ -7,9 +7,21 @@ LLM development automation was moved to `D:/Projects/llm-harness`. Read
 and verified product evidence to choose work here.
 
 For the next bounded task, read [the next-session handover](HANDOVER.md):
-S0 protocol/SDK compatibility investigation, with required work and validation.
+S1 UC-01 lifecycle and composed queued-revocation closure, with required work
+and validation. S0 is complete with modern migration blocked.
 
 ## Product state
+
+- S0 investigation completed 2026-10-28. Read
+  [compatibility findings](S0_COMPATIBILITY_FINDINGS.md),
+  [normative inventory](MCP_2026_REQUIREMENTS.md) and accepted
+  [ADR 0014](decisions/0014-modern-protocol-compatibility-proposal.md).
+  The isolated SDK experiment passes 14 tests; each AI 2.0.2/2.1.0-RC1 starter
+  experiment passes one legacy round-trip test. Missing modern Java client and
+  WebFlux registration plus reproduced header gaps block migration. Product
+  dependencies are unchanged. Fresh Wrapper verify passes 143 unit/startup and
+  38 integration tests, zero failures/errors/skips, in 2:01; evidence under
+  `target/s0-product-regression`. Modern MP/identity/catalog acceptance is unchanged.
 
 - October 28 gap/sprint planning is complete in
   [GATEWAY_SPRINT_ROADMAP.md](GATEWAY_SPRINT_ROADMAP.md), with a separate
@@ -72,14 +84,14 @@ Use the [October 28 sprint roadmap](GATEWAY_SPRINT_ROADMAP.md) for current
 planning. It incorporates completed local hardening and the remaining U5 gaps,
 then proposes protocol migration, workloads, identity integration, registry,
 native federation, approvals/providers and distributed operations. Its S0 tasks
-make the next compatibility investigation concrete; S1 follows with supported
+are complete with documented blockers; S1 follows with supported
 UC-01 lifecycle and composed queued-revocation evidence.
 
 The modern target is MCP `2026-07-28`, distinct from SDK `2.0.0` and Spring AI
 `2.0.1`. Newer SDK release notes offer an experimental modern server while
 documenting client/header limitations; do not infer a migration version from an
-older roadmap or override dependencies without compatibility evidence. S0 can
-finish with a precise blocker while protocol-independent work continues.
+older roadmap or override dependencies without compatibility evidence. S0
+finished with precise blockers; protocol-independent work can continue.
 
 Read the [2026-10-18 source review and proposed roadmap](GATEWAY_REVIEW_AND_NEXT_FEATURES.md)
 for prioritized audit/journal/admission findings, the verified Uber reference,
@@ -126,7 +138,7 @@ a separate project; do not run or extend its workflow here.
 Review UC-01/U5 gaps and the product requirements/acceptance trackers. Implement
 only the requested gateway slice. For next-sprint planning, read
 docs/GATEWAY_SPRINT_ROADMAP.md, docs/MCP_PROTOCOL_ACCEPTANCE.md and proposed
-ADR 0014; S0 is the recommended first compatibility investigation. Preserve the
+ADR 0014 and completed S0 findings; S1 is the next bounded product task. Preserve the
 foundation and pinned stack, use
 independent mocks and real SDK checks where needed, run appropriate Wrapper
 verification, and update factual evidence before committing and pushing.

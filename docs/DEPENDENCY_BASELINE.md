@@ -7,6 +7,14 @@ under `target/roadmap-review-20261028`. This run tests MCP `2025-11-25`;
 [modern compatibility planning](GATEWAY_SPRINT_ROADMAP.md) selects no upgrade.
 The stack below is unchanged. Dated initial observations are historical evidence.
 
+S0 completed on 2026-10-28 with [reproducible compatibility findings](S0_COMPATIBILITY_FINDINGS.md).
+Isolated AI 2.0.2/2.1.0-RC1 starter tests resolve SDK 2.1.0 and negotiate the
+legacy revision. Direct SDK 2.2.0-M1 modern servlet experiments pass within their
+documented limits, but modern Java client/WebFlux binding and required header
+handling remain blocked. [ADR 0014](decisions/0014-modern-protocol-compatibility-proposal.md)
+retains product pins. Fresh product verification: 143 unit/startup and 38
+integration tests, zero failures/errors/skips, `target/s0-product-regression`.
+
 | Component | Version / evidence |
 | --- | --- |
 | Java target | 21; local JDK 21.0.9 |

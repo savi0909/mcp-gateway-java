@@ -1,15 +1,19 @@
 # Gateway gaps and implementation sprint roadmap
 
 Date: 2026-10-28. Reviewed runtime baseline: `1e9c6a7`.
-Status: planning proposal requested by the owner; implementation is pending.
+Status: S0 investigation complete with a migration blocker; S1-S11 remain pending.
 This plan refines the [enterprise vision](ENTERPRISE_MCP_VISION.md) and the
 [October 18 review](GATEWAY_REVIEW_AND_NEXT_FEATURES.md). Existing requirements,
 foundation guarantees and acceptance states retain their authority.
 
 ## Recommendation and meaning of complete
 
-Start with **S0: protocol/SDK compatibility evidence**, then **S1: supported
-UC-01 lifecycle and queued-revocation closure**. Develop the audit lifecycle
+S0 compatibility investigation is complete; read the
+[executed findings](S0_COMPATIBILITY_FINDINGS.md) and
+[normative requirement inventory](MCP_2026_REQUIREMENTS.md). Retain pinned
+dependencies because modern client, Spring binding and header handling remain
+blocked. Next is **S1: supported UC-01 lifecycle and queued-revocation closure**.
+Develop the audit lifecycle
 contract before implementing physical retention. Add the modern protocol through
 compatible SDKs, then workloads, interoperable identity integration, registry,
 native federation, approvals, approved providers and distributed operation.
@@ -42,15 +46,17 @@ Do not choose an upgrade from a version number or roadmap alone. The SDK's older
 assigns modern support to 3.x, but the newer
 [2.2.0-M1 release](https://github.com/modelcontextprotocol/java-sdk/releases/tag/v2.2.0-M1)
 already introduces a separate modern server. Its notes explicitly exclude a
-modern client, Tasks and SEP-2243 custom headers, and introduce a Reactor
-milestone dependency. These are upstream statements, not gateway test results.
+modern client, Tasks and SEP-2243 custom headers, and describe a Reactor milestone
+upgrade. S0 found that the published POM and Boot experiment instead resolve
+Reactor Core 3.8.7. The findings distinguish these sources and executed results.
 
 The [2.1.0 release](https://github.com/modelcontextprotocol/java-sdk/releases/tag/v2.1.0)
 also introduces tool filtering and HTTP-client changes. This may reduce custom
 session integration, but source inspection and BOM/starter verification are
 required. A newer server API alone does not establish a usable modern federation
 client. [ADR 0014](decisions/0014-modern-protocol-compatibility-proposal.md)
-records the proposed migration gate without selecting dependency versions.
+records the accepted keep-pinned-runtime decision without selecting modern
+product dependencies. Experimental server success does not establish S3/S7 readiness.
 
 Modern compatibility affects lifecycle, discovery, result types and transport,
 not just an HTTP property. Use the separate
@@ -108,7 +114,8 @@ Source anchors: [admission service](../src/main/java/dev/mcp/gateway/admission/A
 
 ## Delivery model and dependencies
 
-S0 is a proposed three-to-five engineering-day investigation. S1-S11 are
+S0 was scoped as a three-to-five engineering-day investigation and is now
+complete with the documented blockers. S1-S11 are
 **two-week planning boxes**, assuming one full-time implementer and access to an
 owner/security reviewer for contract decisions. These are capacity assumptions,
 not estimates validated by team velocity or delivery commitments. S6, S8, S10
@@ -156,10 +163,13 @@ flowchart LR
 | S10: Distributed state and HA | Externalize authoritative policy/audit/approval state as selected; publish monotonic snapshots/revocation state; fence concurrent writers; operate two gateway replicas and independent control plane | S2/S6-S9. Kill a replica under traffic; surviving replicas serve new calls; no duplicate approved admission. Test partitions, cold restart, expired snapshots, control-plane/audit outage, backup rollback and rolling versions. Explicit legacy session routing if retained. |
 | S11: Operations and release qualification | Tenant/tool/server rate/concurrency budgets, bounded fair queues and streams, tool circuit breaking, traces/metrics, dashboards/runbooks and staged publication rollback | S10; resource bounds and essential telemetry already accompany prior sprints. Run full functional matrices and agreed load/fault workload. Measure p50/p95/p99, throughput, memory, fairness, errors, audit capacity and revocation/recovery windows. Close all baseline requirements and protocol obligations before release. |
 
-### S0: ready-to-select first sprint
+### S0: completed investigation, migration blocked
 
-The next implementation request should select S0 as a bounded investigation.
-Deliver it in reviewable steps:
+S0-01 through S0-05 are complete as a bounded investigation. The original task
+list below defines its gate; the [findings](S0_COMPATIBILITY_FINDINGS.md) contain
+actual commands/results, candidate source inspection, client failure, header
+gaps and recommendation. Positive modern SDK-client interoperability remains
+blocked; no modern product row is Verified.
 
 1. **S0-01, support inventory:** record required inbound/outbound revisions,
    selected capabilities, legacy-client requirements and unsupported features.
