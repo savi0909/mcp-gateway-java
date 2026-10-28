@@ -32,6 +32,30 @@ unit/startup and 62 integration tests; U5/full enterprise release remain Partial
 Preserve the pinned runtime; modern MCP migration stays
 deferred under [ADR 0014](decisions/0014-modern-protocol-compatibility-proposal.md).
 
+### S2 implemented functional behavior
+
+The following supplement describes the local S2 increment at commit `5e07d2f`.
+The [S2 requirements and acceptance matrix](S2_AUDIT_LIFECYCLE_REQUIREMENTS.md)
+retain the broader obligations; the [storage contract](S2_STORAGE_CONTRACT.md)
+defines operator procedures and exact command arguments.
+
+| Capability | Implemented behavior | Remaining boundary |
+| --- | --- | --- |
+| Operator ownership | A private offline CLI uses OS-authorized access to every included scope; ordinary tool and audit-viewer permissions grant no maintenance capability. Actor/ticket references accompany lifecycle evidence. | Deployment account controls and actor attribution must be established operationally; no lifecycle HTTP API is supplied. |
+| Consistent checkpoint | With the gateway stopped, exclusive journal locks fence the writer. Every retained policy/audit segment is copied to a new destination with an ordered, versioned manifest, record counts and SHA-256 digests; forced writes are read back and completion is published last. | Independent archive durability and power-loss directory durability are unproven. |
+| Evidence preservation | Copy preserves evidence older than the 90-day visibility window and unfinished execution records with their original IDs and revisions. | Visibility expiry does not reclaim storage. Physical expiry remains unavailable and needs its own contract and explicit deletion permission. |
+| Verified restore | Restore requires an independently retained manifest digest and expected revision, validates files and journal semantics, and writes only to a new destination. External intent and pending/completion markers prevent interrupted startup; missing base history cannot trigger bootstrap. | Restore does not reconstruct missing post-checkpoint evidence or external effects. |
+| Authority after recovery | Each cold start of restored storage requires fresh independent authorization outside restored/archive material, matching the receipt and a minimum authoritative policy revision; its validity interval is at most 30 seconds. | Trusted operators must reconcile current authority and later evidence; a digest alone is not rollback protection. |
+| Execution after recovery | Startup records unfinished admissions as UNKNOWN_AFTER_RESTART without business replay. A subsequent invocation requires fresh authorization and durable admission audit. | Recovery does not imply rollback, success, renewed delegation or permission to resume denied work. |
+| Capacity and failure | Private status exposes retained bytes/segments, headroom, usable space, unresolved work and lifecycle state. WARNING begins at 80%, CRITICAL at 95% or below one segment of free space. Observed-rate projections report unknown runway when no rate is supplied. Full audit storage prevents dispatch; partial/unavailable archive writes fail visibly. | Sampling and external alert routing are operator responsibilities; storage inspection does not assert execution readiness or production retention capacity. |
+
+Recorded verification is 152 unit/startup and 62 integration tests, zero
+failures/errors/skips, Wrapper `verify` in 4:03. This is independent mock and
+Boot/SDK evidence, detailed in [the recovery report](S2_RECOVERY_EVIDENCE.md),
+not a new test run from this documentation update. S2's broader operational
+acceptance and U5 remain partial. Review the storage contract before separately
+selecting S4 workload identities; modern MCP migration remains deferred.
+
 ## 1. Goal and ownership
 
 Build an executable Spring Boot application that exposes one logical MCP server at `/worker-coordinator/mcp`. That server offers one tool, `allocate_worker_id`. Calling the tool must invoke the existing Worker Coordinator's REST API and return its allocated ID through MCP.

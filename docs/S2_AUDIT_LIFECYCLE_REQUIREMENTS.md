@@ -1,6 +1,6 @@
 # S2 functional requirements: audit lifecycle and recovery
 
-Version: 0.1. Date: 2026-10-28. Status: requirements retained; bounded local
+Version: 0.2. Date: 2026-10-28. Status: requirements retained; bounded local
 checkpoint/recovery implementation under [the operational contract](S2_STORAGE_CONTRACT.md)
 and [ADR 0016](decisions/0016-offline-audit-checkpoint-and-restore.md).
 Owner contract review before S4 and physical-expiry acceptance remain outstanding.
@@ -19,15 +19,19 @@ retention, durable admission and recovery. Read the preserved
 [identity acceptance](IDENTITY_ACCEPTANCE.md), and
 [local journal decision](decisions/0012-local-admission-hardening.md).
 S2 identifiers below are local refinements, not new source acceptance IDs.
-Writing these requirements does not establish implementation or test evidence.
+Implementation evidence is recorded separately in
+[the S2 recovery report](S2_RECOVERY_EVIDENCE.md); requirement text alone does
+not establish acceptance.
 
 ## Existing behavior and boundaries
 
 [S1](S1_LIFECYCLE_EVIDENCE.md) is complete for local delegated ordinary reads:
 authorized lifecycle/selective memberships, stable authority/subject identity,
-versioned timing defaults and composed queued revocation. The latest executed
-Wrapper verification at commit cdd9af4 passed 144 unit/startup and 60 integration
-tests; this documentation update does not rerun or extend those results.
+versioned timing defaults and composed queued revocation. Its historical Wrapper
+verification at commit `cdd9af4` passed 144 unit/startup and 60 integration tests.
+The subsequent S2 increment at `5e07d2f` records 152 unit/startup and 62 integration
+tests, zero failures/errors/skips, in 4:03 under `target/s2-reviewed`.
+This documentation update does not rerun or extend those results.
 
 Current journals have an exclusive writer, digest-linked retained segments,
 finite storage budgets and forced admission evidence before dispatch. Audit
@@ -43,8 +47,10 @@ control plane, deployment or live coordinator operations.
 
 ## Required product behavior
 
-These requirements define the proposed S2 completion gate. API shapes, storage
-technology and operational choices listed later remain unresolved.
+These requirements define the full S2 completion gate. The local non-destructive
+choices are selected below and implemented under ADR 0016; physical expiry and
+the remaining operational qualification are incomplete. The thirteen requirements
+and their identifiers retain their original meaning.
 
 | ID | Functional requirement |
 | --- | --- |
@@ -62,7 +68,7 @@ technology and operational choices listed later remain unresolved.
 | S2-FR-12 | Lifecycle output, manifests and diagnostic logs must omit secrets and unnecessary protected payloads. Existing scoped audit access, stable pagination and secret-handling boundaries must remain. A checkpoint containing multiple scopes is privileged recovery material, not an ordinary tenant export. |
 | S2-FR-13 | Physical expiry must remain unavailable until its retention/dependency contract, authorization, auditable completion and interruption behavior are defined. This requirements document grants no file deletion permission. Archive creation must not imply removal of local evidence. |
 
-## Pending acceptance matrix
+## Acceptance matrix
 
 States below reflect the bounded local evidence supplement; Partial does not
 establish the full operational/release gate. Use independent local fixtures, random ports, bounded
@@ -82,31 +88,28 @@ removing files. Any actual file/directory deletion requires explicit permission.
 | S2-AC-09 | FR-09/12 | A second writer/unsafe restore is rejected; lifecycle operations preserve tenant-scoped pagination and existing failure sanitization. | Partial |
 | S2-AC-10 | All applicable | Full product Wrapper verify passes after implementation, including existing foundation/S1 Boot/SDK checks; record commands, timings, counters and remaining operational limits. | Verified (local regression) |
 
-## Decisions required before implementation
+## Selected local decisions and remaining operational work
 
-Record these choices in a reviewed S2 design/ADR before coding affected behavior.
-This document supplies requirements, not assumed answers to those choices.
-The selected non-destructive local choices are now recorded in ADR 0016 and its
-operational contract. This does not claim owner review or select physical expiry.
+[ADR 0016](decisions/0016-offline-audit-checkpoint-and-restore.md) and
+[the storage contract](S2_STORAGE_CONTRACT.md) select these choices for the
+implemented increment. Owner contract review before S4 remains outstanding.
 
-- Archive destination, independent durability/trust boundary, manifest format,
-  digest/authenticity protection, verification method and destination outage policy.
-- Lifecycle roles and scope, operator recovery authentication, API/CLI surface,
-  accepted/effective acknowledgment and operation-status inspection contract.
-- Checkpoint quiescence/publication mechanism, supported binary/format versions,
-  restore fencing and trusted freshness source that survives whole-backup rollback.
-- Retention clock/dependency rules, unresolved-outcome handling, any required holds,
-  archive availability during inspection and the separate physical-expiry gate.
-- Capacity thresholds, measurement window, reserve needed for failure/lifecycle
-  evidence and recovery, and agreed recovery time/data-loss objectives. No numeric
-  production RTO/RPO or capacity claim is selected here.
+| Decision area | Selected local contract | Remaining obligation |
+| --- | --- | --- |
+| Archive destination and integrity | New private directory outside the source, optionally on a mounted off-device volume; exact ordered manifest, record counts, SHA-256, read-back verification and independently retained receipt. Destination failure fails the command. | Provision and demonstrate independent durability/access controls; no managed remote archive service or adversarial-OS protection. |
+| Lifecycle authority and surface | OS-authorized all-scope storage operator, private checkpoint/verify/restore/status CLI, actor/ticket references, prepared/terminal audit evidence and external restore intent. No maintenance access follows from tenant audit viewing. | Deployed account attribution, multi-operator governance and external incident handling when failure evidence cannot persist. |
+| Checkpoint and restore fencing | Stop/fence the gateway; acquire exclusive journal locks; publish completion last; use new destinations and reject incomplete or missing restored history. Manifest format is gateway-uc01-segmented-s2-v1. | Power-loss directory-entry durability, clustered fencing and binary downgrade migration are unproven. |
+| Recovery freshness | Independently trusted digest/revision plus fresh external cold-start authorization, matching receipt and minimum current policy revision, with at most a 30-second validity interval. Missing/stale/conflicting authority denies startup. | Operators must reconcile later revocations and post-checkpoint evidence. No distributed current-authority or rollback oracle is supplied. |
+| Retention and uncertain outcomes | Preserve every retained record, including expired-visibility evidence and unfinished outcomes. Restart marks unfinished admissions unknown without replay. No physical expiry or capacity reclamation. | Separate expiry/hold/dependency policy, auditable interruption handling and explicit deletion permission before any removal. |
+| Capacity and recovery objectives | WARNING at 80%, CRITICAL at 95% or below one segment of usable space; rates sampled externally over at least 15 minutes; zero/missing rate yields unknown runway. Full audit storage denies dispatch. | External alert routing, failure-audit reserve and production capacity/RTO/RPO remain unselected or unproven. |
 
 ## Delivery and release gate
 
-First resolve the operational contract and select a bounded implementation slice.
-Then implement and gather named evidence for its applicable pending rows. Any
-unimplemented physical-expiry or recovery requirement must remain explicitly
-incomplete; an archive-only increment must not be presented as full S2 completion.
+The local non-destructive storage contract is implemented with named evidence
+below. Review that contract before selecting S4; this documentation update does
+not record owner approval. Remaining physical-expiry and recovery obligations stay
+explicitly incomplete. The implemented checkpoint/recovery increment does not
+establish full S2 operational qualification or production release readiness.
 Keep [identity](IDENTITY_ACCEPTANCE.md) and [catalog](CATALOG_ACCEPTANCE.md) states
 unchanged until their complete applicable obligations have evidence. S4 workload
 identities remains a separate proposed slice after S2's storage contract review.
