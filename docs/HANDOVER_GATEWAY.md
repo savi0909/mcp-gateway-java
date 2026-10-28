@@ -6,6 +6,9 @@ LLM development automation was moved to `D:/Projects/llm-harness`. Read
 [ADR 0011](decisions/0011-gateway-project-scope.md). Use gateway requirements
 and verified product evidence to choose work here.
 
+For the next bounded task, read [the next-session handover](HANDOVER.md):
+S0 protocol/SDK compatibility investigation, with required work and validation.
+
 ## Product state
 
 - October 28 gap/sprint planning is complete in
