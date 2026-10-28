@@ -151,6 +151,10 @@ flowchart LR
     S10 --> S11[S11 Release qualification]
 ```
 
+S2 now has a [functional requirements draft](S2_AUDIT_LIFECYCLE_REQUIREMENTS.md)
+with proposed archive/checkpoint/restore, retention, capacity and failure behavior.
+Its acceptance rows are Pending; operational design choices remain unresolved.
+
 ## S1 completion — 2026-10-28
 
 [S1 evidence](S1_LIFECYCLE_EVIDENCE.md) closes the selected local lifecycle,

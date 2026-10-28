@@ -2,6 +2,31 @@
 
 Version: 1.0. Date: 7 October 2026. Status: implementation handoff.
 
+## Current scope and functional supplements (2026-10-28)
+
+Sections 1-8 preserve the original foundation handoff and its acceptance IDs.
+Subsequent selected changes are recorded in [ADRs](decisions/), the
+[implementation plan](IMPLEMENTATION_PLAN.md) and [foundation evidence](ACCEPTANCE.md),
+including bounded application retries, payment/worker tools and secured profiles.
+The original one-tool/demo assumptions below are historical foundation scope;
+they do not replace the later approved contracts.
+
+For the current enterprise slice, use the preserved
+[identity v1.4](requirements/Enterprise_MCP_Identity_Authorization_Requirements_v1.4.md)
+and [catalog v1.3](requirements/Enterprise_MCP_Discovery_Catalog_Requirements_v1.3.md)
+requirements with their separate acceptance trackers. S1 is complete within local
+UC-01: organization/tenant lifecycle, selective human/application memberships,
+stable authority/subject identity, versioned timing and queued-revocation checks.
+See the [functional guide](UC01_ADMISSION.md), [ADR 0015](decisions/0015-uc01-lifecycle-and-control-capacity.md)
+and [S1 evidence](S1_LIFECYCLE_EVIDENCE.md).
+
+Next proposed functional work is [S2 audit lifecycle and recovery](S2_AUDIT_LIFECYCLE_REQUIREMENTS.md).
+Its draft defines archive/checkpoint/restore, retention preservation, capacity and
+failure requirements with Pending acceptance checks and explicit design decisions.
+It is not implemented behavior or permission to delete files. U5/full enterprise
+release remain Partial. Preserve the pinned runtime; modern MCP migration stays
+deferred under [ADR 0014](decisions/0014-modern-protocol-compatibility-proposal.md).
+
 ## 1. Goal and ownership
 
 Build an executable Spring Boot application that exposes one logical MCP server at `/worker-coordinator/mcp`. That server offers one tool, `allocate_worker_id`. Calling the tool must invoke the existing Worker Coordinator's REST API and return its allocated ID through MCP.

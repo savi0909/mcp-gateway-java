@@ -8,6 +8,9 @@ BUILD SUCCESS in 3:34; `target/s1-reviewed.log` and `target/s1-reviewed`. Thirte
 changes complete in 17–52 ms under a full 256-slot business queue; 26 actual
 subscribed SDK calls deny at fresh revision 2, zero downstream calls/output.
 
+Read the [S2 functional requirements draft](S2_AUDIT_LIFECYCLE_REQUIREMENTS.md)
+for the pending acceptance matrix and decisions required before implementation.
+
 Next proposed task: design S2's bounded audit lifecycle/recovery contract from the
 [sprint roadmap](GATEWAY_SPRINT_ROADMAP.md): archive/checkpoint/restore ownership,
 integrity manifests, capacity/failure handling and attributable lifecycle evidence.

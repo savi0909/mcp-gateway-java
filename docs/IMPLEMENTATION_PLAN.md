@@ -9,6 +9,9 @@ control plane) are pending and separate from this completed foundation milestone
 Recording that direction does not begin implementation or change acceptance rows.
 The subsequent owner-selected UC-01 prerequisite refines execution order below.
 
+Read the [S2 functional requirements draft](S2_AUDIT_LIFECYCLE_REQUIREMENTS.md)
+for the pending acceptance matrix and decisions required before implementation.
+
 ## Active project and continuation
 
 The [October 28 gap analysis and sprint roadmap](GATEWAY_SPRINT_ROADMAP.md)

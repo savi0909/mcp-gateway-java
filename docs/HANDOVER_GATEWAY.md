@@ -10,6 +10,9 @@ For the next bounded task, read [the next-session handover](HANDOVER.md):
 S1 is complete for local UC-01. Next proposed work is the S2 audit
 lifecycle/recovery contract and design. S0 is complete with modern migration blocked.
 
+Read the [S2 functional requirements draft](S2_AUDIT_LIFECYCLE_REQUIREMENTS.md)
+for the pending acceptance matrix and decisions required before implementation.
+
 ## Product state
 
 - S1 completed 2026-10-28; see [evidence](S1_LIFECYCLE_EVIDENCE.md) and
