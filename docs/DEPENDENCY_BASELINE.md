@@ -2,7 +2,9 @@
 
 Initial source/API inspection: 2026-10-07. Later foundation and UC-01 protocol
 verification is recorded in [WORKLOG](../WORKLOG.md) and the acceptance trackers;
-the current combined baseline is 128 unit/startup and 34 integration tests.
+the October 28 regression baseline is 143 unit/startup and 38 integration tests
+under `target/roadmap-review-20261028`. This run tests MCP `2025-11-25`;
+[modern compatibility planning](GATEWAY_SPRINT_ROADMAP.md) selects no upgrade.
 The stack below is unchanged. Dated initial observations are historical evidence.
 
 | Component | Version / evidence |

@@ -1,12 +1,21 @@
 # Current MCP gateway handover
 
-Updated 2026-10-18. This is the entry point for continuing this repository.
+Updated 2026-10-28. This is the entry point for continuing this repository.
 The owner clarified that this project builds an enterprise-class MCP gateway.
 LLM development automation was moved to `D:/Projects/llm-harness`. Read
 [ADR 0011](decisions/0011-gateway-project-scope.md). Use gateway requirements
 and verified product evidence to choose work here.
 
 ## Product state
+
+- October 28 gap/sprint planning is complete in
+  [GATEWAY_SPRINT_ROADMAP.md](GATEWAY_SPRINT_ROADMAP.md), with a separate
+  [modern protocol acceptance plan](MCP_PROTOCOL_ACCEPTANCE.md) and
+  [proposed compatibility ADR](decisions/0014-modern-protocol-compatibility-proposal.md).
+  Fresh legacy Wrapper `verify` passed 143 unit/startup and 38 integration tests,
+  zero failures/errors/skips, in 2:03. Log: `target/roadmap-review-20261028.log`;
+  reports/JAR: `target/roadmap-review-20261028`. No new runtime behavior or modern
+  protocol conformance is claimed; existing identity/catalog states are unchanged.
 
 - U5 continuation fixes audit-export snapshots under repeated/backward wall
   clocks: opaque cursors bind a scoped append boundary, with current permission
@@ -56,6 +65,19 @@ and verified product evidence to choose work here.
 
 ## Next gateway decision
 
+Use the [October 28 sprint roadmap](GATEWAY_SPRINT_ROADMAP.md) for current
+planning. It incorporates completed local hardening and the remaining U5 gaps,
+then proposes protocol migration, workloads, identity integration, registry,
+native federation, approvals/providers and distributed operations. Its S0 tasks
+make the next compatibility investigation concrete; S1 follows with supported
+UC-01 lifecycle and composed queued-revocation evidence.
+
+The modern target is MCP `2026-07-28`, distinct from SDK `2.0.0` and Spring AI
+`2.0.1`. Newer SDK release notes offer an experimental modern server while
+documenting client/header limitations; do not infer a migration version from an
+older roadmap or override dependencies without compatibility evidence. S0 can
+finish with a precise blocker while protocol-independent work continues.
+
 Read the [2026-10-18 source review and proposed roadmap](GATEWAY_REVIEW_AND_NEXT_FEATURES.md)
 for prioritized audit/journal/admission findings, the verified Uber reference,
 custom-requirement boundaries and proposed feature packages. The review proposes
@@ -99,7 +121,10 @@ Read AGENTS.md, WORKLOG.md, docs/IMPLEMENTATION_PLAN.md and
 docs/HANDOVER_GATEWAY.md. This project is the MCP gateway. LLM harness work is
 a separate project; do not run or extend its workflow here.
 Review UC-01/U5 gaps and the product requirements/acceptance trackers. Implement
-only the requested gateway slice, preserve the foundation and pinned stack, use
+only the requested gateway slice. For next-sprint planning, read
+docs/GATEWAY_SPRINT_ROADMAP.md, docs/MCP_PROTOCOL_ACCEPTANCE.md and proposed
+ADR 0014; S0 is the recommended first compatibility investigation. Preserve the
+foundation and pinned stack, use
 independent mocks and real SDK checks where needed, run appropriate Wrapper
 verification, and update factual evidence before committing and pushing.
 ```

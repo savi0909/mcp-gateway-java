@@ -11,6 +11,15 @@ The subsequent owner-selected UC-01 prerequisite refines execution order below.
 
 ## Active project and continuation
 
+The [October 28 gap analysis and sprint roadmap](GATEWAY_SPRINT_ROADMAP.md)
+refines the remaining enterprise work into S0-S11 with dependencies, exit evidence
+and complete identity/catalog work allocation. Start the next selected slice with
+S0 protocol/SDK compatibility investigation, then S1 supported UC-01 closure.
+The [protocol acceptance plan](MCP_PROTOCOL_ACCEPTANCE.md) is entirely Pending
+for the modern target; [ADR 0014](decisions/0014-modern-protocol-compatibility-proposal.md)
+is Proposed. This is planning, not a runtime/dependency selection or acceptance
+promotion. The current runtime remains tested against MCP `2025-11-25`.
+
 This repository develops the MCP gateway. Start with
 [the current gateway handover](HANDOVER_GATEWAY.md), then review remaining
 UC-01/U5 gaps and the selected product scope below. Development automation lives

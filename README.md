@@ -30,6 +30,10 @@ record tested scope and limits; [all 32 identity acceptance criteria](docs/IDENT
 required for the full first release, separately from foundation evidence.
 
 For resuming work, start with the [current gateway handover](docs/HANDOVER_GATEWAY.md).
+The [gap analysis and sprint roadmap](docs/GATEWAY_SPRINT_ROADMAP.md) identifies
+remaining work toward the enterprise gateway, starting with protocol/SDK
+compatibility and supported UC-01 closure. Its modern protocol target is MCP
+`2026-07-28`; the current runtime's tested revision remains `2025-11-25`.
 The [UC-01 implementation handover](docs/HANDOVER_UC01.md) preserves the detailed
 baseline, verification evidence, remaining gaps and proposed UC-03 scope.
 Audit export's scoped append boundary and cursor compatibility are documented in
@@ -104,6 +108,8 @@ AI coding tools require their own login/subscription or credentials; that is sep
 | [docs/DESIGN.md](docs/DESIGN.md) | Component boundaries and architecture guidance |
 | [docs/IMPLEMENTATION_PROMPT.md](docs/IMPLEMENTATION_PROMPT.md) | Original full milestone implementation request |
 | [docs/ENTERPRISE_MCP_VISION.md](docs/ENTERPRISE_MCP_VISION.md) | Owner-selected enterprise architecture, priorities, roadmap and design process; future scope |
+| [docs/GATEWAY_SPRINT_ROADMAP.md](docs/GATEWAY_SPRINT_ROADMAP.md) | Current gap register, ordered sprints, exit evidence and identity/catalog allocation |
+| [docs/MCP_PROTOCOL_ACCEPTANCE.md](docs/MCP_PROTOCOL_ACCEPTANCE.md) | Pending modern protocol/server/client evidence plan |
 | [docs/UC01_ADMISSION_PLAN.md](docs/UC01_ADMISSION_PLAN.md) | Selected next slice, dependencies, ordered design/implementation work and verification plan |
 | [docs/IDENTITY_ACCEPTANCE.md](docs/IDENTITY_ACCEPTANCE.md) | Separate pending IA-AC-01 through IA-AC-32 baseline tracker |
 | [Identity/authorization v1.4](docs/requirements/Enterprise_MCP_Identity_Authorization_Requirements_v1.4.md) | Preserved owner-supplied enterprise behavioral requirements |
