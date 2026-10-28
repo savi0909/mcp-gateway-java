@@ -27,6 +27,15 @@ and SDK 2.0.0 while continuing protocol-independent S1 work. No modern product
 dependency combination is selected. The [executed findings](../S0_COMPATIBILITY_FINDINGS.md)
 and [normative inventory](../MCP_2026_REQUIREMENTS.md) are the reproducible evidence.
 
+After reviewing these findings, the owner explicitly chose to defer modern MCP
+migration while building functional components. S1 is the selected next slice;
+S2 audit lifecycle/recovery and S4 workload identities are the following
+priorities, subject to their individual acceptance gates. Transport-independent
+identity and registry work need not wait for S3. Revisit modern compatibility
+before implementing modern native federation or committing to modern clients.
+This changes implementation priority, not the requirements for any claimed
+supported revision or the full enterprise release.
+
 The isolated SDK 2.2.0-M1 modern servlet passed bounded server fixtures, but has
 no modern Java client or modern WebFlux transport. AI 2.0.2 and 2.1.0-RC1 both
 resolve SDK 2.1.0 and register legacy APIs; actual starter/SDK round trips

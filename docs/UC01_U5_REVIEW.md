@@ -34,11 +34,11 @@ the exact commands and final totals are in the latest [WORKLOG](../WORKLOG.md).
 | Area | Current evidence | Remaining implementation or proof |
 | --- | --- | --- |
 | Retention and storage lifecycle | Ninety-day visibility cutoff; forced retained rollover; restart, corruption and finite capacity tests | Controlled physical expiry/off-device archival, approved checkpoint/restore semantics, lifecycle auditing and failure recovery. No purge is implemented; capacity still fails closed. |
-| Topology and memberships | Policy can represent multiple tenants; request context selects one; local admission checks current organization/tenant status | Administrative changes cannot generally manage organization/tenant lifecycle or remove one membership from a multi-tenant human. HUMAN changes intentionally require a single tenant; this is bounded U2 administration, not full topology administration. |
-| Supported revocation | HTTP administration plus existing SDK sessions cover human/app/server/publication/grant changes; delegation/resource/credential and deferred-subscription tests supplement them | A bounded queue supplier test and SDK revocation tests are separate evidence. Complete composed SDK queue/revocation timing under resource saturation is not established. Workloads/approvals/providers need their own positive and revocation matrices when enabled. |
+| Topology and memberships | Policy can represent multiple tenants; request context selects one; local admission checks current organization/tenant status | S1 now implements bounded organization/tenant lifecycle and selective human/application membership operations under ADR 0015. Whole-principal updates require authority in every existing membership. New organization provisioning remains private; workload/provider lifecycle remains later. |
+| Supported revocation | HTTP administration plus existing SDK sessions cover human/app/server/publication/grant changes; delegation/resource/credential and deferred-subscription tests supplement them | S1 composes actual subscribed SDK calls with all 256 business queue slots filled and 13 HTTP administrative revocations; fresh revision checks, zero downstream calls and bounded completion are recorded in S1 evidence. Workloads/approvals/providers need their own positive and revocation matrices when enabled. |
 | Audit inspection | Scoped bounded pages; current role checks, retention and reopen evidence; sanitized early HTTP rejection audit | No production search/archive service, off-device storage, general content policy or full approval/provider evidence. Timestamp filtering remains a visibility condition; append position fixes membership of a page sequence. |
 | Recovery and distributed behavior | Single-writer locks; digest-linked contiguous segments; no business replay; unresolved outcomes recovered as unknown | Whole-backup rollback, older-binary downgrade, power-loss/directory-entry durability, clustered state/session routing and distributed revocation remain unproven. |
-| Resource cost | One disk worker, bounded queue/wait and retained journal budgets; no unbounded page response | Page reads still scan retained history, and current policy verification reads/hashes current bytes. No production throughput, fairness, latency or HA target is established. |
+| Resource cost | One business disk worker plus reserved bounded control capacity, bounded queue/wait and retained journal budgets; no unbounded page response | Page reads still scan retained history, and current policy verification reads/hashes current bytes. No production throughput, fairness, latency or HA target is established. |
 
 The applicable source obligations include identity OP-01–06, AU-09, EX-01 and
 IA-AC-21–25/31, plus catalog LIFE-002/004/006/008. See the preserved
@@ -59,3 +59,6 @@ this review. They require their own selected scope, design and acceptance mappin
 distinct workload identity/owner/application, no fabricated human or mode fallback,
 grant intersection, exact credentials, durable audit and mixed-context isolation.
 This correction enables no workload, sensitive-action or third-party execution.
+
+S1 evidence is recorded in [the lifecycle/queue report](S1_LIFECYCLE_EVIDENCE.md).
+This October 28 supplement does not complete retention/recovery or later modes.

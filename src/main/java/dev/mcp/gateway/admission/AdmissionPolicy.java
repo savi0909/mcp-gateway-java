@@ -8,9 +8,22 @@ import java.util.Set;
 public record AdmissionPolicy(long revision, Map<String, String> organizations, Map<String, Tenant> tenants,
         Map<String, Human> humans, Map<String, Application> applications, Map<String, Server> servers,
         Map<String, Capability> capabilities, Map<String, Catalog> catalogs, Map<String, Delegation> delegations,
-        Set<Grant> grants, Set<CredentialScope> credentials, Set<ResourceScope> resources) {
+        Set<Grant> grants, Set<CredentialScope> credentials, Set<ResourceScope> resources, Timing timing) {
+    public AdmissionPolicy(long revision, Map<String, String> organizations, Map<String, Tenant> tenants,
+            Map<String, Human> humans, Map<String, Application> applications, Map<String, Server> servers,
+            Map<String, Capability> capabilities, Map<String, Catalog> catalogs, Map<String, Delegation> delegations,
+            Set<Grant> grants, Set<CredentialScope> credentials, Set<ResourceScope> resources) {
+        this(revision, organizations, tenants, humans, applications, servers, capabilities, catalogs, delegations,
+                grants, credentials, resources, Timing.defaults());
+    }
+    public record Timing(int policyMaxAgeSeconds, int delegationMaxSeconds) {
+        public Timing { require(policyMaxAgeSeconds > 0 && policyMaxAgeSeconds <= 30
+                && delegationMaxSeconds > 0 && delegationMaxSeconds <= 900); }
+        public static Timing defaults() { return new Timing(30, 900); }
+    }
     public AdmissionPolicy {
         require(revision > 0);
+        timing = timing == null ? Timing.defaults() : timing;
         organizations = Map.copyOf(organizations); tenants = Map.copyOf(tenants); humans = Map.copyOf(humans);
         applications = Map.copyOf(applications); servers = Map.copyOf(servers); capabilities = Map.copyOf(capabilities);
         catalogs = Map.copyOf(catalogs); delegations = Map.copyOf(delegations);
@@ -25,7 +38,7 @@ public record AdmissionPolicy(long revision, Map<String, String> organizations, 
             require(subjects.add(java.util.List.of(h.authority(), h.subject())));
             for (String tenant : h.tenants()) require(tenants.containsKey(tenant));
             require(h.tenants().containsAll(h.roles().keySet()));
-            for (var roles : h.roles().values()) require(Set.of("SECURITY_ADMIN", "CATALOG_OWNER", "PUBLISHER", "AUDIT_VIEWER").containsAll(roles));
+            for (var roles : h.roles().values()) require(Set.of("SECURITY_ADMIN", "CATALOG_OWNER", "PUBLISHER", "AUDIT_VIEWER", "ORGANIZATION_ADMIN").containsAll(roles));
         }
         for (var a : applications.values()) {
             status(a.status()); require(organizations.containsKey(a.organization()) && humans.containsKey(a.owner()));
@@ -93,13 +106,13 @@ public record AdmissionPolicy(long revision, Map<String, String> organizations, 
     public record ResourceScope(String organization, String tenant, String server, String capability, String version, String resource) { }
     public AdmissionPolicy next(Map<String, Human> people, Map<String, Application> apps, Map<String, Server> upstreams,
             Map<String, Capability> tools, Map<String, Catalog> memberships, Map<String, Delegation> delegated, Set<Grant> permissions) {
-        return new AdmissionPolicy(revision + 1, organizations, tenants, people, apps, upstreams, tools, memberships, delegated, permissions, credentials, resources);
+        return new AdmissionPolicy(revision + 1, organizations, tenants, people, apps, upstreams, tools, memberships, delegated, permissions, credentials, resources, timing);
     }
     public AdmissionPolicy withCredentials(Set<CredentialScope> scoped) {
-        return new AdmissionPolicy(revision, organizations, tenants, humans, applications, servers, capabilities, catalogs, delegations, grants, scoped, resources);
+        return new AdmissionPolicy(revision, organizations, tenants, humans, applications, servers, capabilities, catalogs, delegations, grants, scoped, resources, timing);
     }
     public AdmissionPolicy withResources(Set<ResourceScope> scoped) {
-        return new AdmissionPolicy(revision, organizations, tenants, humans, applications, servers, capabilities, catalogs, delegations, grants, credentials, scoped);
+        return new AdmissionPolicy(revision, organizations, tenants, humans, applications, servers, capabilities, catalogs, delegations, grants, credentials, scoped, timing);
     }
     public static void require(boolean condition) { if (!condition) throw new IllegalArgumentException("Invalid admission policy"); }
     private static void status(String value) { require(Set.of("PENDING", "ACTIVE", "SUSPENDED", "RETIRED").contains(value)); }

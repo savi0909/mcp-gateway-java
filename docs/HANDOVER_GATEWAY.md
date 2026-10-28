@@ -7,10 +7,21 @@ LLM development automation was moved to `D:/Projects/llm-harness`. Read
 and verified product evidence to choose work here.
 
 For the next bounded task, read [the next-session handover](HANDOVER.md):
-S1 UC-01 lifecycle and composed queued-revocation closure, with required work
-and validation. S0 is complete with modern migration blocked.
+S1 is complete for local UC-01. Next proposed work is the S2 audit
+lifecycle/recovery contract and design. S0 is complete with modern migration blocked.
 
 ## Product state
+
+- S1 completed 2026-10-28; see [evidence](S1_LIFECYCLE_EVIDENCE.md) and
+  [ADR 0015](decisions/0015-uc01-lifecycle-and-control-capacity.md). Authorized
+  lifecycle/selective memberships, stable identity and versioned timing are
+  implemented. Reserved control capacity permits 13 administrative changes while
+  all 256 business slots are full: 17–52 ms round trips, 26 fresh revision-2
+  denials and zero downstream calls. Full Wrapper verify passes 144 unit/startup
+  plus 60 integration tests, zero failures/errors/skips, in 3:34. Evidence:
+  `target/s1-reviewed.log`, `target/s1-reviewed`, and retained JSON linked in the report.
+  U5/release gates remain partial. Pins and disabled modes are preserved.
+
 
 - S0 investigation completed 2026-10-28. Read
   [compatibility findings](S0_COMPATIBILITY_FINDINGS.md),
@@ -84,8 +95,8 @@ Use the [October 28 sprint roadmap](GATEWAY_SPRINT_ROADMAP.md) for current
 planning. It incorporates completed local hardening and the remaining U5 gaps,
 then proposes protocol migration, workloads, identity integration, registry,
 native federation, approvals/providers and distributed operations. Its S0 tasks
-are complete with documented blockers; S1 follows with supported
-UC-01 lifecycle and composed queued-revocation evidence.
+are complete with documented blockers; S1 now has supported
+UC-01 lifecycle and composed queued-revocation evidence. S2 contract/design follows.
 
 The modern target is MCP `2026-07-28`, distinct from SDK `2.0.0` and Spring AI
 `2.0.1`. Newer SDK release notes offer an experimental modern server while
@@ -104,11 +115,12 @@ WORKLOG verification before continuing. Physical audit purge/external archival,
 full-release identity modes and distributed guarantees remain outstanding.
 
 The [post-hardening U5 review](UC01_U5_REVIEW.md) separates the corrected export
-defect from remaining retention, topology, composed queue/revocation and recovery
-obligations. Use it with the latest evidence when selecting the next slice.
+defect from retention/recovery and the topology/composed queue obligations
+subsequently closed within local S1. Use it with the latest evidence when selecting the next slice.
 
 Review remaining UC-01/U5 gaps before extending execution modes: physical retention
-operations, broader topology administration and release-wide revocation evidence.
+operations and release-wide recovery/revocation evidence. S1 closes bounded local
+topology and composed queue checks; new organization provisioning stays private.
 The timestamp-only pagination defect found during that review is corrected under
 ADR 0013; in-progress hash-only exports need to restart after updating binaries.
 The existing detailed handover proposes UC-03
@@ -138,7 +150,8 @@ a separate project; do not run or extend its workflow here.
 Review UC-01/U5 gaps and the product requirements/acceptance trackers. Implement
 only the requested gateway slice. For next-sprint planning, read
 docs/GATEWAY_SPRINT_ROADMAP.md, docs/MCP_PROTOCOL_ACCEPTANCE.md and proposed
-ADR 0014 and completed S0 findings; S1 is the next bounded product task. Preserve the
+ADR 0014, completed S0 findings and S1 evidence; S2 audit lifecycle/recovery
+contract/design is the next proposed task. Preserve the
 foundation and pinned stack, use
 independent mocks and real SDK checks where needed, run appropriate Wrapper
 verification, and update factual evidence before committing and pushing.

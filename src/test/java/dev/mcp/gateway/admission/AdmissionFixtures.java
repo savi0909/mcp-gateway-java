@@ -28,7 +28,7 @@ final class AdmissionFixtures {
             credentials.add(new AdmissionPolicy.CredentialScope("organization-north", tenant, app, h, "coordinator", "READ", "credential-" + n));
         }
         humans.put("security-admin", new AdmissionPolicy.Human(authority, "admin-subject", "Administrator", "ACTIVE", Set.of("tenant-blue"),
-                Map.of("tenant-blue", Set.of("SECURITY_ADMIN", "PUBLISHER", "AUDIT_VIEWER"))));
+                Map.of("tenant-blue", Set.of("SECURITY_ADMIN", "PUBLISHER", "AUDIT_VIEWER", "ORGANIZATION_ADMIN"))));
         humans.put("publisher", new AdmissionPolicy.Human(authority, "publisher-subject", "Publisher", "ACTIVE", Set.of("tenant-blue"), Map.of("tenant-blue", Set.of("PUBLISHER"))));
         var apps = Map.of("application-alpha", new AdmissionPolicy.Application("organization-north", "human-0", "ACTIVE", Set.of("tenant-blue"), false),
                 "application-beta", new AdmissionPolicy.Application("organization-north", "human-1", "ACTIVE", Set.of("tenant-green"), false),

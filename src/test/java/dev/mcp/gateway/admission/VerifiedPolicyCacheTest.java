@@ -18,6 +18,26 @@ class VerifiedPolicyCacheTest {
         clock.incrementAndGet(); assertThatThrownBy(cache::current).isInstanceOf(AdmissionFailure.class);
         source.set(policy); assertThat(cache.current()).isEqualTo(policy);
     }
+    @Test void versionedTimingTightensFallbackAndSurvivesPolicyCopiesAndSerialization() throws Exception {
+        var p = AdmissionFixtures.policy("https://authority.example");
+        var tightened = new AdmissionPolicy(2, p.organizations(), p.tenants(), p.humans(), p.applications(), p.servers(), p.capabilities(), p.catalogs(), p.delegations(), p.grants(), p.credentials(), p.resources(), new AdmissionPolicy.Timing(10, 120));
+        var directory = AdmissionFixtures.directory(); var bootstrap = directory.resolve("bootstrap.json");
+        java.nio.file.Files.writeString(bootstrap, AdmissionFixtures.JSON.writeValueAsString(p));
+        var settings = new AdmissionSettings(bootstrap, directory.resolve("journals"), Duration.ofSeconds(30), java.util.Map.of());
+        try (var journal = new AdmissionJournal(settings)) { journal.writePolicy(tightened); }
+        try (var journal = new AdmissionJournal(settings)) { assertThat(journal.readPolicy().timing()).isEqualTo(tightened.timing()); }
+        var source = new AtomicReference<>(tightened); var clock = new AtomicLong(1);
+        var cache = new VerifiedPolicyCache(() -> { if (source.get() == null) throw new IOException(); return source.get(); }, Duration.ofSeconds(30), clock::get);
+        cache.current(); source.set(null); clock.addAndGet(Duration.ofSeconds(10).toNanos() - 1);
+        assertThat(cache.current()).isEqualTo(tightened); clock.incrementAndGet();
+        assertThatThrownBy(cache::current).isInstanceOf(AdmissionFailure.class);
+        var copy = tightened.next(p.humans(), p.applications(), p.servers(), p.capabilities(), p.catalogs(), p.delegations(), p.grants()).withCredentials(p.credentials()).withResources(p.resources());
+        assertThat(copy.timing()).isEqualTo(tightened.timing());
+        assertThat(AdmissionFixtures.JSON.readValue(AdmissionFixtures.JSON.writeValueAsString(copy), AdmissionPolicy.class)).isEqualTo(copy);
+        var legacy = AdmissionFixtures.JSON.readTree(AdmissionFixtures.JSON.writeValueAsString(p));
+        ((tools.jackson.databind.node.ObjectNode) legacy).remove("timing");
+        assertThat(AdmissionFixtures.JSON.treeToValue(legacy, AdmissionPolicy.class).timing()).isEqualTo(AdmissionPolicy.Timing.defaults());
+    }
     @Test void rollbackConflictAndInvalidationCannotRestoreOlderAuthority() throws Exception {
         var first = AdmissionFixtures.policy("https://authority.example");
         var second = first.next(first.humans(), first.applications(), first.servers(), first.capabilities(), first.catalogs(), first.delegations(), first.grants());

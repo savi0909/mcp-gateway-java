@@ -27,7 +27,7 @@ retain their original meanings.
 
 | Tracker ID | Source requirement coverage | Planned increment | State | Expected observable result / next proof |
 | --- | --- | --- | --- | --- |
-| IA-AC-01 | ID-01 | UC-01 | Pending | Rename a user/change email: identity and grants persist. Same email from another authority receives no inherited grants. |
+| IA-AC-01 | ID-01 | UC-01 | Partial | Rename a user/change email: identity and grants persist. Same email from another authority receives no inherited grants. |
 | IA-AC-02 | ID-02–04, ID-09 | UC-01 | Partial | Recognized user with unknown application, or recognized app with invalid user evidence: invocation does not execute. |
 | IA-AC-03 | ID-05, ID-07, AU-02 | UC-01; extend in UC-03 | Partial | Inject another user's ID/delegation claims into prompt or tool arguments: no impersonation and no execution under that identity. An agent-run identifier alone supplies no authority. |
 | IA-AC-04 | ID-08–11 | UC-01; extend to workloads | Partial | Pending/suspended/retired principal cannot invoke; owner cannot self-activate or self-grant; retired ID cannot be reused. Untrusted administrator enrollment is rejected; trusted initial provisioning is audited. |
@@ -73,7 +73,7 @@ Wrapper run and [ADR 0012](decisions/0012-local-admission-hardening.md).
 | --- | --- | --- |
 | IA-AC-20, 24, 25 | `earlyHttpRejectionsAreDurableSanitizedAndAuditFailureIsUnavailable` | Real HTTP authentication/Origin/session rejections persisted without token/identity claims; restart retains records; audit failure returns 503; zero business calls. Unscoped rejection evidence is private operator data, not tenant export. |
 | IA-AC-08, 28 | `ordinaryMembershipRequiresTheCorrectOwnerAndCanBeExplicitlyReactivated` | Owner-only explicit ordinary activation/removal with live SDK discovery, independent other catalog and one allowed read. Sensitive approvals remain later. |
-| IA-AC-21 | `administrativeRevocationMatrixDeniesExistingSessionsWithinBound` | Human/application/server/grant/publication changes via HTTP deny subsequent SDK calls within 60 seconds; no downstream calls. Existing delegation/resource/credential tests remain. Distributed/topology/later-mode revocation remains later. |
+| IA-AC-21 | `administrativeRevocationMatrixDeniesExistingSessionsWithinBound` | Human/application/server/grant/publication changes via HTTP deny subsequent SDK calls within 60 seconds; no downstream calls. Existing delegation/resource/credential tests remain. S1 adds local topology and saturated queue evidence below; distributed/later-mode revocation remains later. |
 | IA-AC-22, 23, 25 | `AdmissionWorkQueueTest` | Bounded queue rejection, fresh state after queueing, timeout while worker is busy and no delayed execution. This supplements SDK revocation tests; it is not a measured filesystem-I/O or cluster deadline. |
 | IA-AC-24, 31 | `auditPaginationIsScopedStableAndDoesNotRepeatAdmissionOutcomePairs`; `auditVisibilityExpiresExactlyAtBoundaryWhileEvidenceRemainsRetained` | Tenant-scoped bounded pages do not repeat admission/outcome pairs or grow with their own audit accesses; exact visibility expiry. Physical records remain retained, not deleted. |
 | IA-AC-25, 31 | `AdmissionJournalTest` | Retained rollover, forced lifecycle records, restart/latest revision, fixed capacity, writer exclusion, interrupted/partial/missing/corrupt history rejection. No power-loss, off-device archive or complete-backup rollback proof. |
@@ -123,10 +123,29 @@ purge and full-release obligations remain outstanding. See
 | 04, 21, 28, 29 | publisherCannotGrantAndSecurityAdministratorCannotSelfActivateOrSelfGrant; administrativeSuspensionRetirementAndCredentialRevocationAreEffective; consoleAuthorityCannotInvokeToolsOrRenewSuspendedHumanDelegation | Self-grant/activation denied, retired identity cannot be reused, current suspension/revocation applies. Workload/approval/provider lifecycle and full renewal matrix remain. |
 | 06, 07, 08, 12 | filtersPerUserAndEnforcesDirectCallsWithIsolatedCredentialsAndDurableAudit; currentGrantIntersectionDelegationExpiryAndSensitiveMembershipAreEnforced; failsClosedForLifecycleTrustClassificationContractAndCredentialChanges | One valid ordinary read, both grant intersections, hidden direct calls, pending sensitive membership, disabled classifications and contract fingerprint mismatch. More governance and data policies remain. |
 | 18, 19, 30, 32 | failsClosedForLifecycleTrustClassificationContractAndCredentialChanges; missingOwnershipFailsVerificationAndCrossTenantOwnershipIsDenied | Approved origin checks, third-party denial, context credentials, ownership and projected output. Malicious provider interaction and later modes are not enabled. |
-| 22, 23, 25 | revocationBlocksExistingSessionsAndWorkSubscribedAfterRevocation; auditFailurePreventsDispatchAndReadsNeverRetryUpstreamFailures; VerifiedPolicyCacheTest | New subscription rechecks current authority; no audit means no dispatch; 30-second exact fallback boundary, no renewal on failure, rollback/conflict rejection. Runtime timing administration and distributed propagation remain later. |
+| 22, 23, 25 | revocationBlocksExistingSessionsAndWorkSubscribedAfterRevocation; auditFailurePreventsDispatchAndReadsNeverRetryUpstreamFailures; VerifiedPolicyCacheTest | New subscription rechecks current authority; no audit means no dispatch; 30-second exact fallback boundary, no renewal on failure, rollback/conflict rejection. S1 adds versioned timing administration below; distributed propagation remains later. |
 | 24, 26, 31 | scopesAuditAccessAndPreservesPinnedContracts; isolatesOneHundredInterleavedCallsAcrossFiftyUsersTwoApplicationsAndTwoTenants | Scoped audit, before/after revisions, 100 exact caller/resource/credential-attributed reads. Controlled physical expiry and additional modes/fixture populations remain later. |
 | 06, 19, 25 | AdmissionBoundaryTest | Exact 15-minute delegation and credential expiry; missing outcome audit returns unknown and restart preserves evidence without replay. No production durability or live IdP guarantee. |
 
 Final verification command: `.\mvnw.cmd -B -ntp '-Dgateway.build-directory=target/foundation' verify`.
 See the dated WORKLOG entry for exact counts and results. Tests are linked from the
 [implementation guide](UC01_ADMISSION.md); original v1.4 acceptance text is unchanged.
+
+## 2026-10-28 S1 supplement
+
+[S1 evidence](S1_LIFECYCLE_EVIDENCE.md) and
+[ADR 0015](decisions/0015-uc01-lifecycle-and-control-capacity.md) add named
+Boot/SDK evidence for IA-AC-01/04/05/09/21/22/23/24/25/28/31. IA-AC-01 moves
+from Pending to Partial: display/email changes retain authority/subject and
+grants; foreign issuer/same email receives no authority. Positive multi-authority
+linking is outside the single configured issuer boundary. No other status is
+promoted. Explicit topology/selected membership, global timing authorization and
+exact dynamic fallback boundaries are implemented within the documented scope.
+
+Thirteen composed saturated-queue administrative changes deny both actual
+subscribed calls at fresh revision 2, with zero downstream calls/protected output.
+Queued delegation/access-token expiry and five-second queue timeout also deny.
+The report records accepted/effective times, monotonic durations, append ordering
+and call IDs. Existing grants/delegation expiry retain meaning under new issuance
+defaults. Workloads/approvals/providers, physical retention and distributed
+recovery remain outstanding; full first-release completion is not claimed.

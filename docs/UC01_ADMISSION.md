@@ -81,7 +81,7 @@ and journal files under ignored `target/uc01-fixtures`; those are test artifacts
 [AdmissionPolicy](../src/main/java/dev/mcp/gateway/admission/AdmissionPolicy.java)
 defines the JSON records. Top-level fields are `revision`, `organizations`,
 `tenants`, `humans`, `applications`, `servers`, `capabilities`, `catalogs`,
-`delegations`, `grants`, `credentials`, and `resources`. IDs are explicit map keys, independent
+`delegations`, `grants`, `credentials`, `resources`, and `timing`. IDs are explicit map keys, independent
 of display names. Humans can have explicitly approved multiple-tenant memberships;
 no inheritance across tenants is assumed.
 
@@ -138,13 +138,18 @@ Console authority cannot invoke tools or manufacture delegated tool authority.
 `POST /control/changes` takes `expectedRevision`, `action`, the action-specific
 fields below, and `reason`. Wrong revisions and unauthorized changes return 403;
 validation returns sanitized errors. Unknown or irrelevant fields are rejected.
-Success includes committed `revision`, `accepted: true` and `effective: true`.
+Success includes committed `revision`, `accepted: true`, `effective: true`,
+`changeId`, `acceptedAt`, and `effectiveAt`. Acceptance is captured before control
+queueing; success is returned after forced effective audit.
 This is synchronous local completion, not a clustered acknowledgment.
 
 | Action | Role | Action fields |
 | --- | --- | --- |
-| HUMAN | SECURITY_ADMIN | target, human |
-| APPLICATION | SECURITY_ADMIN | target, application |
+| ORGANIZATION / TENANT | SECURITY_ADMIN + ORGANIZATION_ADMIN | target, state |
+| HUMAN_MEMBERSHIP / APPLICATION_MEMBERSHIP | SECURITY_ADMIN | target, tenant, state |
+| TIMING | SECURITY_ADMIN + ORGANIZATION_ADMIN in every policy tenant | timing |
+| HUMAN | SECURITY_ADMIN in every existing membership | target, human |
+| APPLICATION | SECURITY_ADMIN in every existing membership | target, application |
 | GRANT / REVOKE_GRANT | SECURITY_ADMIN | grant |
 | DELEGATION | SECURITY_ADMIN | target, delegation |
 | REVOKE_DELEGATION | SECURITY_ADMIN | target |
@@ -158,10 +163,30 @@ This is synchronous local completion, not a clustered acknowledgment.
 
 HUMAN/APPLICATION enrollment starts pending; a different authorized administrator
 activates it. Authority/subject and retired principal IDs cannot be reassigned.
-Identity administrative updates currently support principals with one tenant;
-multiple-tenant provisioning is explicit bootstrap policy, with execution checks
-for the selected tenant. Organization/tenant topology changes need a later scoped
-administrative contract. New catalogs start empty. New contracts start pending;
+Whole-principal updates preserve existing membership sets and require authority
+in each membership. Use HUMAN_MEMBERSHIP/APPLICATION_MEMBERSHIP with `tenant`
+equal to the selected request tenant and state `ACTIVE` or `REMOVED`; these
+operations change only that membership and never create execution grants.
+Removing human membership removes only its tenant roles. Self changes and
+administrator-owned application changes are denied.
+
+ORGANIZATION targets the caller's existing organization. TENANT targets an
+existing same-organization tenant or enrolls a new tenant as PENDING. States are
+PENDING, ACTIVE, SUSPENDED and RETIRED; retirement prevents identifier reuse.
+Only organization lifecycle can recover a PENDING/SUSPENDED organization while
+the console, human and selected tenant remain active. Keep an administration
+tenant active for tenant recovery. New organization enrollment remains trusted
+private provisioning. See [ADR 0015](decisions/0015-uc01-lifecycle-and-control-capacity.md).
+
+TIMING takes `timing: {"policyMaxAgeSeconds": 30, "delegationMaxSeconds": 900}`.
+Both values are positive and bounded by the shown baseline ceilings. Defaults
+are snapshot-wide, so explicit authority in every policy tenant is required.
+The effective fallback maximum is the smaller of deployment and policy settings.
+New delegations must meet the current issuance maximum; existing grants and
+explicit delegation expiries retain their meaning. Legacy policies lacking
+`timing` use the original defaults. New snapshots require this binary or a
+separately validated migration for downgrade. No approval/mutation/workload/provider
+mode or retention administration is enabled. New catalogs start empty. New contracts start pending;
 classification is assigned by security administration, publication by publisher.
 
 MEMBERSHIP state is `REQUEST` or `REMOVE`. A published ordinary read can activate
@@ -201,8 +226,13 @@ policy, checks eligibility and forces its audit record to disk before dispatch.
 Work whose publisher has not yet subscribed is checked when subscribed. Already
 admitted work may finish after revocation; revocation does not undo external effects.
 
-Disk work uses a dedicated single worker with at most 256 queued tasks and a
-five-second queue budget. Overload/queue expiry returns verification unavailable;
+Business disk work uses a dedicated single worker with at most 256 queued tasks
+and a five-second queue budget. Administration has a reserved worker with 16
+waiting tasks and its own five-second budget. Both serialize on the same journal;
+a full business queue cannot consume the reserved control slots. Control HTTP
+rejection audit and business queue-failure audit use the control worker. Call IDs
+and queuedAt precede queueing; admission records contain the freshly checked
+revision. A queue-failed call is unverified and NOT_ATTEMPTED. Overload/queue expiry returns verification unavailable;
 expired or cancelled queued tasks do not later execute. Authorization occurs only
 after dequeueing. A forced disk operation already underway is not cancelled by
 the queue timer; an OS-level stalled write is not covered by a hard I/O deadline.
@@ -262,6 +292,9 @@ release criteria remain partial rather than treating forced local writes as a
 production audit platform.
 
 ## Executed verification and limits
+
+See [S1 evidence](S1_LIFECYCLE_EVIDENCE.md) for lifecycle, stable identity, timing
+and composed queued-revocation tests on the pinned runtime.
 
 `Uc01AdmissionIT` runs a real Boot server and compatible SDK clients against
 independent issuer and REST mocks. `AdmissionBoundaryTest` adds deterministic

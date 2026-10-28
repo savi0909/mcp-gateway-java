@@ -27,8 +27,11 @@ public class AdmissionConfiguration {
     @Bean(destroyMethod = "close") AdmissionJournal admissionJournal(AdmissionSettings settings, SecuritySettings security) throws IOException {
         AdmissionPolicy.require(security.enabled()); return new AdmissionJournal(settings);
     }
+    @Bean(destroyMethod = "close") AdmissionWorkQueue admissionWorkQueue() { return new AdmissionWorkQueue(); }
     @Bean AdmissionService admissionService(AdmissionJournal journal, AdmissionSettings settings, GatewayProperties gateway,
-            List<ToolDefinition> tools, RestBindingExecutor executor) { return new AdmissionService(journal, settings, gateway, tools, executor); }
+            List<ToolDefinition> tools, RestBindingExecutor executor, AdmissionWorkQueue queue) {
+        return new AdmissionService(journal, settings, gateway, tools, executor, java.time.Clock.systemUTC(), queue);
+    }
     @Bean AdmissionSessionFilter admissionSessionFilter() { return new AdmissionSessionFilter(); }
     @Bean AdmissionRejectionAuditFilter admissionRejectionAuditFilter(AdmissionService admission) {
         return new AdmissionRejectionAuditFilter(admission);

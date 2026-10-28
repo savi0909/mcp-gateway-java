@@ -46,3 +46,13 @@ historical retained reports from focused IT runs under Surefire. Relevant source
 [Uc01AdmissionIT](../src/test/java/dev/mcp/gateway/admission/Uc01AdmissionIT.java),
 [boundary tests](../src/test/java/dev/mcp/gateway/admission/AdmissionBoundaryTest.java),
 [policy cache tests](../src/test/java/dev/mcp/gateway/admission/VerifiedPolicyCacheTest.java).
+
+## 2026-10-28 S1 supplement
+
+[S1 evidence](S1_LIFECYCLE_EVIDENCE.md) composes saturated actual SDK queueing
+with HTTP publication/server suspension and catalog membership removal, alongside
+identity/tenant/grant/delegation/resource/credential changes. ADMIN_EFFECTIVE
+precedes fresh revision-2 denial for both queued calls; zero downstream calls and
+no protected output. This extends LIFE-002/004/006/008 and CAT-E2E-07/10 evidence
+within local ordinary reads. All existing statuses remain unchanged; S1 does not
+establish positive sensitive/provider/workload execution or distributed propagation.

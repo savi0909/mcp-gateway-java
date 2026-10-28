@@ -1,3 +1,11 @@
+> Current supplement (2026-10-28): S1 is complete. Read [S1 evidence](S1_LIFECYCLE_EVIDENCE.md)
+> and [ADR 0015](decisions/0015-uc01-lifecycle-and-control-capacity.md). Authorized
+> lifecycle/selective membership and timing defaults plus real saturated SDK
+> queue/revocation are implemented. Full verify passes 144 unit/startup and 60
+> integration tests, zero failures/errors/skips. S2 audit lifecycle/recovery design
+> is the next proposed task; the historical UC-03 recommendation below is superseded.
+> Pins stay fixed, modern migration deferred, U5/full release remain partial.
+
 # UC-01 implementation handover
 
 Current continuation starts at [HANDOVER_GATEWAY.md](HANDOVER_GATEWAY.md).
@@ -148,7 +156,7 @@ Remaining gaps include:
 - Live downstream issuer/scope verification, credential rotation and token exchange.
   Current opaque credentials rely on trusted provisioning; known-secret echo checks
   do not provide general response-content policy or data-loss prevention.
-- Multi-tenant principal administration and organization/tenant topology operations.
+- New organization provisioning remains private; S1 now supplies bounded organization/tenant lifecycle and selective multi-tenant principal administration.
 - Distributed configuration/revocation, HA, capacity benchmarks, backup rollback
   recovery and power-loss durability proof. Local journal guarantees do not prove these.
 - Native MCP federation, catalog-change notifications and newer protocol/Tasks

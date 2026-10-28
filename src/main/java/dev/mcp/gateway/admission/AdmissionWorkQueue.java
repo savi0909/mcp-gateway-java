@@ -14,6 +14,8 @@ import reactor.core.scheduler.Schedulers;
 /** Dedicated bounded disk work. Queue residence never supplies authorization. */
 final class AdmissionWorkQueue implements AutoCloseable {
     private final Scheduler scheduler;
+    private final AtomicInteger waiting = new AtomicInteger();
+    int queuedTasks() { return waiting.get(); }
     private final long maxWaitNanos;
     AdmissionWorkQueue() { this(256, Duration.ofSeconds(5)); }
     AdmissionWorkQueue(int capacity, Duration maxWait) {
@@ -23,10 +25,12 @@ final class AdmissionWorkQueue implements AutoCloseable {
     <T> Mono<T> submit(Supplier<T> work) {
         return Mono.create(sink -> {
             long queued = System.nanoTime();
+            waiting.incrementAndGet();
             var state = new AtomicInteger(); // 0 queued, 1 executing, 2 finished/cancelled
             var task = new AtomicReference<Disposable>();
             var timeout = Schedulers.parallel().schedule(() -> {
                 if (state.compareAndSet(0, 2)) {
+                    waiting.decrementAndGet();
                     var scheduled = task.get(); if (scheduled != null) scheduled.dispose();
                     sink.error(AdmissionFailure.unavailable());
                 }
@@ -34,6 +38,7 @@ final class AdmissionWorkQueue implements AutoCloseable {
             sink.onCancel(() -> {
                 timeout.dispose();
                 if (state.compareAndSet(0, 2)) {
+                    waiting.decrementAndGet();
                     var scheduled = task.get(); if (scheduled != null) scheduled.dispose();
                 }
                 // Never interrupt a forced write already in progress. Its outcome remains durable/unknown.
@@ -41,6 +46,7 @@ final class AdmissionWorkQueue implements AutoCloseable {
             try {
                 var scheduled = scheduler.schedule(() -> {
                     if (!state.compareAndSet(0, 1)) return;
+                    waiting.decrementAndGet();
                     timeout.dispose();
                     try {
                         if (System.nanoTime() - queued >= maxWaitNanos) throw AdmissionFailure.unavailable();
@@ -53,7 +59,7 @@ final class AdmissionWorkQueue implements AutoCloseable {
                 if (state.get() == 2) scheduled.dispose();
             }
             catch (RejectedExecutionException rejected) {
-                state.set(2); timeout.dispose(); sink.error(AdmissionFailure.unavailable());
+                if (state.compareAndSet(0, 2)) waiting.decrementAndGet(); timeout.dispose(); sink.error(AdmissionFailure.unavailable());
             }
         });
     }

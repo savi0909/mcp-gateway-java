@@ -24,7 +24,7 @@ public final class VerifiedPolicyCache {
         }
         catch (IOException unavailable) {
             long elapsed = ticker.getAsLong() - verifiedAt;
-            if (cached != null && elapsed >= 0 && elapsed < maxAge) return cached;
+            if (cached != null && elapsed >= 0 && elapsed < Math.min(maxAge, Duration.ofSeconds(cached.timing().policyMaxAgeSeconds()).toNanos())) return cached;
             throw AdmissionFailure.unavailable();
         }
         catch (RuntimeException invalid) { cached = null; throw AdmissionFailure.unavailable(); }

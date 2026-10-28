@@ -1,11 +1,30 @@
-# Next-session handover: S1 UC-01 lifecycle and queued revocation
+# Next-session handover: S2 audit lifecycle/recovery contract
 
 Updated: 2026-10-28. Repository: `D:/ai-projects/mcp-gateway-server-java`.
-Next task: implement the bounded S1 UC-01 lifecycle and composed queued-revocation
-slice from the [sprint roadmap](GATEWAY_SPRINT_ROADMAP.md). **S0 is complete with
-modern migration blocked.** This handover does not select S2-S11 or an SDK upgrade.
+S1 is complete for the selected local ordinary-read scope. Read
+[S1 evidence](S1_LIFECYCLE_EVIDENCE.md) and [ADR 0015](decisions/0015-uc01-lifecycle-and-control-capacity.md).
+Full Wrapper verify: 144 unit/startup + 60 integration tests, zero failures/errors/skips,
+BUILD SUCCESS in 3:34; `target/s1-reviewed.log` and `target/s1-reviewed`. Thirteen control
+changes complete in 17–52 ms under a full 256-slot business queue; 26 actual
+subscribed SDK calls deny at fresh revision 2, zero downstream calls/output.
 
-## Current state
+Next proposed task: design S2's bounded audit lifecycle/recovery contract from the
+[sprint roadmap](GATEWAY_SPRINT_ROADMAP.md): archive/checkpoint/restore ownership,
+integrity manifests, capacity/failure handling and attributable lifecycle evidence.
+Review retention preservation and uncertain outcomes before implementation.
+Physical expiry requires its operational contract and explicit deletion permission;
+none is granted here. Keep modern MCP deferred and pins unchanged. Do not begin
+S4 or other execution modes as part of S2. The completed S1 scope is retained below
+as historical context; this handover does not authorize S2 implementation by itself.
+
+The owner explicitly confirmed that modern MCP migration should be deferred
+while functional components are built. S1 used the pinned runtime; modern
+support is not an S1 completion gate. S2 audit lifecycle/recovery and S4 workload
+identities are the proposed following priorities, with their own scoped gates.
+Revisit modern compatibility before modern native federation or modern-client
+commitments; see the priority decision in ADR 0014 and the sprint roadmap.
+
+## S0 starting state (historical)
 
 - S0 starting baseline: commit `0df6579` on `main`. Read
   [compatibility findings](S0_COMPATIBILITY_FINDINGS.md),
@@ -41,7 +60,7 @@ modern migration blocked.** This handover does not select S2-S11 or an SDK upgra
    foundation acceptance; inspect admission administration, policy/cache, work queue,
    journals, identity mapping, filters and current protocol test fixtures.
 
-## Required work
+## Completed S1 required work (historical scope)
 
 1. Implement authorized organization/tenant lifecycle administration and selective
    multi-tenant membership changes within existing UC-01. Changes affect only the
@@ -79,11 +98,10 @@ changes require link/format checks. Label experiment results separately from
 product conformance. Commit and push completed repository work under the standing
 authorization; update this handover with the next concrete task.
 
-## Completion and following task
+## Completed S1 and following task
 
-Complete S1 only. Demonstrate its lifecycle/selective membership and stable
-identity requirements, versioned timing administration and actual queued-call
-revocation evidence; run full Wrapper verify. The next proposed slice is S2's
+S1 lifecycle/selective membership, stable identity, versioned timing and actual
+queued-call revocation are implemented and verified; see the linked evidence. The next proposed slice is S2's
 audit lifecycle/recovery design, with physical expiry still subject to a concrete
 operational contract and explicit deletion authorization. Modern S3/S7 stay blocked
 until official client/binding/header support satisfies ADR 0014.

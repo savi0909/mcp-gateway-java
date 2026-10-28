@@ -19,7 +19,8 @@ import tools.jackson.databind.json.JsonMapper;
 
 /** Serializes fresh admission and administrative commits; disk work stays off event-loop threads. */
 public final class AdmissionService implements AutoCloseable {
-    private final AdmissionWorkQueue workQueue = new AdmissionWorkQueue();
+    private final AdmissionWorkQueue workQueue;
+    private final AdmissionWorkQueue controlQueue = new AdmissionWorkQueue(16, Duration.ofSeconds(5));
     private final AdmissionJournal journal;
     private final VerifiedPolicyCache policies;
     private final AdmissionSettings settings;
@@ -39,6 +40,11 @@ public final class AdmissionService implements AutoCloseable {
     }
     AdmissionService(AdmissionJournal journal, AdmissionSettings settings, GatewayProperties gateway,
             List<ToolDefinition> definitions, RestBindingExecutor executor, java.time.Clock clock) {
+        this(journal, settings, gateway, definitions, executor, clock, new AdmissionWorkQueue());
+    }
+    AdmissionService(AdmissionJournal journal, AdmissionSettings settings, GatewayProperties gateway,
+            List<ToolDefinition> definitions, RestBindingExecutor executor, java.time.Clock clock, AdmissionWorkQueue workQueue) {
+        this.workQueue = workQueue;
         this.clock = clock;
         this.journal = journal; this.settings = settings; this.gateway = gateway; this.executor = executor;
         this.policies = new VerifiedPolicyCache(journal::readPolicy, settings.policyMaxAge(), System::nanoTime);
@@ -72,9 +78,9 @@ public final class AdmissionService implements AutoCloseable {
         }
     }
     private <T> Mono<T> disk(Supplier<T> work) { return workQueue.submit(work); }
-    @Override public void close() { workQueue.close(); }
+    @Override public void close() { workQueue.close(); controlQueue.close(); }
     public Mono<Boolean> recordHttpRejection(int status, boolean administration) {
-        return disk(() -> {
+        return (administration ? controlQueue : workQueue).submit(() -> {
             synchronized (journal) {
                 audit(Map.of("id", UUID.randomUUID().toString(), "decision", status == 401 ? "HTTP_AUTHENTICATION_REJECTED" : "HTTP_ACCESS_REJECTED",
                         "verified", false, "authenticatedEvidence", false, "outcome", "NOT_ATTEMPTED",
@@ -102,7 +108,12 @@ public final class AdmissionService implements AutoCloseable {
             Object raw = exchange.transportContext().get(AdmissionIdentity.ATTRIBUTE);
             var identity = raw instanceof AdmissionIdentity i ? i : null;
             Map<String, Object> arguments = request.arguments() == null ? Map.of() : Collections.unmodifiableMap(new HashMap<>(request.arguments()));
-            return disk(() -> admit(identity, definition, arguments)).flatMap(ticket ->
+            String callId = UUID.randomUUID().toString(); Instant queuedAt = clock.instant();
+            var checked = new java.util.concurrent.atomic.AtomicBoolean();
+            return disk(() -> {
+                checked.set(true);
+                return admit(identity, definition, arguments, callId, queuedAt);
+            }).flatMap(ticket ->
                 executor.executeAuthorizedRead(definition.binding().resolve(arguments), ticket.credential())
                     .map(result -> result(definition, result))
                     .onErrorReturn(error("UPSTREAM_INVALID_RESPONSE", "unknown"))
@@ -114,20 +125,21 @@ public final class AdmissionService implements AutoCloseable {
                         synchronized (journal) { recordOutcome(ticket, "UNKNOWN_CANCELLED"); }
                         return true;
                     }).subscribe(ignored -> { }, ignored -> { })))
-                .onErrorResume(AdmissionFailure.class, failure -> Mono.just(error(failure.code(), "not_attempted")));
+                .onErrorResume(AdmissionFailure.class, failure -> {
+                    if (checked.get()) return Mono.just(error(failure.code(), "not_attempted"));
+                    return controlQueue.submit(() -> {
+                        synchronized (journal) {
+                            var event = invocationFacts(identity, definition, callId, queuedAt);
+                            event.put("decision", "VERIFICATION_UNAVAILABLE"); event.put("reason", "ADMISSION_QUEUE_UNAVAILABLE"); audit(event);
+                        }
+                        return error("VERIFICATION_UNAVAILABLE", "not_attempted");
+                    }).onErrorReturn(error("VERIFICATION_UNAVAILABLE", "not_attempted"));
+                });
         });
     }
-    private Ticket admit(AdmissionIdentity identity, ToolDefinition definition, Map<String, Object> arguments) {
+    private Ticket admit(AdmissionIdentity identity, ToolDefinition definition, Map<String, Object> arguments, String callId, Instant queuedAt) {
         synchronized (journal) {
-            var event = new LinkedHashMap<String, Object>();
-            event.put("id", UUID.randomUUID().toString()); event.put("tool", definition.name());
-            event.put("outcome", "NOT_ATTEMPTED"); event.put("verified", false); event.put("authenticatedEvidence", identity != null);
-            if (identity != null) {
-                event.put("organization", identity.organization()); event.put("tenant", identity.tenant());
-                event.put("authority", identity.authority()); event.put("subject", identity.subject());
-                event.put("application", identity.application()); event.put("mode", identity.mode());
-                event.put("agentRun", identity.agentRun()); event.put("delegation", identity.delegation());
-            }
+            var event = invocationFacts(identity, definition, callId, queuedAt);
             try {
                 var p = policies.current(); event.put("revision", p.revision());
                 var context = context(p, identity); event.put("human", context.human()); event.put("verified", true);
@@ -153,6 +165,18 @@ public final class AdmissionService implements AutoCloseable {
             catch (RuntimeException failure) { event.put("decision", "VERIFICATION_UNAVAILABLE"); audit(event); throw AdmissionFailure.unavailable(); }
         }
     }
+    private LinkedHashMap<String, Object> invocationFacts(AdmissionIdentity identity, ToolDefinition definition, String callId, Instant queuedAt) {
+            var event = new LinkedHashMap<String, Object>();
+            event.put("id", callId); event.put("queuedAt", queuedAt.toString()); event.put("tool", definition.name());
+            event.put("outcome", "NOT_ATTEMPTED"); event.put("verified", false); event.put("authenticatedEvidence", identity != null);
+            if (identity != null) {
+                event.put("organization", identity.organization()); event.put("tenant", identity.tenant());
+                event.put("authority", identity.authority()); event.put("subject", identity.subject());
+                event.put("application", identity.application()); event.put("mode", identity.mode());
+                event.put("agentRun", identity.agentRun()); event.put("delegation", identity.delegation());
+            }
+            return event;
+    }
     private Context context(AdmissionPolicy p, AdmissionIdentity i) {
         if (i == null || !"HUMAN_DELEGATED".equals(i.mode())) throw AdmissionFailure.denied();
         var c = principals(p, i); var d = p.delegations().get(i.delegation());
@@ -162,12 +186,17 @@ public final class AdmissionService implements AutoCloseable {
         return new Context(c.human(), c.application(), d);
     }
     private Context administration(AdmissionPolicy p, AdmissionIdentity i) {
-        if (i == null || !"ADMINISTRATION".equals(i.mode())) throw AdmissionFailure.denied();
-        return principals(p, i);
+        return administration(p, i, false);
     }
-    private Context principals(AdmissionPolicy p, AdmissionIdentity i) {
+    private Context administration(AdmissionPolicy p, AdmissionIdentity i, boolean organizationLifecycle) {
+        if (i == null || !"ADMINISTRATION".equals(i.mode())) throw AdmissionFailure.denied();
+        return principals(p, i, organizationLifecycle);
+    }
+    private Context principals(AdmissionPolicy p, AdmissionIdentity i) { return principals(p, i, false); }
+    private Context principals(AdmissionPolicy p, AdmissionIdentity i, boolean organizationLifecycle) {
         if (!i.expiresAt().isAfter(clock.instant())
-                || !"ACTIVE".equals(p.organizations().get(i.organization()))) throw AdmissionFailure.denied();
+                || !("ACTIVE".equals(p.organizations().get(i.organization()))
+                    || organizationLifecycle && Set.of("PENDING", "SUSPENDED").contains(p.organizations().getOrDefault(i.organization(), "")))) throw AdmissionFailure.denied();
         var tenant = p.tenants().get(i.tenant()); var app = p.applications().get(i.application());
         if (tenant == null || !tenant.organization().equals(i.organization()) || !"ACTIVE".equals(tenant.status())
                 || app == null || !app.organization().equals(i.organization()) || !"ACTIVE".equals(app.status())
@@ -248,15 +277,30 @@ public final class AdmissionService implements AutoCloseable {
             String version, String purpose, String reason, AdmissionPolicy.Human human, AdmissionPolicy.Application application,
             AdmissionPolicy.Grant grant, AdmissionPolicy.Delegation delegation, AdmissionPolicy.Server server,
             AdmissionPolicy.Capability contract, AdmissionPolicy.CredentialScope credential, AdmissionPolicy.Catalog catalogDefinition,
-            AdmissionPolicy.ResourceScope resource) { }
-    public Mono<Map<String, Object>> change(AdmissionIdentity i, Change change) { return disk(() -> commit(i, change)); }
-    private Map<String, Object> commit(AdmissionIdentity i, Change change) {
+            AdmissionPolicy.ResourceScope resource, String tenant, AdmissionPolicy.Timing timing) {
+        public Change(long expectedRevision, String action, String target, String state, String catalog, String capability,
+                String version, String purpose, String reason, AdmissionPolicy.Human human, AdmissionPolicy.Application application,
+                AdmissionPolicy.Grant grant, AdmissionPolicy.Delegation delegation, AdmissionPolicy.Server server,
+                AdmissionPolicy.Capability contract, AdmissionPolicy.CredentialScope credential, AdmissionPolicy.Catalog catalogDefinition,
+                AdmissionPolicy.ResourceScope resource) {
+            this(expectedRevision, action, target, state, catalog, capability, version, purpose, reason, human, application,
+                    grant, delegation, server, contract, credential, catalogDefinition, resource, null, null);
+        }
+    }
+    public Mono<Map<String, Object>> change(AdmissionIdentity i, Change change) {
+        return Mono.defer(() -> {
+            Instant acceptedAt = clock.instant();
+            return controlQueue.submit(() -> commit(i, change, acceptedAt));
+        });
+    }
+    private Map<String, Object> commit(AdmissionIdentity i, Change change, Instant acceptedAt) {
         synchronized (journal) {
             var facts = new LinkedHashMap<String, Object>(); facts.put("id", UUID.randomUUID().toString());
             facts.put("organization", i.organization()); facts.put("tenant", i.tenant()); facts.put("authority", i.authority()); facts.put("subject", i.subject()); facts.put("application", i.application());
+            facts.put("acceptedAt", acceptedAt.toString());
             facts.put("action", change.action()); facts.put("target", change.target() == null ? "" : change.target()); facts.put("verified", false);
             try {
-                var p = policies.authoritative(); var c = administration(p, i);
+                var p = policies.authoritative(); var c = administration(p, i, "ORGANIZATION".equals(change.action()));
                 facts.put("actor", c.human()); facts.put("verified", true); facts.put("beforeRevision", p.revision());
                 if (!c.application().administration() || !i.scopes().contains("gateway:admin") || change.expectedRevision() != p.revision()
                         || change.reason() == null || change.reason().isBlank() || change.reason().length() > 256) throw AdmissionFailure.denied();
@@ -266,6 +310,8 @@ public final class AdmissionService implements AutoCloseable {
                 var caps = new HashMap<>(p.capabilities()); var cats = new HashMap<>(p.catalogs()); var ds = new HashMap<>(p.delegations()); var grants = new HashSet<>(p.grants());
                 var credentialScopes = new HashSet<>(p.credentials());
                 var resources = new HashSet<>(p.resources());
+                var organizations = new HashMap<>(p.organizations()); var tenants = new HashMap<>(p.tenants());
+                var timing = p.timing();
                 if ("MEMBERSHIP".equals(change.action())) {
                     var cat = cats.get(change.catalog()); var cap = caps.get(change.capability());
                     if (!roles.contains("CATALOG_OWNER") || cat == null || !cat.owner().equals(c.human()) || cap == null
@@ -287,10 +333,55 @@ public final class AdmissionService implements AutoCloseable {
                 else {
                     if (!roles.contains("SECURITY_ADMIN")) throw AdmissionFailure.denied();
                     switch (change.action()) {
+                        case "ORGANIZATION", "TENANT" -> {
+                            if (!roles.contains("ORGANIZATION_ADMIN")) throw AdmissionFailure.denied();
+                            if ("ORGANIZATION".equals(change.action())) {
+                                if (!i.organization().equals(change.target())) throw AdmissionFailure.denied();
+                                var old = organizations.get(change.target()); lifecycle(old, change.state());
+                                organizations.put(change.target(), change.state()); facts.put("before", old); facts.put("after", change.state());
+                            }
+                            else {
+                                var old = tenants.get(change.target());
+                                if (old != null && !old.organization().equals(i.organization())) throw AdmissionFailure.denied();
+                                lifecycle(old == null ? null : old.status(), change.state());
+                                var next = new AdmissionPolicy.Tenant(i.organization(), change.state());
+                                tenants.put(change.target(), next); facts.put("before", old == null ? "ABSENT" : old); facts.put("after", next);
+                            }
+                        }
+                        case "HUMAN_MEMBERSHIP", "APPLICATION_MEMBERSHIP" -> {
+                            if (!i.tenant().equals(change.tenant()) || !Set.of("ACTIVE", "REMOVED").contains(change.state())) throw AdmissionFailure.denied();
+                            boolean add = "ACTIVE".equals(change.state());
+                            if ("HUMAN_MEMBERSHIP".equals(change.action())) {
+                                var old = people.get(change.target());
+                                if (old == null || change.target().equals(c.human()) || "RETIRED".equals(old.status())
+                                        || !old.authority().equals(i.authority())) throw AdmissionFailure.denied();
+                                var memberships = new HashSet<>(old.tenants()); var selectedRoles = new HashMap<>(old.roles());
+                                if (add) memberships.add(i.tenant()); else { memberships.remove(i.tenant()); selectedRoles.remove(i.tenant()); }
+                                var next = new AdmissionPolicy.Human(old.authority(), old.subject(), old.displayName(), old.status(), memberships, selectedRoles);
+                                people.put(change.target(), next); facts.put("before", old); facts.put("after", next);
+                            }
+                            else {
+                                var old = apps.get(change.target());
+                                if (old == null || change.target().equals(i.application()) || old.owner().equals(c.human())
+                                        || "RETIRED".equals(old.status()) || !old.organization().equals(i.organization())) throw AdmissionFailure.denied();
+                                var memberships = new HashSet<>(old.tenants());
+                                if (add) memberships.add(i.tenant()); else memberships.remove(i.tenant());
+                                var next = new AdmissionPolicy.Application(old.organization(), old.owner(), old.status(), memberships, old.administration());
+                                apps.put(change.target(), next); facts.put("before", old); facts.put("after", next);
+                            }
+                        }
+                        case "TIMING" -> {
+                            if (!roles.contains("ORGANIZATION_ADMIN")) throw AdmissionFailure.denied();
+                            // Timing is snapshot-wide; every represented organization needs explicit authority.
+                            if (p.tenants().entrySet().stream().anyMatch(e -> !p.humans().get(c.human()).roles()
+                                    .getOrDefault(e.getKey(), Set.of()).containsAll(Set.of("SECURITY_ADMIN", "ORGANIZATION_ADMIN")))) throw AdmissionFailure.denied();
+                            timing = change.timing(); facts.put("before", p.timing()); facts.put("after", timing);
+                        }
                         case "HUMAN" -> {
                             var next = change.human(); var old = people.get(change.target());
                             if (next == null || change.target().equals(c.human()) || !next.authority().equals(i.authority())
-                                    || !next.tenants().equals(Set.of(i.tenant())) || old != null && (!old.tenants().equals(Set.of(i.tenant()))
+                                    || old == null && !next.tenants().equals(Set.of(i.tenant())) || old != null && (!old.tenants().equals(next.tenants())
+                                    || !old.tenants().contains(i.tenant()) || old.tenants().stream().anyMatch(t -> !p.humans().get(c.human()).roles().getOrDefault(t, Set.of()).contains("SECURITY_ADMIN"))
                                     || "RETIRED".equals(old.status()) || !old.authority().equals(next.authority()) || !old.subject().equals(next.subject()))
                                     || old == null && (!"PENDING".equals(next.status()) || !next.roles().isEmpty())) throw AdmissionFailure.denied();
                             people.put(change.target(), next); facts.put("before", old == null ? "ABSENT" : old); facts.put("after", next);
@@ -298,8 +389,9 @@ public final class AdmissionService implements AutoCloseable {
                         case "APPLICATION" -> {
                             var next = change.application(); var old = apps.get(change.target());
                             if (next == null || change.target().equals(i.application()) || next.owner().equals(c.human())
-                                    || !next.organization().equals(i.organization()) || !next.tenants().equals(Set.of(i.tenant()))
-                                    || old != null && ("RETIRED".equals(old.status()) || !old.organization().equals(next.organization()) || !old.tenants().equals(next.tenants()))
+                                    || !next.organization().equals(i.organization()) || old == null && !next.tenants().equals(Set.of(i.tenant()))
+                                    || old != null && (old.owner().equals(c.human()) || "RETIRED".equals(old.status()) || !old.organization().equals(next.organization()) || !old.tenants().equals(next.tenants())
+                                    || old.tenants().stream().anyMatch(t -> !p.humans().get(c.human()).roles().getOrDefault(t, Set.of()).contains("SECURITY_ADMIN")))
                                     || old == null && (!"PENDING".equals(next.status()) || next.administration())) throw AdmissionFailure.denied();
                             apps.put(change.target(), next); facts.put("before", old == null ? "ABSENT" : old); facts.put("after", next);
                         }
@@ -323,7 +415,8 @@ public final class AdmissionService implements AutoCloseable {
                             var d = change.delegation();
                             if (d == null || ds.containsKey(change.target()) || !d.tenant().equals(i.tenant()) || !d.organization().equals(i.organization())
                                     || d.human().equals(c.human()) || d.application().equals(i.application()) || !"ACTIVE".equals(people.get(d.human()).status())
-                                    || !"ACTIVE".equals(apps.get(d.application()).status())) throw AdmissionFailure.denied();
+                                    || !"ACTIVE".equals(apps.get(d.application()).status())
+                                    || Duration.between(d.issuedAt(), d.expiresAt()).compareTo(Duration.ofSeconds(timing.delegationMaxSeconds())) > 0) throw AdmissionFailure.denied();
                             ds.put(change.target(), d); facts.put("before", "ABSENT"); facts.put("after", d);
                         }
                         case "SERVER" -> {
@@ -369,12 +462,13 @@ public final class AdmissionService implements AutoCloseable {
                         default -> throw AdmissionFailure.denied();
                     }
                 }
-                var next = p.next(people, apps, servers, caps, cats, ds, grants).withCredentials(credentialScopes).withResources(resources);
+                var next = new AdmissionPolicy(p.revision() + 1, organizations, tenants, people, apps, servers, caps, cats, ds, grants, credentialScopes, resources, timing);
                 facts.put("decision", "ADMIN_PREPARED"); facts.put("reason", change.reason()); facts.put("afterRevision", next.revision()); audit(facts);
                 try { journal.writePolicy(next); } catch (IOException failure) { policies.invalidate(); throw AdmissionFailure.unavailable(); }
                 policies.invalidate(); policies.current();
-                audit(Map.of("id", facts.get("id"), "organization", i.organization(), "tenant", i.tenant(), "decision", "ADMIN_EFFECTIVE", "revision", next.revision()));
-                return Map.of("revision", next.revision(), "accepted", true, "effective", true);
+                String effectiveAt = clock.instant().toString();
+                audit(Map.of("id", facts.get("id"), "organization", i.organization(), "tenant", i.tenant(), "decision", "ADMIN_EFFECTIVE", "revision", next.revision(), "acceptedAt", facts.get("acceptedAt"), "effectiveAt", effectiveAt));
+                return Map.of("revision", next.revision(), "accepted", true, "effective", true, "changeId", facts.get("id"), "acceptedAt", facts.get("acceptedAt"), "effectiveAt", effectiveAt);
             }
             catch (RuntimeException failure) {
                 facts.put("decision", failure instanceof AdmissionFailure f ? f.code() : "ACCESS_DENIED"); audit(facts);
@@ -382,10 +476,17 @@ public final class AdmissionService implements AutoCloseable {
             }
         }
     }
+    private void lifecycle(String old, String next) {
+        if (!Set.of("PENDING", "ACTIVE", "SUSPENDED", "RETIRED").contains(next)
+                || "RETIRED".equals(old) || old == null && !"PENDING".equals(next)) throw AdmissionFailure.denied();
+    }
     private void validateChange(Change change) {
         Set<String> allowed = switch (change.action()) {
             case "MEMBERSHIP" -> Set.of("catalog", "capability", "version", "state", "purpose");
             case "PUBLICATION" -> Set.of("target", "state");
+            case "ORGANIZATION", "TENANT" -> Set.of("target", "state");
+            case "HUMAN_MEMBERSHIP", "APPLICATION_MEMBERSHIP" -> Set.of("target", "tenant", "state");
+            case "TIMING" -> Set.of("timing");
             case "HUMAN" -> Set.of("target", "human");
             case "APPLICATION" -> Set.of("target", "application");
             case "GRANT", "REVOKE_GRANT" -> Set.of("grant");
@@ -404,7 +505,7 @@ public final class AdmissionService implements AutoCloseable {
         fields.put("human", change.human()); fields.put("application", change.application()); fields.put("grant", change.grant());
         fields.put("delegation", change.delegation()); fields.put("server", change.server()); fields.put("contract", change.contract());
         fields.put("credential", change.credential()); fields.put("catalogDefinition", change.catalogDefinition());
-        fields.put("resource", change.resource());
+        fields.put("resource", change.resource()); fields.put("tenant", change.tenant()); fields.put("timing", change.timing());
         fields.entrySet().removeIf(e -> e.getValue() == null);
         if (!fields.keySet().equals(allowed) || fields.values().stream().anyMatch(value -> value instanceof String s && (s.isBlank() || s.length() > 256))) throw AdmissionFailure.denied();
     }

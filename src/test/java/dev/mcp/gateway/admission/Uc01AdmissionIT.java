@@ -62,7 +62,7 @@ class Uc01AdmissionIT {
         var transport = HttpClientStreamableHttpTransport.builder(origin).endpoint("/worker-coordinator/mcp")
                 .requestBuilder(HttpRequest.newBuilder().header("Authorization", "Bearer " + token))
                 .httpRequestCustomizer((builder, method, uri, body, context) -> builder.build().headers().firstValue("Mcp-Session-Id").ifPresent(session::set)).build();
-        var client = McpClient.async(transport).requestTimeout(Duration.ofSeconds(4)).build(); clients.add(client);
+        var client = McpClient.async(transport).requestTimeout(Duration.ofSeconds(8)).build(); clients.add(client);
         sessions.put(client, session);
         client.initialize().toFuture().get(5, TimeUnit.SECONDS); return client;
     }
@@ -85,6 +85,232 @@ class Uc01AdmissionIT {
                 .header("Authorization", "Bearer " + token).GET().build(), HttpResponse.BodyHandlers.ofString());
     }
 
+    @Test void tenantLifecycleIsAuthorizedVersionedAndRevokesExistingSession() throws Exception {
+        var reader = connect(token(1, Map.of()));
+        var request = Map.<String, Object>of("expectedRevision", revision(), "action", "TENANT", "target", "tenant-green", "state", "SUSPENDED", "reason", "suspend tenant");
+        assertThat(change("publisher", request).statusCode()).isEqualTo(403);
+        assertThat(change("security-admin", request).statusCode()).isEqualTo(200);
+        denied(call(reader, "get_product", Map.of("productId", "item-1")), "ACCESS_DENIED");
+        assertThat(backend.count()).isZero();
+        assertThat(change("security-admin", Map.of("expectedRevision", revision(), "action", "TENANT", "target", "tenant-green", "state", "ACTIVE", "reason", "restore tenant")).statusCode()).isEqualTo(200);
+        reply(1); assertThat(call(reader, "get_product", Map.of("productId", "item-1")).isError()).isFalse();
+        assertThat(change("security-admin", Map.of("expectedRevision", revision(), "action", "TENANT", "target", "tenant-south", "state", "SUSPENDED", "reason", "foreign tenant")).statusCode()).isEqualTo(403);
+        assertThat(backend.count()).isEqualTo(1);
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"HUMAN", "APPLICATION", "ORGANIZATION", "TENANT", "HUMAN_MEMBERSHIP", "APPLICATION_MEMBERSHIP", "REVOKE_DELEGATION", "REVOKE_GRANT", "SERVER", "PUBLICATION", "MEMBERSHIP", "REVOKE_RESOURCE", "REVOKE_CREDENTIAL"})
+    void saturatedProtocolQueueRechecksCommittedRevocation(String action) throws Exception {
+        var reader = connect(token(0, Map.of()));
+        var queue = app.getBean(AdmissionWorkQueue.class);
+        var started = new java.util.concurrent.CountDownLatch(1); var release = new java.util.concurrent.CountDownLatch(1);
+        var blocker = queue.submit(() -> {
+            started.countDown();
+            try { if (!release.await(4, TimeUnit.SECONDS)) throw new IllegalStateException("release timed out"); }
+            catch (InterruptedException e) { throw new IllegalStateException(e); }
+            return true;
+        }).toFuture();
+        var fillers = new ArrayList<java.util.concurrent.CompletableFuture<Boolean>>();
+        try {
+            assertThat(started.await(1, TimeUnit.SECONDS)).isTrue();
+            var first = reader.callTool(new McpSchema.CallToolRequest("get_product", Map.of("productId", "item-0"), null)).toFuture();
+            var second = reader.callTool(new McpSchema.CallToolRequest("get_product", Map.of("productId", "item-0"), null)).toFuture();
+            await(() -> queue.queuedTasks() == 2);
+            for (int n = 0; n < 254; n++) fillers.add(queue.submit(() -> true).toFuture());
+            assertThat(queue.queuedTasks()).isEqualTo(256);
+            assertThatThrownBy(() -> queue.submit(() -> true).block(Duration.ofSeconds(1))).isInstanceOf(AdmissionFailure.class);
+            assertThat(first.isDone()).isFalse(); assertThat(second.isDone()).isFalse();
+            var change = new HashMap<String, Object>(); change.put("expectedRevision", revision()); change.put("action", action); change.put("reason", "queued revocation");
+            var h = seed.humans().get("human-0"); var a = seed.applications().get("application-alpha");
+            String actor = "security-admin";
+            switch (action) {
+                case "HUMAN" -> { change.put("target", "human-0"); change.put("human", new AdmissionPolicy.Human(h.authority(), h.subject(), h.displayName(), "SUSPENDED", h.tenants(), h.roles())); }
+                case "APPLICATION" -> { change.put("target", "application-alpha"); change.put("application", new AdmissionPolicy.Application(a.organization(), a.owner(), "SUSPENDED", a.tenants(), a.administration())); }
+                case "ORGANIZATION" -> { change.put("target", "organization-north"); change.put("state", "SUSPENDED"); }
+                case "TENANT" -> { change.put("target", "tenant-blue"); change.put("state", "SUSPENDED"); }
+                case "HUMAN_MEMBERSHIP", "APPLICATION_MEMBERSHIP" -> { change.put("target", action.startsWith("HUMAN") ? "human-0" : "application-alpha"); change.put("tenant", "tenant-blue"); change.put("state", "REMOVED"); }
+                case "REVOKE_DELEGATION" -> change.put("target", "delegation-0");
+                case "REVOKE_GRANT" -> change.put("grant", new AdmissionPolicy.Grant("HUMAN", "human-0", "tenant-blue", "inventory.lookup@1", "1", "READ", "item-0"));
+                case "SERVER" -> { var server = seed.servers().get("coordinator"); change.put("target", "coordinator"); change.put("server", new AdmissionPolicy.Server(server.organization(), server.owner(), "SUSPENDED", server.trust(), server.backendRef(), server.origin())); }
+                case "PUBLICATION" -> { change.put("target", "inventory.lookup@1"); change.put("state", "SUSPENDED"); }
+                case "MEMBERSHIP" -> { actor = "human-0"; change.putAll(Map.of("catalog", "catalog-alpha", "capability", "inventory.lookup@1", "version", "1", "state", "REMOVE", "purpose", "inventory-read")); }
+                case "REVOKE_RESOURCE" -> change.put("resource", seed.resources().stream().filter(r -> r.resource().equals("item-0")).findFirst().orElseThrow());
+                case "REVOKE_CREDENTIAL" -> change.put("credential", seed.credentials().stream().filter(c -> c.human().equals("human-0")).findFirst().orElseThrow());
+            }
+            long begin = System.nanoTime(); var response = change(actor, change);
+            assertThat(response.statusCode()).isEqualTo(200);
+            long elapsedMillis = Duration.ofNanos(System.nanoTime() - begin).toMillis();
+            assertThat(elapsedMillis).isLessThan(60000);
+            assertThat(blocker.isDone()).isFalse(); assertThat(first.isDone()).isFalse();
+            release.countDown(); assertThat(blocker.get(1, TimeUnit.SECONDS)).isTrue();
+            String code = Set.of("REVOKE_RESOURCE", "REVOKE_CREDENTIAL").contains(action) ? "VERIFICATION_UNAVAILABLE" : "ACCESS_DENIED";
+            denied(first.get(3, TimeUnit.SECONDS), code); denied(second.get(3, TimeUnit.SECONDS), code);
+            for (var filler : fillers) assertThat(filler.get(2, TimeUnit.SECONDS)).isTrue();
+            assertThat(backend.count()).isZero();
+            var records = app.getBean(AdmissionJournal.class).readAudits();
+            var effective = records.stream().filter(r -> "ADMIN_EFFECTIVE".equals(r.get("decision"))).findFirst().orElseThrow();
+            var decisions = records.stream().filter(r -> r.containsKey("queuedAt")).toList();
+            assertThat(decisions).hasSize(2);
+            assertThat(decisions).allSatisfy(r -> {
+                assertThat(((Number) r.get("revision")).longValue()).isEqualTo(2L); assertThat(r.get("outcome")).isEqualTo("NOT_ATTEMPTED");
+                assertThat(Instant.parse((String) r.get("queuedAt"))).isBeforeOrEqualTo(Instant.parse((String) effective.get("effectiveAt")));
+                assertThat(records.indexOf(r)).isGreaterThan(records.indexOf(effective));
+            });
+            assertThat(decisions).extracting(r -> r.get("id")).doesNotHaveDuplicates();
+            Files.writeString(Path.of("target", "s1-queued-" + action + ".json"), AdmissionFixtures.JSON.writeValueAsString(
+                    Map.of("control", AdmissionFixtures.JSON.readTree(response.body()), "controlElapsedMillis", elapsedMillis,
+                            "admissionOrder", decisions, "downstreamCalls", backend.count(), "queuedTasksAtCommit", 256)));
+        }
+        finally { release.countDown(); }
+    }
+    private void await(java.util.function.BooleanSupplier condition) throws Exception {
+        long end = System.nanoTime() + Duration.ofSeconds(2).toNanos();
+        while (!condition.getAsBoolean() && System.nanoTime() < end) Thread.sleep(10);
+        assertThat(condition.getAsBoolean()).isTrue();
+    }
+    @Test void selectiveMembershipsPreserveOtherTenantsAndDoNotCreateGrants() throws Exception {
+        var reader = connect(token(1, Map.of()));
+        for (String action : List.of("HUMAN_MEMBERSHIP", "APPLICATION_MEMBERSHIP")) {
+            String target = action.startsWith("HUMAN") ? "human-1" : "application-beta";
+            var command = new HashMap<String, Object>(Map.of("expectedRevision", revision(), "action", action, "target", target, "tenant", "tenant-blue", "state", "ACTIVE", "reason", "add selected membership"));
+            assertThat(change("publisher", command).statusCode()).isEqualTo(403);
+            assertThat(change("security-admin", command).statusCode()).isEqualTo(200);
+        }
+        var journal = app.getBean(AdmissionJournal.class); var p = journal.readPolicy();
+        assertThat(p.humans().get("human-1").tenants()).containsExactlyInAnyOrder("tenant-blue", "tenant-green");
+        assertThat(p.applications().get("application-beta").tenants()).containsExactlyInAnyOrder("tenant-blue", "tenant-green");
+        assertThat(p.grants()).isEqualTo(seed.grants());
+        var switched = connect(token(1, Map.of("tenant", "tenant-blue")));
+        denied(call(switched, "get_product", Map.of("productId", "item-1")), "ACCESS_DENIED");
+        for (String action : List.of("HUMAN_MEMBERSHIP", "APPLICATION_MEMBERSHIP")) {
+            assertThat(change("security-admin", Map.of("expectedRevision", revision(), "action", action, "target", action.startsWith("HUMAN") ? "human-1" : "application-beta", "tenant", "tenant-blue", "state", "REMOVED", "reason", "remove selected membership")).statusCode()).isEqualTo(200);
+        }
+        p = journal.readPolicy();
+        assertThat(p.humans().get("human-1").tenants()).containsExactly("tenant-green");
+        assertThat(p.applications().get("application-beta").tenants()).containsExactly("tenant-green");
+        reply(1); assertThat(call(reader, "get_product", Map.of("productId", "item-1")).isError()).isFalse();
+        assertThat(backend.count()).isEqualTo(1);
+    }
+    @Test void displayAndEmailChangesPreserveAuthoritySubjectAndCannotTransferGrants() throws Exception {
+        var original = connect(token(0, Map.of("email", "same@example.invalid", "name", "Before")));
+        var h = seed.humans().get("human-0");
+        var renamed = new AdmissionPolicy.Human(h.authority(), h.subject(), "After", h.status(), h.tenants(), h.roles());
+        assertThat(change("security-admin", Map.of("expectedRevision", revision(), "action", "HUMAN", "target", "human-0", "human", renamed, "reason", "display change")).statusCode()).isEqualTo(200);
+        var renamedClient = connect(token(0, Map.of("email", "changed@example.invalid", "name", "After")));
+        reply(0); assertThat(call(original, "get_product", Map.of("productId", "item-0")).isError()).isFalse();
+        reply(0); assertThat(call(renamedClient, "get_product", Map.of("productId", "item-0")).isError()).isFalse();
+        assertThat(app.getBean(AdmissionJournal.class).readPolicy().grants()).isEqualTo(seed.grants());
+        var transferred = new AdmissionPolicy.Human("https://foreign.example", h.subject(), "After", h.status(), h.tenants(), h.roles());
+        assertThat(change("security-admin", Map.of("expectedRevision", revision(), "action", "HUMAN", "target", "human-0", "human", transferred, "reason", "authority transfer")).statusCode()).isEqualTo(403);
+        var foreign = issuer.token(h.subject(), "tenant-blue", "gateway:read", RESOURCE,
+                Map.of("iss", "https://foreign.example", "email", "changed@example.invalid", "application", "application-alpha", "organization", "organization-north", "execution_mode", "HUMAN_DELEGATED", "delegation", "delegation-0", "agent_run", "foreign"), false);
+        assertThat(HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(origin + "/worker-coordinator/mcp")).header("Authorization", "Bearer " + foreign).POST(HttpRequest.BodyPublishers.ofString("{}")).build(), HttpResponse.BodyHandlers.ofString()).statusCode()).isEqualTo(401);
+        assertThat(backend.count()).isEqualTo(2);
+    }
+    @Test void organizationRecoveryAndTenantEnrollmentKeepRetiredIdsImmutable() throws Exception {
+        for (String state : List.of("SUSPENDED", "ACTIVE")) {
+            assertThat(change("security-admin", Map.of("expectedRevision", revision(), "action", "ORGANIZATION", "target", "organization-north", "state", state, "reason", "organization lifecycle")).statusCode()).isEqualTo(200);
+        }
+        assertThat(change("security-admin", Map.of("expectedRevision", revision(), "action", "ORGANIZATION", "target", "organization-south", "state", "SUSPENDED", "reason", "foreign organization")).statusCode()).isEqualTo(403);
+        assertThat(change("security-admin", Map.of("expectedRevision", revision(), "action", "TENANT", "target", "tenant-new", "state", "ACTIVE", "reason", "skip enrollment")).statusCode()).isEqualTo(403);
+        for (String state : List.of("PENDING", "ACTIVE", "SUSPENDED", "RETIRED")) {
+            assertThat(change("security-admin", Map.of("expectedRevision", revision(), "action", "TENANT", "target", "tenant-new", "state", state, "reason", "tenant lifecycle")).statusCode()).isEqualTo(200);
+        }
+        assertThat(change("security-admin", Map.of("expectedRevision", revision(), "action", "TENANT", "target", "tenant-new", "state", "ACTIVE", "reason", "reuse retired tenant")).statusCode()).isEqualTo(403);
+        assertThat(change("security-admin", Map.of("expectedRevision", revision(), "action", "ORGANIZATION", "target", "organization-north", "state", "RETIRED", "reason", "retire organization")).statusCode()).isEqualTo(200);
+        assertThat(change("security-admin", Map.of("expectedRevision", revision(), "action", "ORGANIZATION", "target", "organization-north", "state", "ACTIVE", "reason", "reuse retired organization")).statusCode()).isEqualTo(403);
+        assertThat(backend.count()).isZero();
+    }
+    @Test void timingDefaultsRequireExplicitAuthorityPersistAndOnlyConstrainNewDelegations() throws Exception {
+        var timing = Map.of("policyMaxAgeSeconds", 10, "delegationMaxSeconds", 120);
+        var command = new HashMap<String, Object>(Map.of("expectedRevision", revision(), "action", "TIMING", "timing", timing, "reason", "tighten defaults"));
+        assertThat(change("publisher", command).statusCode()).isEqualTo(403);
+        // Snapshot-wide defaults require explicitly provisioned roles for every tenant, not one tenant's administrator.
+        assertThat(change("security-admin", command).statusCode()).isEqualTo(403);
+        var p = app.getBean(AdmissionJournal.class).readPolicy(); var people = new HashMap<>(p.humans()); var admin = people.get("security-admin");
+        var roles = new HashMap<String, Set<String>>();
+        p.tenants().keySet().forEach(t -> roles.put(t, Set.of("SECURITY_ADMIN", "ORGANIZATION_ADMIN", "AUDIT_VIEWER")));
+        people.put("security-admin", new AdmissionPolicy.Human(admin.authority(), admin.subject(), admin.displayName(), admin.status(), p.tenants().keySet(), roles));
+        fixturePolicy(new AdmissionPolicy(1, p.organizations(), p.tenants(), people, p.applications(), p.servers(), p.capabilities(), p.catalogs(), p.delegations(), p.grants(), p.credentials(), p.resources()));
+        command.put("expectedRevision", revision()); var response = change("security-admin", command);
+        assertThat(response.statusCode()).isEqualTo(200);
+        var current = app.getBean(AdmissionJournal.class).readPolicy();
+        assertThat(current.timing()).isEqualTo(new AdmissionPolicy.Timing(10, 120));
+        assertThat(current.grants()).isEqualTo(seed.grants()); assertThat(current.delegations()).isEqualTo(seed.delegations());
+        var d = seed.delegations().get("delegation-0");
+        assertThat(change("security-admin", Map.of("expectedRevision", revision(), "action", "DELEGATION", "target", "too-long", "delegation", d, "reason", "new delegation exceeds default")).statusCode()).isEqualTo(403);
+        Instant now = Instant.now(); var shortD = new AdmissionPolicy.Delegation(d.organization(), d.tenant(), d.human(), d.application(), now, now.plusSeconds(120), false, d.capabilities(), d.resources());
+        assertThat(change("security-admin", Map.of("expectedRevision", revision(), "action", "DELEGATION", "target", "bounded-new", "delegation", shortD, "reason", "new bounded delegation")).statusCode()).isEqualTo(200);
+        assertThat(change("security-admin", Map.of("expectedRevision", revision(), "action", "TIMING", "timing", Map.of("policyMaxAgeSeconds", 31, "delegationMaxSeconds", 900), "reason", "exceed maximum")).statusCode()).isBetween(400, 499);
+        assertThat(change("security-admin", command).statusCode()).isEqualTo(403); // stale revision
+        var reader = connect(token(0, Map.of())); reply(0); assertThat(call(reader, "get_product", Map.of("productId", "item-0")).isError()).isFalse();
+        assertThat(app.getBean(AdmissionJournal.class).readPolicy().timing()).isEqualTo(new AdmissionPolicy.Timing(10, 120));
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"delegation", "token"})
+    void subscribedProtocolWorkExpiringInQueueNeverExecutes(String evidence) throws Exception {
+        var d = seed.delegations().get("delegation-0"); Instant expiry = Instant.now().plusMillis(1500);
+        var shortD = new AdmissionPolicy.Delegation(d.organization(), d.tenant(), d.human(), d.application(), Instant.now(), expiry, false, d.capabilities(), d.resources());
+        assertThat(change("security-admin", Map.of("expectedRevision", revision(), "action", "DELEGATION", "target", "short-lived", "delegation", shortD, "reason", "expiry fixture")).statusCode()).isEqualTo(200);
+        var reader = connect(token(0, evidence.equals("delegation") ? Map.of("delegation", "short-lived") : Map.of("exp", java.util.Date.from(expiry))));
+        var queue = app.getBean(AdmissionWorkQueue.class); var started = new java.util.concurrent.CountDownLatch(1); var release = new java.util.concurrent.CountDownLatch(1);
+        var blocker = queue.submit(() -> {
+            started.countDown(); try { if (!release.await(4, TimeUnit.SECONDS)) throw new IllegalStateException("release timed out"); }
+            catch (InterruptedException e) { throw new IllegalStateException(e); } return true;
+        }).toFuture();
+        try {
+            assertThat(started.await(1, TimeUnit.SECONDS)).isTrue();
+            var queued = reader.callTool(new McpSchema.CallToolRequest("get_product", Map.of("productId", "item-0"), null)).toFuture();
+            await(() -> queue.queuedTasks() == 1);
+            while (Instant.now().isBefore(expiry)) Thread.sleep(10);
+            assertThat(queued.isDone()).isFalse(); release.countDown(); blocker.get(1, TimeUnit.SECONDS);
+            denied(queued.get(2, TimeUnit.SECONDS), "ACCESS_DENIED"); assertThat(backend.count()).isZero();
+        }
+        finally { release.countDown(); }
+    }
+    @Test void protocolQueueTimeoutNeverDispatchesAfterWorkerRecovers() throws Exception {
+        var reader = connect(token(0, Map.of())); var queue = app.getBean(AdmissionWorkQueue.class);
+        var started = new java.util.concurrent.CountDownLatch(1); var release = new java.util.concurrent.CountDownLatch(1);
+        var blocker = queue.submit(() -> {
+            started.countDown(); try { if (!release.await(7, TimeUnit.SECONDS)) throw new IllegalStateException("release timed out"); }
+            catch (InterruptedException e) { throw new IllegalStateException(e); } return true;
+        }).toFuture();
+        try {
+            assertThat(started.await(1, TimeUnit.SECONDS)).isTrue();
+            var queued = reader.callTool(new McpSchema.CallToolRequest("get_product", Map.of("productId", "item-0"), null)).toFuture();
+            await(() -> queue.queuedTasks() == 1);
+            denied(queued.get(6, TimeUnit.SECONDS), "VERIFICATION_UNAVAILABLE");
+            assertThat(blocker.isDone()).isFalse(); release.countDown(); blocker.get(1, TimeUnit.SECONDS);
+            assertThat(queue.submit(() -> true).block(Duration.ofSeconds(1))).isTrue();
+            assertThat(backend.count()).isZero();
+            assertThat(app.getBean(AdmissionJournal.class).readAudits()).anySatisfy(r -> {
+                assertThat(r).containsEntry("reason", "ADMISSION_QUEUE_UNAVAILABLE").containsEntry("outcome", "NOT_ATTEMPTED").containsEntry("verified", false);
+            });
+        }
+        finally { release.countDown(); }
+    }
+    @Test void wholePrincipalLifecycleRequiresAuthorityForEveryExistingMembership() throws Exception {
+        var initial = app.getBean(AdmissionJournal.class).readPolicy(); var applications = new HashMap<>(initial.applications());
+        applications.put("admin-owned", new AdmissionPolicy.Application("organization-north", "security-admin", "PENDING", Set.of("tenant-blue"), false));
+        fixturePolicy(new AdmissionPolicy(1, initial.organizations(), initial.tenants(), initial.humans(), applications, initial.servers(), initial.capabilities(), initial.catalogs(), initial.delegations(), initial.grants(), initial.credentials(), initial.resources()));
+        var transferred = new AdmissionPolicy.Application("organization-north", "human-0", "ACTIVE", Set.of("tenant-blue"), false);
+        assertThat(change("security-admin", Map.of("expectedRevision", revision(), "action", "APPLICATION", "target", "admin-owned", "application", transferred, "reason", "owner transfer cannot bypass self activation")).statusCode()).isEqualTo(403);
+        var reader = connect(token(1, Map.of()));
+        for (String action : List.of("HUMAN_MEMBERSHIP", "APPLICATION_MEMBERSHIP")) {
+            assertThat(change("security-admin", Map.of("expectedRevision", revision(), "action", action, "target", action.startsWith("HUMAN") ? "human-1" : "application-beta", "tenant", "tenant-blue", "state", "ACTIVE", "reason", "explicit membership")).statusCode()).isEqualTo(200);
+        }
+        var p = app.getBean(AdmissionJournal.class).readPolicy(); var h = p.humans().get("human-1"); var a = p.applications().get("application-beta");
+        var person = new AdmissionPolicy.Human(h.authority(), h.subject(), h.displayName(), "SUSPENDED", h.tenants(), h.roles());
+        var application = new AdmissionPolicy.Application(a.organization(), a.owner(), "SUSPENDED", a.tenants(), a.administration());
+        assertThat(change("security-admin", Map.of("expectedRevision", revision(), "action", "HUMAN", "target", "human-1", "human", person, "reason", "global status")).statusCode()).isEqualTo(403);
+        assertThat(change("security-admin", Map.of("expectedRevision", revision(), "action", "APPLICATION", "target", "application-beta", "application", application, "reason", "global status")).statusCode()).isEqualTo(403);
+        var people = new HashMap<>(p.humans()); var admin = people.get("security-admin"); var roles = new HashMap<>(admin.roles());
+        roles.put("tenant-green", Set.of("SECURITY_ADMIN"));
+        people.put("security-admin", new AdmissionPolicy.Human(admin.authority(), admin.subject(), admin.displayName(), admin.status(), Set.of("tenant-blue", "tenant-green"), roles));
+        fixturePolicy(new AdmissionPolicy(1, p.organizations(), p.tenants(), people, p.applications(), p.servers(), p.capabilities(), p.catalogs(), p.delegations(), p.grants(), p.credentials(), p.resources()));
+        assertThat(change("security-admin", Map.of("expectedRevision", revision(), "action", "HUMAN", "target", "human-1", "human", person, "reason", "authorized global status")).statusCode()).isEqualTo(200);
+        assertThat(change("security-admin", Map.of("expectedRevision", revision(), "action", "APPLICATION", "target", "application-beta", "application", application, "reason", "authorized global status")).statusCode()).isEqualTo(200);
+        denied(call(reader, "get_product", Map.of("productId", "item-1")), "ACCESS_DENIED"); assertThat(backend.count()).isZero();
+    }
     @Test void filtersPerUserAndEnforcesDirectCallsWithIsolatedCredentialsAndDurableAudit(CapturedOutput output) throws Exception {
         String t0 = token(0, Map.of()); var first = connect(t0); var second = connect(token(2, Map.of()));
         assertThat(first.listTools().toFuture().get(4, TimeUnit.SECONDS).tools()).extracting(McpSchema.Tool::name).containsExactly("get_product");
@@ -181,7 +407,7 @@ class Uc01AdmissionIT {
 
     private void fixturePolicy(AdmissionPolicy fixture) throws Exception {
         // Controlled authoritative fault injection; administration behavior has separate HTTP tests.
-        app.getBean(AdmissionJournal.class).writePolicy(new AdmissionPolicy(revision() + 1, fixture.organizations(), fixture.tenants(), fixture.humans(), fixture.applications(), fixture.servers(), fixture.capabilities(), fixture.catalogs(), fixture.delegations(), fixture.grants(), fixture.credentials(), fixture.resources()));
+        app.getBean(AdmissionJournal.class).writePolicy(new AdmissionPolicy(revision() + 1, fixture.organizations(), fixture.tenants(), fixture.humans(), fixture.applications(), fixture.servers(), fixture.capabilities(), fixture.catalogs(), fixture.delegations(), fixture.grants(), fixture.credentials(), fixture.resources(), fixture.timing()));
     }
     @Test void failsClosedForLifecycleTrustClassificationContractAndCredentialChanges() throws Exception {
         var reader = connect(token(0, Map.of()));

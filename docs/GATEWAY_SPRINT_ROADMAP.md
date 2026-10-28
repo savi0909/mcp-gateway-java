@@ -1,7 +1,7 @@
 # Gateway gaps and implementation sprint roadmap
 
 Date: 2026-10-28. Reviewed runtime baseline: `1e9c6a7`.
-Status: S0 investigation complete with a migration blocker; S1-S11 remain pending.
+Status: S0 investigation complete with a migration blocker; S1 is complete within local UC-01; S2-S11 remain pending.
 This plan refines the [enterprise vision](ENTERPRISE_MCP_VISION.md) and the
 [October 18 review](GATEWAY_REVIEW_AND_NEXT_FEATURES.md). Existing requirements,
 foundation guarantees and acceptance states retain their authority.
@@ -12,11 +12,16 @@ S0 compatibility investigation is complete; read the
 [executed findings](S0_COMPATIBILITY_FINDINGS.md) and
 [normative requirement inventory](MCP_2026_REQUIREMENTS.md). Retain pinned
 dependencies because modern client, Spring binding and header handling remain
-blocked. Next is **S1: supported UC-01 lifecycle and queued-revocation closure**.
-Develop the audit lifecycle
-contract before implementing physical retention. Add the modern protocol through
-compatible SDKs, then workloads, interoperable identity integration, registry,
-native federation, approvals, approved providers and distributed operation.
+blocked. S1 is complete for local delegated ordinary reads; see [S1 evidence](S1_LIFECYCLE_EVIDENCE.md).
+Next proposed work is S2 audit lifecycle/recovery design, followed by S4 under its own gate.
+The owner confirmed after reviewing S0 that modern MCP migration can wait while
+functional components are built. S1 is implemented; continue with S2 audit lifecycle/recovery
+and S4 workload identities, respecting each slice's acceptance gates. Develop the
+audit lifecycle contract before implementing physical retention. Identity
+integration and registry/publication can follow on the pinned protocol where
+their contracts are transport-independent. Modern S3 is not a prerequisite for
+those slices; revisit it before modern native federation or modern-client
+compatibility commitments. S7 and later dependent work retain their stated gates.
 
 The current product is a tested local MCP-to-REST gateway with an opt-in
 enterprise delegated-read slice. It is not yet the complete federated platform
@@ -145,6 +150,18 @@ flowchart LR
     S9 --> S10
     S10 --> S11[S11 Release qualification]
 ```
+
+## S1 completion — 2026-10-28
+
+[S1 evidence](S1_LIFECYCLE_EVIDENCE.md) closes the selected local lifecycle,
+selective membership, stable identity, versioned timing and composed queued
+revocation slice. Full Wrapper verify passes 144 unit/startup and 60 integration
+tests (zero failures/errors/skips). Thirteen administrative changes complete in
+17–52 ms while all 256 business slots are full; 26 subscribed calls deny at fresh
+revision 2 with zero downstream calls/output. See ADR 0015 for the administrative
+scope and reserved control capacity. U5/release-wide IA/CAT gates remain partial.
+The backlog rows below retain their scope definitions; S2 is the next proposed
+contract/design task. No physical retention implementation or deletion is selected.
 
 ## Sprint backlog and exit evidence
 
