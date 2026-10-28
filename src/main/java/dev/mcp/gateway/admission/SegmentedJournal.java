@@ -94,6 +94,11 @@ final class SegmentedJournal implements AutoCloseable {
         long size = 0; for (var segment : segments) size += segment.channel().size(); return size;
     }
     int count() { return segments.size(); }
+    void snapshot(CheckpointFileConsumer consumer) throws IOException {
+        verify();
+        for (var segment : segments) consumer.accept(segment.path().getFileName().toString(), bytes(segment));
+    }
+    @FunctionalInterface interface CheckpointFileConsumer { void accept(String name, byte[] bytes) throws IOException; }
     private byte[] bytes(Segment segment) throws IOException {
         long size = segment.channel().size();
         if (size > segmentBytes) throw new IllegalArgumentException("Invalid journal size");

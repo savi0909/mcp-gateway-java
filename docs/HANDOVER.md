@@ -1,6 +1,16 @@
-# Next-session handover: S2 audit lifecycle/recovery contract
+# Next-session handover: review S2 storage contract before S4
 
 Updated: 2026-10-28. Repository: `D:/ai-projects/mcp-gateway-server-java`.
+The owner subsequently requested S2 contract plus implementation and tests.
+That non-destructive local increment is documented in
+[the storage contract](S2_STORAGE_CONTRACT.md) and
+[ADR 0016](decisions/0016-offline-audit-checkpoint-and-restore.md).
+Read WORKLOG and [the S2 evidence report](S2_RECOVERY_EVIDENCE.md) for final checks:
+152 unit/startup and 62 integration tests, zero failures/errors/skips, Wrapper
+verify in 4:03 under `target/s2-reviewed`. Next gate: owner review
+of that contract before separately selecting S4. No physical deletion is authorized;
+physical expiry, production archive durability and distributed recovery remain
+incomplete. Historical S1/S2 planning text below is preserved as context.
 S1 is complete for the selected local ordinary-read scope. Read
 [S1 evidence](S1_LIFECYCLE_EVIDENCE.md) and [ADR 0015](decisions/0015-uc01-lifecycle-and-control-capacity.md).
 Full Wrapper verify: 144 unit/startup + 60 integration tests, zero failures/errors/skips,

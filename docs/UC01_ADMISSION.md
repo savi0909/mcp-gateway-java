@@ -221,6 +221,14 @@ from the first page after this update. See [ADR 0013](decisions/0013-audit-expor
 
 ## Failure, timing and durability
 
+S2 adds private offline checkpoint/restore and capacity inspection; read
+[the storage contract](S2_STORAGE_CONTRACT.md) for complete commands, independent
+receipts, externally provisioned cold-start authorization, failure handling and
+remaining limits. Restored directories require `admission.recovery-authorization`
+at every cold start; incomplete restores cannot bootstrap. This supersedes the
+earlier manual-copy-only guidance below for supported maintenance. It adds no
+audit deletion route and does not complete physical expiry or production recovery.
+
 Admission is serialized with local administration. Each decision obtains current
 policy, checks eligibility and forces its audit record to disk before dispatch.
 Work whose publisher has not yet subscribed is checked when subscribed. Already

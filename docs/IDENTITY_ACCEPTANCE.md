@@ -1,5 +1,13 @@
 # Enterprise identity/authorization acceptance evidence
 
+S2 supplementary local evidence is mapped in [the recovery report](S2_RECOVERY_EVIDENCE.md)
+and [S2 acceptance supplement](S2_AUDIT_LIFECYCLE_REQUIREMENTS.md). It extends
+IA-AC-23/24/25/31 with non-destructive checkpoint/integrity, capacity, interrupted
+restore/startup gating, retained uncertainty and actual Boot/SDK recovery tests.
+No identity criterion is promoted: physical expiry, production recovery, later
+identity modes and full release remain incomplete. Operator cold-start authority
+is independently supplied, not permission inferred from the restored backup.
+
 Status: UC-01 rows **Partial**, later-mode rows **Pending**. Date: 2026-10-08.
 Executed local mock evidence is listed below; the full first release is incomplete.
 

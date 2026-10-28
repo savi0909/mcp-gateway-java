@@ -67,6 +67,13 @@ required for the full first release; UC-01 alone cannot satisfy that release gat
 
 This is a single-module gateway with validated properties/catalogs, a bounded REST executor, ASYNC tools, Origin enforcement, independent HTTP fixtures and an SDK smoke client. Default MCP remains disabled. Opt-in profiles `payments`, `workers`, and `worker-payments` expose one, nine or ten tools; `mock` supplies the standalone worker demo. Full Wrapper verification passes with 144 unit/startup tests and 60 integration tests using independent mocks. The `secured` profile supplies foundation JWT/scopes/tenant/session admission (ADR 0006); `uc01` adds the separately documented enterprise ordinary-read slice (ADR 0009). Existing demos remain unchanged; latest S1 lifecycle/queue artifacts are under `target/s1-reviewed`; see `docs/S1_LIFECYCLE_EVIDENCE.md`. Consult `WORKLOG.md` and ADRs for evidence and limits.
 
+S2 adds non-destructive offline checkpoint/restore and capacity status; read
+`docs/S2_STORAGE_CONTRACT.md`, ADR 0016 and `docs/S2_RECOVERY_EVIDENCE.md`.
+Current full verification passes 152 unit/startup plus 62 integration tests under
+`target/s2-reviewed`. Restored cold startup needs fresh independent recovery
+authorization. Review S2's contract before selecting S4; physical expiry remains
+unavailable. The S1 counts above are historical.
+
 Use Java 21, Spring Boot 4.0.8, Spring AI BOM 2.0.1, Maven 3.9.11 via Wrapper, and package `dev.mcp.gateway`. Inspect resolved dependency sources and configuration metadata before coding against SDK or starter APIs. Keep the BOM-managed SDK version; do not invent constructors, handlers, or property names. Version changes require official compatibility evidence and a decision record.
 
 ## Commands

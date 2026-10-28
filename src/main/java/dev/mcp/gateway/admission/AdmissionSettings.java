@@ -12,7 +12,11 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 @ConfigurationProperties(prefix = "admission", ignoreUnknownFields = false)
 public record AdmissionSettings(Path bootstrap, Path journalDirectory, @DefaultValue("30s") Duration policyMaxAge,
         Map<String, Credential> credentials, @DefaultValue("16777216") int journalSegmentBytes,
-        @DefaultValue("268435456") long journalMaxBytes) {
+        @DefaultValue("268435456") long journalMaxBytes, Path recoveryAuthorization) {
+    public AdmissionSettings(Path bootstrap, Path journalDirectory, Duration policyMaxAge, Map<String, Credential> credentials,
+            int journalSegmentBytes, long journalMaxBytes) {
+        this(bootstrap, journalDirectory, policyMaxAge, credentials, journalSegmentBytes, journalMaxBytes, null);
+    }
     public AdmissionSettings(Path bootstrap, Path journalDirectory, Duration policyMaxAge, Map<String, Credential> credentials) {
         this(bootstrap, journalDirectory, policyMaxAge, credentials, 16 * 1024 * 1024, 256L * 1024 * 1024);
     }

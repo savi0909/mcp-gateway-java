@@ -1,7 +1,9 @@
 # Gateway gaps and implementation sprint roadmap
 
 Date: 2026-10-28. Reviewed runtime baseline: `1e9c6a7`.
-Status: S0 investigation complete with a migration blocker; S1 is complete within local UC-01; S2-S11 remain pending.
+Status: S0 investigation complete with a migration blocker; S1 complete within
+local UC-01; S2 non-destructive local checkpoint/recovery implemented, physical
+expiry incomplete and storage contract review before S4 outstanding; S3-S11 pending.
 This plan refines the [enterprise vision](ENTERPRISE_MCP_VISION.md) and the
 [October 18 review](GATEWAY_REVIEW_AND_NEXT_FEATURES.md). Existing requirements,
 foundation guarantees and acceptance states retain their authority.
@@ -13,7 +15,11 @@ S0 compatibility investigation is complete; read the
 [normative requirement inventory](MCP_2026_REQUIREMENTS.md). Retain pinned
 dependencies because modern client, Spring binding and header handling remain
 blocked. S1 is complete for local delegated ordinary reads; see [S1 evidence](S1_LIFECYCLE_EVIDENCE.md).
-Next proposed work is S2 audit lifecycle/recovery design, followed by S4 under its own gate.
+Read [S2's operational contract](S2_STORAGE_CONTRACT.md) and
+[ADR 0016](decisions/0016-offline-audit-checkpoint-and-restore.md) for its bounded
+local implementation. Owner contract review precedes selecting S4 under its own gate.
+Final S2 Wrapper verification passes 152 unit/startup plus 62 integration tests,
+zero failures/errors/skips, in 4:03; see [the recovery report](S2_RECOVERY_EVIDENCE.md).
 The owner confirmed after reviewing S0 that modern MCP migration can wait while
 functional components are built. S1 is implemented; continue with S2 audit lifecycle/recovery
 and S4 workload identities, respecting each slice's acceptance gates. Develop the
@@ -164,8 +170,9 @@ tests (zero failures/errors/skips). Thirteen administrative changes complete in
 17–52 ms while all 256 business slots are full; 26 subscribed calls deny at fresh
 revision 2 with zero downstream calls/output. See ADR 0015 for the administrative
 scope and reserved control capacity. U5/release-wide IA/CAT gates remain partial.
-The backlog rows below retain their scope definitions; S2 is the next proposed
-contract/design task. No physical retention implementation or deletion is selected.
+The backlog rows below retain their scope definitions. The owner subsequently
+selected S2 contract/implementation/tests; local non-destructive checkpoint/restore
+and capacity status are implemented. Physical expiry and deletion remain unselected.
 
 ## Sprint backlog and exit evidence
 

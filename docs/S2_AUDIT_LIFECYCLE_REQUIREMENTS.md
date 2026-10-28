@@ -1,6 +1,9 @@
 # S2 functional requirements: audit lifecycle and recovery
 
-Version: 0.1. Date: 2026-10-28. Status: requirements draft; implementation pending.
+Version: 0.1. Date: 2026-10-28. Status: requirements retained; bounded local
+checkpoint/recovery implementation under [the operational contract](S2_STORAGE_CONTRACT.md)
+and [ADR 0016](decisions/0016-offline-audit-checkpoint-and-restore.md).
+Owner contract review before S4 and physical-expiry acceptance remain outstanding.
 
 ## Purpose and authority
 
@@ -61,27 +64,30 @@ technology and operational choices listed later remain unresolved.
 
 ## Pending acceptance matrix
 
-All rows are **Pending**. Use independent local fixtures, random ports, bounded
+States below reflect the bounded local evidence supplement; Partial does not
+establish the full operational/release gate. Use independent local fixtures, random ports, bounded
 waits and exact counters. Storage faults may be injected or simulated without
 removing files. Any actual file/directory deletion requires explicit permission.
 
 | ID | Coverage | Required observable evidence | State |
 | --- | --- | --- | --- |
-| S2-AC-01 | FR-01/02/12 | Authorized lifecycle action records scoped actor/reason/before-after boundaries; ordinary caller, audit viewer and foreign-scope actor cannot perform it or obtain protected material. | Pending |
-| S2-AC-02 | FR-03/09 | Checkpoint during attempted concurrent admissions has a provable consistent policy/audit boundary and complete manifest; no admitted call lacks durable evidence. | Pending |
-| S2-AC-03 | FR-02/03/04/09 | Interrupt every archive/checkpoint publication step; partial copies never report completion; unavailable archive fails visibly; retry/restart does not overwrite committed evidence or create ambiguous completion. | Pending |
-| S2-AC-04 | FR-03/06/08 | Restore a valid complete checkpoint into a controlled stopped-writer fixture; original records/IDs and unresolved outcomes survive; no business work is replayed. | Pending |
-| S2-AC-05 | FR-06/07 | Tampered, truncated, incomplete, reordered and incompatible checkpoints deny readiness. A complete but older valid backup cannot undo a later revocation; missing freshness authority keeps admission disabled. | Pending |
-| S2-AC-06 | FR-05/13 | Test just before, at and after retention boundaries, backward clocks and unresolved evidence dependencies. Visibility expiry does not remove files. Physical-expiry acceptance remains pending until its separate operational/deletion gate is met. | Pending |
-| S2-AC-07 | FR-10/11 | Simulated full storage and write/access failures prevent new requested-tool execution and protected output. Capacity signals cross specified thresholds; insufficient history does not fabricate a runway estimate. | Pending |
-| S2-AC-08 | FR-07/08/11 | After interrupted restore or storage recovery, stale/revoked/expired authority still denies; a newly authorized SDK call succeeds only after fresh checks and durable audit, with exact downstream counts. | Pending |
-| S2-AC-09 | FR-09/12 | A second writer/unsafe restore is rejected; lifecycle operations preserve tenant-scoped pagination and existing failure sanitization. | Pending |
-| S2-AC-10 | All applicable | Full product Wrapper verify passes after implementation, including existing foundation/S1 Boot/SDK checks; record commands, timings, counters and remaining operational limits. | Pending |
+| S2-AC-01 | FR-01/02/12 | Authorized lifecycle action records scoped actor/reason/before-after boundaries; ordinary caller, audit viewer and foreign-scope actor cannot perform it or obtain protected material. | Partial |
+| S2-AC-02 | FR-03/09 | Checkpoint during attempted concurrent admissions has a provable consistent policy/audit boundary and complete manifest; no admitted call lacks durable evidence. | Partial |
+| S2-AC-03 | FR-02/03/04/09 | Interrupt every archive/checkpoint publication step; partial copies never report completion; unavailable archive fails visibly; retry/restart does not overwrite committed evidence or create ambiguous completion. | Partial |
+| S2-AC-04 | FR-03/06/08 | Restore a valid complete checkpoint into a controlled stopped-writer fixture; original records/IDs and unresolved outcomes survive; no business work is replayed. | Partial |
+| S2-AC-05 | FR-06/07 | Tampered, truncated, incomplete, reordered and incompatible checkpoints deny readiness. A complete but older valid backup cannot undo a later revocation; missing freshness authority keeps admission disabled. | Partial |
+| S2-AC-06 | FR-05/13 | Test just before, at and after retention boundaries, backward clocks and unresolved evidence dependencies. Visibility expiry does not remove files. Physical-expiry acceptance remains pending until its separate operational/deletion gate is met. | Partial |
+| S2-AC-07 | FR-10/11 | Simulated full storage and write/access failures prevent new requested-tool execution and protected output. Capacity signals cross specified thresholds; insufficient history does not fabricate a runway estimate. | Partial |
+| S2-AC-08 | FR-07/08/11 | After interrupted restore or storage recovery, stale/revoked/expired authority still denies; a newly authorized SDK call succeeds only after fresh checks and durable audit, with exact downstream counts. | Partial |
+| S2-AC-09 | FR-09/12 | A second writer/unsafe restore is rejected; lifecycle operations preserve tenant-scoped pagination and existing failure sanitization. | Partial |
+| S2-AC-10 | All applicable | Full product Wrapper verify passes after implementation, including existing foundation/S1 Boot/SDK checks; record commands, timings, counters and remaining operational limits. | Verified (local regression) |
 
 ## Decisions required before implementation
 
 Record these choices in a reviewed S2 design/ADR before coding affected behavior.
 This document supplies requirements, not assumed answers to those choices.
+The selected non-destructive local choices are now recorded in ADR 0016 and its
+operational contract. This does not claim owner review or select physical expiry.
 
 - Archive destination, independent durability/trust boundary, manifest format,
   digest/authenticity protection, verification method and destination outage policy.
@@ -104,3 +110,31 @@ incomplete; an archive-only increment must not be presented as full S2 completio
 Keep [identity](IDENTITY_ACCEPTANCE.md) and [catalog](CATALOG_ACCEPTANCE.md) states
 unchanged until their complete applicable obligations have evidence. S4 workload
 identities remains a separate proposed slice after S2's storage contract review.
+
+## Bounded local S2 evidence supplement
+
+See [the storage contract](S2_STORAGE_CONTRACT.md) for ownership, failure handling,
+capacity sampling and executable commands. `AuditCheckpointTest` exercises actual
+files with injected partial writes (four checkpoint publication writes and five
+restore publication writes), unavailable destinations, writer exclusion,
+wrong receipt/revision, corruption, expired/missing independent authority, retained
+old evidence, segmented restore/reopen, refusal to bootstrap missing restored
+base history and capacity projection.
+
+`Uc01AdmissionIT.verifiedCheckpointRestorePreservesRevocationAndUnknownOutcomeWithoutReplay`
+restores a revoked policy and synthetic unresolved admission, then starts a real
+Boot server/SDK clients: no recovery dispatch, revoked call denied, one fresh
+authorized call makes exactly one backend request; second restart adds no duplicate
+unknown outcome. `exhaustedAuditStorageDeniesActualSdkDispatchAndSurvivesRestart`
+fills a bounded fixture journal, observes CRITICAL, denies a real SDK call with
+zero downstream requests/output and preserves the records across restart.
+
+| Rows supplemented | Local evidence | Remaining full-scope limit |
+| --- | --- | --- |
+| S2-AC-01/09 | Private OS-authorized offline command, required actor/ticket, all-scope lifecycle records, source locks; no caller-facing route | Deployed OS ACL/authority mapping, multi-operator governance and broader scope matrices are not proven |
+| S2-AC-02/03 | Both journals captured under locks/monitor; ordered bounded manifest; partial writes at every file publication step fail, source reopens; unavailable archive fails | Power-loss/directory durability and independent off-device storage are not proven |
+| S2-AC-04/08 | Segmented copy/restore/reopen plus actual Boot/SDK revocation, uncertainty and fresh authorized call | Synthetic unresolved fixture supplements earlier lost-outcome tests; production RPO/RTO remain unselected |
+| S2-AC-05 | Digest/revision/integrity checks; fresh external authorization required at cold start; a higher independent revision blocks an old valid checkpoint | Current-authority attestation is trusted operator input, not a distributed rollback oracle; adversarial OS and all format permutations are unproven |
+| S2-AC-06 | Entire retained history, including old unresolved records, copied without expiry; existing deterministic visibility boundary evidence retained | Physical expiry/holds/dependency purge remain unavailable and need separate permission |
+| S2-AC-07 | Partial ENOSPC simulation, unavailable destination, full source journal, WARNING/CRITICAL and explicit-rate runway | Host disk not filled; offline sampling/notification routing and production capacity are operator responsibilities |
+| S2-AC-10 | Final Wrapper command/results are recorded in WORKLOG and the S2 evidence report | Full S2/release completion is not inferred from regression checks |

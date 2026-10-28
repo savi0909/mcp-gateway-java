@@ -7,13 +7,27 @@ LLM development automation was moved to `D:/Projects/llm-harness`. Read
 and verified product evidence to choose work here.
 
 For the next bounded task, read [the next-session handover](HANDOVER.md):
-S1 is complete for local UC-01. Next proposed work is the S2 audit
-lifecycle/recovery contract and design. S0 is complete with modern migration blocked.
+S1 is complete for local UC-01. S2 now has a bounded non-destructive local
+checkpoint/recovery implementation under [the storage contract](S2_STORAGE_CONTRACT.md)
+and [ADR 0016](decisions/0016-offline-audit-checkpoint-and-restore.md).
+Review that contract before selecting S4. Physical expiry remains unavailable;
+S0 is complete with modern migration blocked.
 
 Read the [S2 functional requirements draft](S2_AUDIT_LIFECYCLE_REQUIREMENTS.md)
-for the pending acceptance matrix and decisions required before implementation.
+for the full-scope acceptance matrix and new bounded local evidence supplement.
 
 ## Product state
+
+- S2: private offline checkpoints preserve every retained policy/audit segment;
+  exclusive new destinations, forced read-back verified manifests and independent
+  receipts gate restore. External restore intent blocks interrupted bootstrap;
+  normal restored startup requires a fresh independent authorization and minimum
+  policy revision. Capacity status includes headroom, alerts, unresolved work and
+  explicit-rate projections. Read the contract for commands/trust boundaries and
+  [S2 evidence](S2_RECOVERY_EVIDENCE.md) for exact verification: 152 unit/startup
+  plus 62 integration tests, zero failures/errors/skips, Wrapper verify in 4:03
+  under `target/s2-reviewed`. No deletion, production archive/HA claim or S4
+  implementation. UC-01/U5 and full release remain partial.
 
 - S1 completed 2026-10-28; see [evidence](S1_LIFECYCLE_EVIDENCE.md) and
   [ADR 0015](decisions/0015-uc01-lifecycle-and-control-capacity.md). Authorized
@@ -99,7 +113,8 @@ planning. It incorporates completed local hardening and the remaining U5 gaps,
 then proposes protocol migration, workloads, identity integration, registry,
 native federation, approvals/providers and distributed operations. Its S0 tasks
 are complete with documented blockers; S1 now has supported
-UC-01 lifecycle and composed queued-revocation evidence. S2 contract/design follows.
+UC-01 lifecycle and composed queued-revocation evidence. S2's bounded storage
+contract/implementation now awaits owner review before S4 selection.
 
 The modern target is MCP `2026-07-28`, distinct from SDK `2.0.0` and Spring AI
 `2.0.1`. Newer SDK release notes offer an experimental modern server while
@@ -153,8 +168,9 @@ a separate project; do not run or extend its workflow here.
 Review UC-01/U5 gaps and the product requirements/acceptance trackers. Implement
 only the requested gateway slice. For next-sprint planning, read
 docs/GATEWAY_SPRINT_ROADMAP.md, docs/MCP_PROTOCOL_ACCEPTANCE.md and proposed
-ADR 0014, completed S0 findings and S1 evidence; S2 audit lifecycle/recovery
-contract/design is the next proposed task. Preserve the
+ADR 0014, completed S0 findings, S1 evidence and S2_STORAGE_CONTRACT.md /
+S2_RECOVERY_EVIDENCE.md. Review the S2 storage contract before separately
+selecting S4; physical expiry/deletion remains unselected. Preserve the
 foundation and pinned stack, use
 independent mocks and real SDK checks where needed, run appropriate Wrapper
 verification, and update factual evidence before committing and pushing.

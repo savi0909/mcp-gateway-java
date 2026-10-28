@@ -20,11 +20,16 @@ stable authority/subject identity, versioned timing and queued-revocation checks
 See the [functional guide](UC01_ADMISSION.md), [ADR 0015](decisions/0015-uc01-lifecycle-and-control-capacity.md)
 and [S1 evidence](S1_LIFECYCLE_EVIDENCE.md).
 
-Next proposed functional work is [S2 audit lifecycle and recovery](S2_AUDIT_LIFECYCLE_REQUIREMENTS.md).
-Its draft defines archive/checkpoint/restore, retention preservation, capacity and
-failure requirements with Pending acceptance checks and explicit design decisions.
-It is not implemented behavior or permission to delete files. U5/full enterprise
-release remain Partial. Preserve the pinned runtime; modern MCP migration stays
+The selected non-destructive [S2 audit lifecycle and recovery](S2_AUDIT_LIFECYCLE_REQUIREMENTS.md)
+increment now provides private offline checkpoint/archive verification, gated
+restore, capacity signals and interrupted/full-storage recovery tests. Read
+[the operational contract](S2_STORAGE_CONTRACT.md),
+[ADR 0016](decisions/0016-offline-audit-checkpoint-and-restore.md) and
+[reviewed evidence](S2_RECOVERY_EVIDENCE.md). It preserves all retained evidence
+and unknown outcomes without business replay. Physical expiry remains unavailable;
+S4 waits for owner storage-contract review. Full verification passes 152
+unit/startup and 62 integration tests; U5/full enterprise release remain Partial.
+Preserve the pinned runtime; modern MCP migration stays
 deferred under [ADR 0014](decisions/0014-modern-protocol-compatibility-proposal.md).
 
 ## 1. Goal and ownership

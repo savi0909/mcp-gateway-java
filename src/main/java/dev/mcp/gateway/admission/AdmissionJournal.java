@@ -15,11 +15,26 @@ public final class AdmissionJournal implements AutoCloseable {
             .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS).build();
     private final SegmentedJournal policy, audit;
     private final long maxBytes;
+    private final java.nio.file.Path directory;
+    private final int segmentBytes;
     private AdmissionPolicy current;
     private String currentDigest;
     private int currentSegment;
 
     public AdmissionJournal(AdmissionSettings settings) throws IOException {
+        this(settings, false);
+    }
+    AdmissionJournal(AdmissionSettings settings, boolean restoring) throws IOException {
+        directory = settings.journalDirectory(); segmentBytes = settings.journalSegmentBytes();
+        var intent = AuditCheckpoint.restoreIntent(directory);
+        boolean restoredStore = Files.exists(intent) || Files.exists(directory.resolve("restore.pending"));
+        if (!restoring && restoredStore) {
+            var complete = directory.resolve("restore.complete");
+            if (!java.util.Arrays.equals(AuditCheckpoint.boundedRead(directory.resolve("restore.pending"), 65),
+                    AuditCheckpoint.boundedRead(complete, 65)) || Files.size(complete) != 65)
+                throw new IOException("Incomplete restore");
+        }
+        if (restoredStore) AuditCheckpoint.requireSource(directory);
         Files.createDirectories(settings.journalDirectory()); maxBytes = settings.journalMaxBytes();
         policy = new SegmentedJournal(settings.journalDirectory(), "policy", settings.journalSegmentBytes(), maxBytes, json);
         SegmentedJournal openedAudit = null;
@@ -36,6 +51,11 @@ public final class AdmissionJournal implements AutoCloseable {
                 policy.append(json.writeValueAsBytes(seed));
             }
             readPolicy(); visitAudits(record -> { });
+            if (restoredStore && !restoring) {
+                var authorization = AuditCheckpoint.verifyRecoveryAuthorization(settings, current.revision());
+                appendAudit(Map.of("id", UUID.randomUUID().toString(), "at", Instant.now().toString(), "decision", "RESTORE_AUTHORITY_VERIFIED",
+                        "revision", current.revision(), "actor", authorization.actor(), "reason", authorization.reason()));
+            }
         }
         catch (Exception failure) {
             if (openedAudit != null) openedAudit.close(); policy.close();
@@ -84,6 +104,46 @@ public final class AdmissionJournal implements AutoCloseable {
         policy.verify(); audit.verify();
         return Map.of("policyBytes", policy.size(), "auditBytes", audit.size(), "maxBytesPerJournal", maxBytes,
                 "policySegments", policy.count(), "auditSegments", audit.count(), "physicalPurgeEnabled", false);
+    }
+    synchronized void snapshot(SegmentedJournal.CheckpointFileConsumer consumer) throws IOException {
+        readPolicy(); visitAudits(record -> { });
+        policy.snapshot(consumer); audit.snapshot(consumer);
+    }
+    /** Private operator health; rates are measured externally, in bytes per second per journal. */
+    public synchronized Map<String, Object> capacityStatus(long policyBytesPerSecond, long auditBytesPerSecond) throws IOException {
+        if (policyBytesPerSecond < 0 || auditBytesPerSecond < 0) throw new IllegalArgumentException("Invalid observed rate");
+        var status = new LinkedHashMap<String, Object>(storageStatus());
+        long usable = Files.getFileStore(directory).getUsableSpace(); status.put("filesystemUsableBytes", usable);
+        var pending = new HashMap<String, String>();
+        var lifecycle = new LinkedHashMap<String, Object>();
+        visitAudits(record -> {
+            String id = (String) record.get("id"), decision = (String) record.get("decision");
+            pending.remove(id);
+            if (decision != null && Set.of("ADMITTED", "ADMIN_PREPARED").contains(decision)) {
+                if (pending.size() >= 10000) throw AdmissionFailure.unavailable();
+                pending.put(id, decision);
+            }
+            if (decision != null && (decision.startsWith("CHECKPOINT_") || decision.startsWith("RESTORE_"))) {
+                lifecycle.clear();
+                for (String key : List.of("id", "decision", "at", "acceptedAt", "effectiveAt", "status", "scope", "actor", "reason", "revision", "manifestSha256"))
+                    if (record.containsKey(key)) lifecycle.put(key, record.get(key));
+            }
+        });
+        status.put("unresolvedWork", pending.size()); status.put("latestLifecycle", Map.copyOf(lifecycle));
+        status.put("executionReadiness", "NOT_EVALUATED_BY_STORAGE_INSPECTION");
+        if ("CHECKPOINT_STARTED".equals(lifecycle.get("decision"))) status.put("maintenanceRecovery", "INTERRUPTED_OR_UNACKNOWLEDGED");
+        for (var kind : List.of("policy", "audit")) {
+            long used = (Long) status.get(kind + "Bytes"), remaining = maxBytes - used;
+            int count = (Integer) status.get(kind + "Segments");
+            long rate = kind.equals("policy") ? policyBytesPerSecond : auditBytesPerSecond;
+            status.put(kind + "RemainingBytes", remaining);
+            status.put(kind + "Alert", used >= maxBytes * .95 || count >= 973 || usable < segmentBytes ? "CRITICAL"
+                    : used >= maxBytes * .80 || count >= 820 ? "WARNING" : "NORMAL");
+            status.put(kind + "SecondsRemaining", rate == 0 ? -1L : Math.min(remaining, usable) / rate);
+            try { status.put(kind + "Required90DayBytes", Math.multiplyExact(rate, 7776000L)); }
+            catch (ArithmeticException overflow) { status.put(kind + "Required90DayBytes", Long.MAX_VALUE); }
+        }
+        return Collections.unmodifiableMap(status);
     }
     @Override public synchronized void close() throws IOException {
         try { audit.close(); } finally { policy.close(); }

@@ -10,7 +10,9 @@ Recording that direction does not begin implementation or change acceptance rows
 The subsequent owner-selected UC-01 prerequisite refines execution order below.
 
 Read the [S2 functional requirements draft](S2_AUDIT_LIFECYCLE_REQUIREMENTS.md)
-for the pending acceptance matrix and decisions required before implementation.
+for the full acceptance matrix. The requested bounded local S2 implementation and
+selected storage choices are documented in [the operational contract](S2_STORAGE_CONTRACT.md)
+and [ADR 0016](decisions/0016-offline-audit-checkpoint-and-restore.md).
 
 ## Active project and continuation
 
@@ -21,7 +23,11 @@ complete with a migration blocker; see [executed findings](S0_COMPATIBILITY_FIND
 and [normative inventory](MCP_2026_REQUIREMENTS.md). The selected product
 slice S1 is complete within local UC-01; [S1 evidence](S1_LIFECYCLE_EVIDENCE.md)
 records lifecycle, selective membership, timing and composed queued revocation.
-Next proposed work is S2 audit lifecycle/recovery contract and design.
+S2 adds non-destructive offline checkpoint/verified restore, independent cold-start
+authorization and private capacity signals. Physical expiry remains incomplete;
+owner review of the storage contract is the next gate before selecting S4.
+Final S2 Wrapper verification passes 152 unit/startup plus 62 integration tests,
+zero failures/errors/skips, in 4:03; see [the recovery report](S2_RECOVERY_EVIDENCE.md).
 The [protocol acceptance plan](MCP_PROTOCOL_ACCEPTANCE.md) is entirely Pending
 for the modern target; [ADR 0014](decisions/0014-modern-protocol-compatibility-proposal.md)
 records the accepted keep-current-runtime decision. No modern dependency upgrade

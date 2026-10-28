@@ -1,5 +1,10 @@
 # Catalog v1.3 acceptance evidence
 
+S2 adds [local checkpoint/recovery evidence](S2_RECOVERY_EVIDENCE.md) preserving
+committed policy/catalog revocation and requiring fresh admission after restore.
+This is supplementary lifecycle evidence only; no catalog acceptance state changes
+and no new workload/provider/publication execution mode is enabled.
+
 Date: 2026-10-08. Scope: local UC-01 ordinary internal reads. This is not complete
 discovery/catalog-domain acceptance. [Source v1.3](requirements/Enterprise_MCP_Discovery_Catalog_Requirements_v1.3.md)
 retains its finalized requirements and original unchecked checklist. Source

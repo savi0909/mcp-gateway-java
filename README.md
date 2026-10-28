@@ -2,7 +2,14 @@
 
 An enterprise MCP gateway project in Java. The current local increment exposes the existing coordinator's worker lease and namespace APIs alongside its separate payment sample. The coordinator manages leases, the payment worker generates payment IDs, and the gateway adapts REST and MCP.
 
-**Current state:** the foundation plus opt-in local UC-01 increment pass **143 unit/startup tests and 38 real Boot/SDK integration tests** with independent mocks. Default MCP is disabled. `worker-payments` exposes nine coordinator tools plus payment; optional `secured` adds JWT authentication, scopes, tenant admission and session ownership. `workers,secured,uc01` adds the enterprise ordinary-read admission described below. The existing demo is unchanged; the latest U5 correction executable is under `target/u5-pagination-final`.
+**Current state:** the foundation plus opt-in local UC-01 increment pass **152 unit/startup tests and 62 real Boot/SDK integration tests** with independent mocks. Default MCP is disabled. `worker-payments` exposes nine coordinator tools plus payment; optional `secured` adds JWT authentication, scopes, tenant admission and session ownership. `workers,secured,uc01` adds the enterprise ordinary-read admission described below. The existing demo is unchanged; the latest S2 executable is under `target/s2-reviewed`.
+
+S2 provides private offline checkpoint/archive verification, gated restore and
+capacity inspection. Read [the storage operational contract](docs/S2_STORAGE_CONTRACT.md)
+for ownership, independent recovery authorization and commands, and
+[the recovery evidence](docs/S2_RECOVERY_EVIDENCE.md) for fault/restart tests.
+Physical deletion remains unavailable; S4 awaits contract review. Runtime pins
+and deferred modern MCP migration are preserved.
 
 See [Worker tools and definitions](docs/WORKER_TOOLS.md) for tools, schemas and run commands, and [the payment demo](docs/PAYMENT_DEMO.md) for Docker setup. The documented demo MCP address is `http://127.0.0.1:8080/worker-coordinator/mcp`; see the worklog for dated runtime checks.
 

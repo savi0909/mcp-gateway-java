@@ -28,6 +28,7 @@ class Uc01AdmissionIT {
     private final Map<McpAsyncClient, java.util.concurrent.atomic.AtomicReference<String>> sessions = new HashMap<>();
     private IndependentHttpMock backend; private LocalTokenIssuer issuer; private ConfigurableApplicationContext app;
     private String origin; private AdmissionPolicy seed; private Path directory;
+    private List<String> launchArguments;
     @BeforeEach void start() throws Exception {
         backend = new IndependentHttpMock(); issuer = new LocalTokenIssuer(); directory = AdmissionFixtures.directory();
         seed = AdmissionFixtures.policy(issuer.origin().toString(), backend.origin()); var bootstrap = directory.resolve("bootstrap.json");
@@ -40,6 +41,7 @@ class Uc01AdmissionIT {
                 "--admission.bootstrap=" + bootstrap.toAbsolutePath(), "--admission.journal-directory=" + directory.resolve("journals").toAbsolutePath()));
         for (int n = 0; n < 50; n++) args.addAll(List.of("--admission.credentials.credential-" + n + ".token=isolated-" + n + "-canary",
                 "--admission.credentials.credential-" + n + ".audience=" + backend.origin(), "--admission.credentials.credential-" + n + ".expires-at=" + Instant.now().plusSeconds(600)));
+        launchArguments = List.copyOf(args);
         app = new SpringApplicationBuilder(McpGatewayApplication.class).run(args.toArray(String[]::new));
         origin = "http://127.0.0.1:" + ((WebServerApplicationContext) app).getWebServer().getPort();
     }
@@ -83,6 +85,65 @@ class Uc01AdmissionIT {
     private HttpResponse<String> audit(String token) throws Exception {
         return HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(origin + "/control/audit")).timeout(Duration.ofSeconds(4))
                 .header("Authorization", "Bearer " + token).GET().build(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private void restartAt(Path journals, String... extra) {
+        for (var client : clients) try { client.closeGracefully().block(Duration.ofSeconds(2)); } catch (Exception ignored) { }
+        clients.clear(); sessions.clear();
+        app.close();
+        var args = new ArrayList<>(launchArguments.stream().filter(a -> !a.startsWith("--admission.journal-directory=")).toList());
+        args.add("--admission.journal-directory=" + journals.toAbsolutePath()); args.addAll(List.of(extra));
+        app = new SpringApplicationBuilder(McpGatewayApplication.class).run(args.toArray(String[]::new));
+        origin = "http://127.0.0.1:" + ((WebServerApplicationContext) app).getWebServer().getPort();
+    }
+    @Test void verifiedCheckpointRestorePreservesRevocationAndUnknownOutcomeWithoutReplay() throws Exception {
+        assertThat(change("security-admin", Map.of("expectedRevision", revision(), "action", "REVOKE_DELEGATION", "target", "delegation-0", "reason", "restore must retain revocation")).statusCode()).isEqualTo(200);
+        var settings = app.getBean(AdmissionSettings.class);
+        // Synthetic lost outcome; no downstream call is made to create this fixture.
+        app.getBean(AdmissionJournal.class).appendAudit(Map.of("id", "s2-unfinished", "decision", "ADMITTED",
+                "at", "2020-01-01T00:00:00Z", "organization", "organization-north", "tenant", "tenant-blue", "revision", revision()));
+        app.close();
+        var archive = directory.resolve("s2-archive"); var destination = directory.resolve("s2-restored");
+        var checkpoints = new AuditCheckpoint();
+        var receipt = checkpoints.checkpoint(settings, archive, "storage-operator", "ticket-S2");
+        checkpoints.restore(archive, new AdmissionSettings(settings.bootstrap(), destination, settings.policyMaxAge(), settings.credentials(),
+                settings.journalSegmentBytes(), settings.journalMaxBytes()), receipt.manifestSha256(), 2, "recovery-operator", "ticket-S2-restore");
+        var authority = directory.resolve("recovery-authority.json");
+        Files.writeString(authority, AdmissionFixtures.JSON.writeValueAsString(Map.of("manifestSha256", receipt.manifestSha256(),
+                "minimumPolicyRevision", 2, "verifiedAt", Instant.now().minusSeconds(1).toString(), "expiresAt", Instant.now().plusSeconds(28).toString(),
+                "actor", "recovery-operator", "reason", "ticket-S2")));
+        restartAt(destination, "--admission.recovery-authorization=" + authority.toAbsolutePath());
+        var journal = app.getBean(AdmissionJournal.class);
+        assertThat(journal.readAudits()).anyMatch(r -> "s2-unfinished".equals(r.get("id")) && "UNKNOWN_AFTER_RESTART".equals(r.get("outcome")));
+        assertThat(backend.count()).isZero();
+        denied(call(connect(token(0, Map.of())), "get_product", Map.of("productId", "item-0")), "ACCESS_DENIED");
+        assertThat(backend.count()).isZero();
+        reply(2); assertThat(call(connect(token(2, Map.of())), "get_product", Map.of("productId", "item-2")).isError()).isFalse();
+        assertThat(backend.count()).isEqualTo(1);
+        restartAt(destination, "--admission.recovery-authorization=" + authority.toAbsolutePath());
+        assertThat(app.getBean(AdmissionJournal.class).readAudits().stream().filter(r -> "s2-unfinished".equals(r.get("id")) && "UNKNOWN_AFTER_RESTART".equals(r.get("outcome")))).hasSize(1);
+        assertThat(backend.count()).isEqualTo(1);
+    }
+    @Test void exhaustedAuditStorageDeniesActualSdkDispatchAndSurvivesRestart() throws Exception {
+        var journals = directory.resolve("journals");
+        restartAt(journals, "--admission.journal-segment-bytes=65536", "--admission.journal-max-bytes=131072");
+        var reader = connect(token(0, Map.of())); var journal = app.getBean(AdmissionJournal.class);
+        int accepted = 0;
+        for (;;) {
+            try { journal.appendAudit(Map.of("id", "capacity-" + accepted, "decision", "TEST", "padding", "x".repeat(4096))); accepted++; }
+            catch (java.io.IOException full) { break; }
+        }
+        // Consume the residual space too, until even a small admission cannot fit.
+        for (;;) {
+            try { journal.appendAudit(Map.of("id", "tail-" + accepted, "decision", "TEST")); accepted++; }
+            catch (java.io.IOException full) { break; }
+        }
+        denied(call(reader, "get_product", Map.of("productId", "item-0")), "VERIFICATION_UNAVAILABLE");
+        assertThat(backend.count()).isZero();
+        assertThat(journal.capacityStatus(0, 0).get("auditAlert")).isEqualTo("CRITICAL");
+        restartAt(journals, "--admission.journal-segment-bytes=65536", "--admission.journal-max-bytes=131072");
+        assertThat(app.getBean(AdmissionJournal.class).readAudits().stream().filter(r -> "TEST".equals(r.get("decision")))).hasSize(accepted);
+        assertThat(backend.count()).isZero();
     }
 
     @Test void tenantLifecycleIsAuthorizedVersionedAndRevokesExistingSession() throws Exception {
